@@ -36,9 +36,9 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/{bin,program}
-    cp -R target/${name}/* $out/program #*/
-    sed -i "s,\$(dirname \$0),$out,g" $out/program/chee
-    ln -s $out/program/chee $out/bin/chee
+    cp -R target/${name}/* $out/ #*/
+    sed -i "s,\$(dirname \$0),$out,g" $out/chee
+    mv $out/chee $out/bin/chee
   '';
 
   meta = with stdenv.lib; {

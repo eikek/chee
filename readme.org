@@ -39,7 +39,13 @@ chee version
 You can build chee with the [[http://nixos.org/nix][nix package manager]].
 
 #+begin_src shell :exports both
-nix-build -i https://github.com/eikek/chee/archive/master.tar.gz
+nix-build https://github.com/eikek/chee/archive/master.tar.gz
+#+end_src
+
+or install it with
+
+#+begin_src shell :exports code
+nix-env -if https://github.com/eikek/chee/archive/master.tar.gz
 #+end_src
 
 
