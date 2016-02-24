@@ -1,5 +1,8 @@
 #+title: chee
 
+#+attr_html: style="display:inline;"
+https://travis-ci.org/eikek/chee.svg
+
 Chee is a command line tool for managing photos.
 
 Some features are:

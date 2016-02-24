@@ -4,6 +4,7 @@ import scala.util._
 import org.scalatest._
 import better.files._
 import chee.TestInfo
+import chee.cli.FileExt
 
 class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   val idMapping = (id: Ident) => id.in("old")
@@ -19,13 +20,13 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "work for existing files" in {
-    val map = new BasicExtract().extract(TestInfo.baseDir / "readme.org")
-    val expectedIdents = Set(Ident.path, Ident.filename, Ident.extension, Ident.length, Ident.lastModified)
+    val map = new BasicExtract().extract(TestInfo.images.head)
+    val expectedIdents = Set(Ident.path, Ident.filename, Ident.extension, Ident.mimetype, Ident.length, Ident.lastModified)
     map.asSet.map(_.ident).toSet should be (expectedIdents)
-    map.get(Ident.filename) should be (Some("readme.org"))
-    map.get(Ident.extension) should be (Some("org"))
-    map.get(Ident.path) should be (Some((file"readme.org").path.toString))
-    map.get(Ident.mimetype) should be (None)
+    map.get(Ident.filename) should be (Some(TestInfo.images.head.name))
+    map.get(Ident.extension) should be (TestInfo.images.head.getExtension)
+    map.get(Ident.path) should be (Some(TestInfo.images.head.path.toString))
+    map.get(Ident.mimetype) should (be (Some("image/jpg")) or be (Some("image/png")) or be (Some("image/jpeg")))
   }
 
   it should "apply mapIdents" in {
