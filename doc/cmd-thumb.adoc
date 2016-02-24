@@ -1,0 +1,49 @@
+=== thumb
+
+Create thumbnails.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-thumb}
+----------------------------------------------------------------------
+
+.Example
+----------------------------------------------------------------------
+chee thumb --size 200 -o ./thumbdir 'date:201410*'
+----------------------------------------------------------------------
+
+Scales the original image to completely cover the new dimensions
+whilst retaining the original aspect ratio.
+
+If the new dimensions have a different aspect ratio than the original
+image, the image will be cropped so that it still covers the new area
+without leaving any background.
+
+As with `scale` images are not changed, but new files are written.
+
+The images to scale are selected by a `query`. If non-image files are
+selected, they are skipped silently. Other options for querying are
+the same as with the `find` command. See xref:_find[here] for more
+details.
+
+The output is rendered (like with `find`) using a format pattern. It
+can be specfified with `--pattern`. When evaluating the format
+pattern, standard properties are retrieved from the scaled image but
+image metadata (all image properties except `width` and `height`) is
+taken from the original image. Additionall, all properties from the
+original image are available and prefixed by `origin-`.
+
+By default, new images are written to a directory in chee's working
+directory. With `--outdir` another dircetory can be specified.
+
+With `--nameformat` you can specify a format pattern to determine the
+target filename. By default, a name containing the checksum of the
+original file and the target size is generated. This pattern is
+evaluated against the properties of the original file plus
+`target-width` and `target-height` that are set to the dimensions of
+the scaled image.
+
+The `--size` option gives the size of the thumbnails to generate. It
+may be a string like `<width>x<height>` (e.g. `200x150`) or just one
+number, for example `200` which is the same as `200x200`.

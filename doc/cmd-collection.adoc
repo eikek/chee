@@ -1,0 +1,61 @@
+=== collection
+
+Manages collections. The collection command requires subcommands.
+
+.Usage
+----------------------------------------------------------------------
+collection [list|edit|show]
+----------------------------------------------------------------------
+
+
+==== list
+
+Lists all defined collections by name and optionally shows the
+description title. The description title is the first line of the
+description.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-collection-list}
+----------------------------------------------------------------------
+
+
+==== edit
+
+Edits a collection or creates a new one.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-collection-edit}
+----------------------------------------------------------------------
+
+The argument is mandatory and names the collection to edit. If the
+name is unknown, a new one is created with that name.
+
+The command works interactively and non-interactively. If a value for
+`name`, `query` or `description` is given, it is set into the
+collection silently. Otherwise an external editor opens to allow
+changing or creating a collection.
+
+The editor is filled with a template. You can specify the name, query
+and a description. When the file is saved and the editor exists, the
+text is saved to the list of collections. If you leave the name or
+query empty, the process is cancelled and the collection list is not
+updated.
+
+The editor program is determined from the configuration file. Set a
+program at key `chee.programs.editor`. If this is not set, the
+environment variable `EDITOR` is used. If this is empty, too, an error
+is reported.
+
+==== show
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-collection-show}
+----------------------------------------------------------------------
+
+Shows all details of a collection.

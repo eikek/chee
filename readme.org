@@ -1,0 +1,63 @@
+#+title: chee
+
+Chee is a command line tool for managing photos.
+
+Some features are:
+
+- searches photos using standard file properties and image properties
+  (resolution, created-time, etc)
+- manages collections (created from queries and can be used in
+  queries)
+- copy/symlink images using a custom pattern
+
+It is a simple program: the metadata of image (and other) files are
+put in a database which can then be queried more conveniently. But
+this already allows some useful features.
+
+
+* Installing
+
+** Building
+
+[[http://scala-sbt.com][sbt]] is used for building chee. Install sbt, then clone the repository
+and execute:
+
+#+begin_src shell :exports code
+sbt make-zip
+#+end_src
+
+in the source root. The result is a zip file in =target=
+folder. Unpack the zip somewhere and add the resulting directory to
+your =PATH=. Then the ~chee~ command should be available. Test it via
+
+#+begin_src shell :exports code
+chee version
+#+end_src
+
+** Using Nix
+
+You can build chee with the [[http://nixos.org/nix][nix package manager]].
+
+#+begin_src shell :exports both
+nix-build -i https://github.com/eikek/chee/archive/master.tar.gz
+#+end_src
+
+
+* Documentation
+
+Chee is a command line tool and comes with documentation built in. It
+is accessible via the ~help~ command.
+
+The help command provides information about chee's concepts as well as
+about its commands. Help pages can be printed to stdout or viewed in a
+browser. Run ~chee help~ to find out more.
+
+The command
+
+#+begin_src shell :exports code
+chee help manual
+#+end_src
+
+opens a browser showing the complete manual.
+
+Click [[https://eknet.org/main/projects/chee/manual-0.1.0.html][here]] to read the manual now.

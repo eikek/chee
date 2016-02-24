@@ -1,0 +1,48 @@
+=== help
+
+The help command provides access to specific manual pages or the
+complete manual.
+
+[subs="attributes,specialchars"]
+.usage
+----------------------------------------------------------------------
+{usage-help}
+----------------------------------------------------------------------
+
+Some manual pages describe the basic concepts of chee. They can be
+opened using `--about`. Help pages about specific commands open with
+the `--command` switch. By default (if no switch is present) command
+pages are requested.
+
+The `--html` can be used to request html pages that are opened in a
+browser. By default, the text version is printed to stdout.
+
+The name `manual` is special, it will always start a browser with the
+complete manual (all pages combined in one html). There is no text
+version.
+
+.Complete Manual
+----------------------------------------------------------------------
+chee help manual
+----------------------------------------------------------------------
+
+Choose from the following concept pages:
+
+1. property
+2. location
+3. query
+4. collection
+5. format
+6. config
+
+And here is a list of commands:
+
+- help
+- find
+- view
+- location
+- collection
+- mktree
+- scale
+- thumb
+- config

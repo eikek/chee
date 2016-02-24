@@ -1,0 +1,62 @@
+chee
+====
+Eike Kettner
+v{version} (build {commit} at {buildtime})
+
+Chee is a command line tool for managing photos and photo
+collections.
+
+How do you organize your photos? I have a bunch of folders with
+contents from various flash cards, because manually sorting alot of
+photos is too time consuming. Chee wants to help at this point. It can
+search photos from different directories by querying its image
+metadata. So the idea is to simply keep these flash card dumps and
+work with them.
+
+Some features are:
+
+- searches photos using standard file properties and image properties
+  (resolution, created-time, etc)
+- manages collections (created from queries and can be used in
+  queries)
+- copy/symlink images using a custom pattern
+
+It is a simple program: the metadata of image (and other) files are
+put in a database which can then be queried more conveniently. But
+this already allows some useful features.
+
+
+== Concepts
+
+include::about-property.adoc[]
+
+include::about-location.adoc[]
+
+include::about-query.adoc[]
+
+include::about-collection.adoc[]
+
+include::about-format.adoc[]
+
+include::about-config.adoc[]
+
+
+== Commands
+
+include::cmd-help.adoc[]
+
+include::cmd-find.adoc[]
+
+include::cmd-view.adoc[]
+
+include::cmd-location.adoc[]
+
+include::cmd-collection.adoc[]
+
+include::cmd-mktree.adoc[]
+
+include::cmd-thumb.adoc[]
+
+include::cmd-scale.adoc[]
+
+include::cmd-config.adoc[]

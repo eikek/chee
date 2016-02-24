@@ -1,0 +1,143 @@
+=== location
+
+This command manages locations.
+
+Locations are directories whose contents are indexed and which are
+queried by default.
+
+The location command expects itself subcommands.
+
+
+.Usage
+----------------------------------------------------------------------
+chee location [info|add|update|delete|mv|sync] […]
+----------------------------------------------------------------------
+
+
+==== info
+
+Lists all registered locations, one per line and print the number of
+images it contains.
+
+----------------------------------------------------------------------
+$ chee location info
+/mnt/nas/fotos/one: 587
+/mnt/nas/fotos/two: 1254
+----------------------------------------------------------------------
+
+
+==== add
+
+Registers a directory as a location and adds its contents to the
+index.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-add}
+----------------------------------------------------------------------
+
+The options are self explaining: without any options, chee searches
+the directory for image and video files. This means it looks for files
+with known extensions: `jpg`, `mov`, `mp4` and `mpg`, except those
+starting with `.`. You can change this by either specifying `--all`,
+which will disable this condition, or by changing it.
+
+Add a query condition to the config file using the key
+`chee.queries.file-default`. The default value is
+
+----------------------------------------------------------------------
+(& !filename:.* (| extension:jpg extension:mov extension:png extension:mp4))
+----------------------------------------------------------------------
+
+This condition is always used when querying directories.
+
+
+==== update
+
+This command is like `add` for registered locations. It checks for new
+files and adds it to the index.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-update}
+----------------------------------------------------------------------
+
+The directories are searched with the same options as originally given
+to the `add` command. Every new file is added to the index all others
+are skipped. This is the fastest option to sychronise the index when
+only new files are added to a location. If files are changed or
+deleted, a full synchronisation must be run using the `sync` command.
+
+With `--all` all known locations are updated. In this case no
+directories must be given.
+
+
+==== import
+
+Imports files from any folder into a location.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-import}
+----------------------------------------------------------------------
+
+Searches `<sourcedir>` directory and copies matching files into the
+given location directory, adding them to the index. If a file is
+already present in the index (no matter which location), it is not
+copied unless `--duplicates` is specified. Files are never
+overwritten, new filenames are generated (appending a number until a
+non-existent file is found) if the a target file already exists.
+
+==== delete
+
+Removes all files of a location from the indexs.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-delete}
+----------------------------------------------------------------------
+
+This command simply clears the index from all files in the given
+locations. It will also remove the given directories from the
+location set.
+
+
+==== mv (move)
+
+Moves a location to another directory.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-mv}
+----------------------------------------------------------------------
+
+If a location is moved, the index must be updated accordingly. This
+command can be used to do this. It also moves the directory if it
+exists and `--index` is not specified.
+
+
+==== sync
+
+Synchronise the index with a location.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-location-sync}
+----------------------------------------------------------------------
+
+There are two ways to synchronise:
+
+1. Drop the index and add all files again
+2. Check if a file has been changed and update the index. New
+   files are added and missing files deleted.
+
+By default the option 2 is used. If `--reindex` is specified, option 1
+is used. If only a few files have been changed/removed, option 2 is
+usually much faster, since many files can be skipped. It also does not
+change the `added` property.

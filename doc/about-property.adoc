@@ -1,0 +1,53 @@
+=== Properties
+
+When chee sees a file, it extracts certain properties and uses these
+to answer queries. Every file is represented as a set of properties.
+
+There are basic file properties that can be obtained from any file:
+
+.Standard file properties:
+- `checksum` a sha256 checksum of the file
+- `location` the location of a file
+- `path` the absolute file name
+- `filename` the name of the file (with extension)
+- `extension` the file extension
+- `length` the file size
+- `lastmodified` the last modified time of the file
+- `added` the time the file has been added to chee
+- `mimetype` the mimetype of the file
+
+Then there are properties that are only applicable to image files:
+
+.Image roperties:
+- `created` the created timestamp. This timestamp is saved by the
+  camera when taking the picture. The problem is, that there is no
+  time zone information supplied. Thus this timestamp is considered
+  being in the “current” time zone (the system default time zone).
+- `make` camera make
+- `model` camera model
+- `width` width of the image (pixel)
+- `height` height of the image (pixel)
+- `orientation` the orientation tag (integer)
+- `iso` the iso value
+
+If image properties cannot be obtained from a file, they are ignored
+(they are then not part of the properties set of that file).
+
+
+==== Virtual Properties
+
+Virtual properties are not extracted from an image, but computed from
+existing properties. They can be used in queries and format
+patterns. Since the query language does not support arithmetic,
+virtual properties provide a way to have predefined functions. See the
+chapters about xref:_query[queries] and xref:_format_patterns[format
+patterns] for more information.
+
+Currently there is one such property:
+
+===== pixel
+
+It is the product of `width` and `height` and allows to query images
+based on their pixel size.
+
+For instance, find photos with more than 5 mega pixel: `pixel>5m`.

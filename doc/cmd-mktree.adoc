@@ -1,0 +1,35 @@
+=== mktree
+
+The `mktree` command copies or symlinks a set of files into another
+directory.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-mktree}
+----------------------------------------------------------------------
+
+To select the files to symlink or copy, the same options as for the
+`find` command are used. Additionally, there are options that control
+the target filename and whether to overwrite existing files or not.
+
+The `--overwrite` option tells chee to overwrite existing files. By
+default, they are skipped.
+
+The `--pattern` option is used to determine the target filename. This
+is a xref:_format_patterns[format pattern] and the default value
+will make a filename like this:
+`<year>/<month>/<day>-<hour>-<minute>_<filename>`. That is, files are
+sorted in a directory structure based on their `created` or
+`lastmodified` property. As with the `find` command, you can specify a
+pattern at the command line or refer to a pattern from the config
+file under the key `chee.formats`.
+
+The `--target` option specifies the directory to transfer files to;
+and the name that results from `--pattern` is appended to this. It is
+by default the current working directory. If a target directory does
+not exist, it is created.
+
+The `query` argument is the query string that is run against the index
+or a directory (if `-f` is given). See xref:_query[query] concept page
+for details.

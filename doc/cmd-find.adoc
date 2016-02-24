@@ -1,0 +1,47 @@
+=== find
+
+The `find` command executes a query against all locations or a
+directory.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-find}
+----------------------------------------------------------------------
+
+.Example
+----------------------------------------------------------------------
+chee find created:201410*
+----------------------------------------------------------------------
+
+Find searches by default all locations. If `--file` is given, it
+searches a directory instead. Note that using `--file` takes longer,
+since the directory must be traversed. When searching locations, a
+index is used and searching this is much faster. If you use `--file`
+you can also specify `--recursive` to recursively traverse the
+directory.
+
+The option `--all` has two meanings, whether `--file` is specified or
+not: Normally with `--file`, the directory is scanned for image and
+video files and all other are skipped. This is done by using a default
+query and with `--all` this default query is ignored. The default
+query can be changed in the configuration file; see the
+xref:_configuration[configuration] chapter for details.
+
+If `--file` is not specified, the index is searched and
+non-existing files are not in the result. Then `--all` will ignore
+this and non-existing files show up in the result.
+
+With `--first` the result can be limited to the first `n` files.
+
+The output can be controlled with a format pattern, specified by the
+`--pattern` option. Please see the chapter on
+xref:_format_patterns[Format Patterns] on how to use this. If no
+pattern is specified, certain properties of the files are printed,
+each on one line.
+
+The `query` is used to search a directory or the index. If multiple
+conditions are given, they are wrapped in a `(& …)`. Please see the
+page abount xref:_query[queries] for details.
+
+Other commands that operate on a set of files usually share these options

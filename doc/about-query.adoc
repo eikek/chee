@@ -1,0 +1,355 @@
+=== Query
+
+A query is a condition or a combination of them. A simple condition is
+a _property-name,op,value_ tuple that can be matched against the
+properties of a file.
+
+----------------------------------------------------------------------
+extension:jpg
+----------------------------------------------------------------------
+
+The tuple would match every file with a JPG extension (case
+insensitive). It consists of a property name `extension`, a comparator
+`:` and a value `jpg`. Tuples can be composed using the usual boolean
+operation `and`, `or` and `not`. Compositions are grouped by parens.
+
+----------------------------------------------------------------------
+(& extension:jpg width>2000)
+----------------------------------------------------------------------
+
+This query would match every file with extension JPG _and_ a width
+greater than 2000 pixels.
+
+Names can be abbreviated to the shortest non-ambiguous term. So the
+example above could be written like this:
+
+----------------------------------------------------------------------
+(& ext:jpg w>2000)
+----------------------------------------------------------------------
+
+See the xref:_properties[Properties] section for a list of property
+names.
+
+A `not` is specified by a `!` in front of a condition. This inverts
+its subsequent condition.
+
+----------------------------------------------------------------------
+(& ext:jpg !w<2000)
+----------------------------------------------------------------------
+
+Use a `|` instead of `&` to combine conditions with +or+:
+
+----------------------------------------------------------------------
+(| ext:jpg !w<2000)
+----------------------------------------------------------------------
+
+
+With the _exists_ operator (`?`) a property can be checked for existence.
+
+----------------------------------------------------------------------
+extension?
+----------------------------------------------------------------------
+
+This would match every file that has an extension.
+
+
+==== Whitespace
+
+A simple value definition must not contain whitespace or parens. If a
+value needs this, it must be quoted in single or double quotation
+marks.
+
+----------------------------------------------------------------------
+model:'Nikon 1*'
+model:"Nikon 1*"
+----------------------------------------------------------------------
+
+Both are equivalent and are provided for convenience (ususally the
+shell's quotation must be escaped). Within a quoted value, the
+quotation characters can be included using a backslash.
+
+----------------------------------------------------------------------
+model:"Nikon \"1*"
+----------------------------------------------------------------------
+
+
+==== Comparators
+
+There are the following comparators.
+
+`:`(like)::
+    It compares strings case insensitive and allows to use the
+    wildcard `*` to match zero or more characters. Properties that
+    have numeric values are compared as strings. Date/Timestamps are
+    converted to a standard pattern `yyyy-MM-dd HH:mm:ss` and matched
+    against the input.
+`=`(equal)::
+    Compares strings case sensitive and converts non-string property
+    values.
+`<`,`>`(lower/greater than)::
+    For numeric comparisons. Compares strings alphabetically. Dates/
+    Timestamps are converted to a numeric value before being compared.
+
+
+==== Special Values
+
+For some properties, values can be specified in different ways.
+
+===== pixel
+
+The `pixel` property is the product of `width` and `height`. Values
+can be suffixed by `m` or `mp` to mean “mega pixel”.
+
+----------------------------------------------------------------------
+pixel>5m pixel<2mp
+----------------------------------------------------------------------
+
+
+===== length
+
+The `length` property denotes the size of a file in bytes. For
+querying, numbers can be suffixed with either `kb`/`k`, `mb`/`m`, or
+`gb`/`g` to mean the corresponding size.
+
+----------------------------------------------------------------------
+len>5m
+----------------------------------------------------------------------
+
+
+===== dates
+
+_Specifying Dates_
+
+The date and time string is written in format `year month day hour
+minute second`. Year is specified with 4 digits, other groups with one
+or two digits. Groups are separated by exactly one non-numeric
+character except `#`. Often a dash is used for the date parts and a
+colon for the time parts (and both parts are separated by space or
+`T`), but any non-numeric character except `#` will do.
+
+.Example
+----------------------------------------------------------------------
+2015-10-22 12:33:00
+----------------------------------------------------------------------
+
+Certain parts can be omitted and will be initialised with a default
+value:
+
+If the year is omitted, it is set to the current or last year, making
+it a date in the past. So in Februar 2015, the string `10-10` would be
+expanded to `2014-10-10`, but `01-14` would yield `2015-01-14`.
+
+If parts are missing from the right, they are set to their first
+values. So `2015-01` is expanded to `2015-01-01 00:00:00` and
+`2015-05-12 12` to `2015-05-12 12:00:00` and so on.
+
+Another option is to use date-keywords: reserved words that mean a
+specific date (that differs from year to year):
+
+- `now` yields the current date and time
+- `eastersun` yields the start of easter sunday of current year
+- `ascension` yields the day of ascension of the current year
+- `whitsun` yields the start of whitsun (sunday)
+
+The last option is to calculate a date from another one. Specify a
+date as described above and add or subtract an amount of
+time. Searching for photos from last week, on could write:
+
+----------------------------------------------------------------------
+date>now#-7d
+----------------------------------------------------------------------
+
+The term `now#-7d` means to subtract 7 days from `now` which is the
+current date. All time parts of the result are set to 0. The `#`
+character separates date definition and the amount to
+add/subtract. The `now` keyword can be omitted, so
+
+----------------------------------------------------------------------
+date>-7d
+----------------------------------------------------------------------
+
+is the same. Instead of subtracting you can also add amounts.
+
+The following units can be used to mean years, months, day, hours,
+minutes and seconds, respectively: `y`, `m`, `d`, `h`, `min`,
+`s`. Subtracting/adding date parts will set the time to 0 and missing
+date parts to its current values. For example, on November 06. 2015
+the term `-1y` would yield `2014-11-06 00:00:00`. Subtracting monthes
+keeps the current year and day, instead. If no unit is specified, it
+defaults to `d`.
+
+_Comparing Dates_
+
+If the `like` comparator is used, the date value of the photo is
+converted to a string following the standard pattern `yyyy-MM-dd
+HH:mm:ss`, for example `2015-10-23 14:40:22`, and this is matched
+against the input pattern.
+
+When other comparators are used, dates are converted to a point in
+time and compared numerically. Local date/times (the `created`
+property) are considered in default (system) time zone. Therefore,
+using `like`, the input string is used as is and is not tried to
+expand to a complete date/time value. For example, the following two
+queries could yield same results (“could” because of time zone):
+
+----------------------------------------------------------------------
+date>2015-10   <=>    date:2015-10*
+----------------------------------------------------------------------
+
+If the comparator is not `like`, an error is raised, if the date/time
+cannot be expanded. Using like with `created` compares it to the exact
+value as extracted from the file, where other comparators parse this
+value into a local date and place it into the system time zone.
+
+
+====  Macros
+
+Macros are query conditions that expand to some other query
+condition. They are used to capture common (and longer) conditions in
+a succinct way. There are macros that use special property names and
+those that add comparators. Special property names cannot be used in
+format patterns, since they are not real properties.
+
+There are the following macros:
+
+===== date
+
+This is a special property name that handles the case when there is no
+`created` property (as provided only by exif data). It then falls back
+to the `lastmodified` timestamp.
+
+So the simple condition `date:2015*` is expanded into:
+
+----------------------------------------------------------------------
+(| created:2015* (& !created? lastmodified:2015*))
+----------------------------------------------------------------------
+
+The `date` macro cannot be specified in a format pattern literally,
+but it can be encoded using a condition directive:
+
+.date in format pattern
+----------------------------------------------------------------------
+~[created~;~#created~fyyyy-MM-dd HH:mm~;~#lastmodified~fyyyy-MM-dd HH:mm~]
+----------------------------------------------------------------------
+
+See xref:_format_patterns[Format Patterns] for details.
+
+
+===== enumeration
+
+The `~` comparator can be used to test whether a property is contained
+in an enumeration of values.
+
+To abbreviate conditions like the following:
+
+----------------------------------------------------------------------
+(| ext:jpg ext:png ext:gif)
+----------------------------------------------------------------------
+
+the `/` macro can be used, too. The value must be an enumeration,
+where each value is separated by a semi-colon `;`. The above query can
+be written as:
+
+----------------------------------------------------------------------
+ext~jpg;png;gif
+----------------------------------------------------------------------
+
+and expands exactly to the more lengthy condition. All values are
+always compared with `like`. It is not possible to specify another
+comparator.
+
+
+===== range
+
+The `/` comparator abbreviates conditions that check range
+containment. For example, to find files between 2 and 3 mega pixels
+one could write this:
+
+----------------------------------------------------------------------
+(& pixel>2mp pixel<3mp)
+----------------------------------------------------------------------
+
+With the `/` comparator, this can be abbreviated:
+
+----------------------------------------------------------------------
+pixel/2mp--3mp
+----------------------------------------------------------------------
+
+This works by parsing the value into a range: specifying the lower and
+upper bound separated by two dashes `--`. That means that a single
+value may not contain a double dash, since it is interpreted as the
+separator.
+
+Once the value is recognized being two values, the condition is
+expanded in the standard range condition:
+
+----------------------------------------------------------------------
+(& pixel>2mp pixel<3mp)
+----------------------------------------------------------------------
+
+There is a special syntax for date ranges. First of all, the standard
+range syntax works:
+
+----------------------------------------------------------------------
+date:2015-10-10--2015-10-20
+----------------------------------------------------------------------
+
+This would create two date values, as described above in
+xref:_dates[how date/times are specified]. Then it is expanded to an
+`and` condition. Since the comparators `>` and `<` are used, dates are
+compared numerically and local dates are considered in the default
+(system) time zone.
+
+Then, you can specify the second date by calculating from the first
+date. Normally, a term like `+7d` would subtract 7 days from the
+current date. But if used in a range (the upper bound date), it will
+use the lower bound date a the reference value. For instance:
+
+----------------------------------------------------------------------
+date:2015-10--+7d
+----------------------------------------------------------------------
+
+would expand to the following:
+
+----------------------------------------------------------------------
+date:2015-10-01--2015-10-08
+----------------------------------------------------------------------
+
+
+===== id
+
+The id macro is useful when comparing file checksums. For each file
+its sha256 checksum is generated and added to the property list (and
+to the index). This value can be used as a file id.
+
+When doing exact searches using these ids it is inconvenient to
+specify the full checksum, which is a 64 character string. To uniquely
+identify a file, the first 8-10 characters are usually sufficient
+(unless you have really really many files). So one can use the `like`
+comparator in most cases. The id macro does this:
+
+----------------------------------------------------------------------
+id:15e59afb0
+----------------------------------------------------------------------
+
+expands to
+
+----------------------------------------------------------------------
+checksum:15e59afb0*
+----------------------------------------------------------------------
+
+If the value is a complete checksum, then the `equal` operator is
+used instead:
+
+----------------------------------------------------------------------
+id:04343d3ff0102c26eb355db5333266e77e6ef06db3c9bcbcc0bd30b7a1c92f38
+----------------------------------------------------------------------
+
+expands to
+
+----------------------------------------------------------------------
+checksum=04343d3ff0102c26eb355db5333266e77e6ef06db3c9bcbcc0bd30b7a1c92f38
+----------------------------------------------------------------------
+
+The comparator that is used with `id` does not matter. It is always
+expanded in a `like` or `equal`.

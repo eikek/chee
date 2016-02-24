@@ -1,0 +1,20 @@
+=== config
+
+The `config` command shows the current configuration.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-config}
+----------------------------------------------------------------------
+
+The `--origin` option renders comments on each config value that
+contain information about where the value was read. It may be a value
+from the default config or a user defined one.
+
+The `--json` option renders the config file in JSON format. If
+`--origin` is also specified, then comments are rendered which results
+in non-valid json.
+
+The `--all` option shows all available config values. By default only
+the `chee` configuration is printed.

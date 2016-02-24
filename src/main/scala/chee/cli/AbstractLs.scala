@@ -1,0 +1,105 @@
+package chee.cli
+
+import com.typesafe.config.Config
+import better.files._
+import chee.properties._
+import chee.query._
+import chee.CheeConf.Implicits._
+
+abstract class AbstractLs extends ScoptCommand {
+  import AbstractLs._
+
+  trait CommandOpts {
+    def lsOpts: LsOpts
+  }
+
+  type T <: CommandOpts
+
+  case class LsOpts(
+    directory: Option[File] = None,
+    recursive: Boolean = false,
+    all: Boolean = false,
+    first: Option[Int] = None,
+    query: String = "")
+
+  abstract class LsOptionParser extends CheeOptionParser[T](name) {
+    opt[File]('f', "file") optional() action { (f, c) =>
+      copyLsOpts(c, c.lsOpts.copy(directory = Some(f)))
+    } text ("A directory to search instead of the index.")
+
+    opt[Unit]('r', "recursive") optional() action { (_, c) =>
+      copyLsOpts(c, c.lsOpts.copy(recursive = true))
+    } text ("Find files recursively. Only applicable if `-f' is specified.")
+
+    opt[Unit]('a', "all") optional() action { (_, c) =>
+      copyLsOpts(c, c.lsOpts.copy(all = true))
+    } text ("When used with `-f', ignore the default query, otherwise\n" +
+      "        select non-existing files.")
+
+    opt[Int]("first") valueName("<n>") optional() action { (n, c) =>
+      copyLsOpts(c, c.lsOpts.copy(first = Some(n)))
+    } text ("Limit output to the first n items.")
+
+    moreOptions()
+
+    arg[String]("<query>") optional() unbounded() action { (q, c) =>
+      copyLsOpts(c, c.lsOpts.copy(query = c.lsOpts.query +" "+ q))
+    } text ("The query string. See the manual page about queries for\n" +
+      "        more information.")
+
+    def moreOptions(): Unit
+
+    def copyLsOpts(o: T, lsopts: LsOpts): T
+  }
+
+  def exec(cfg: Config, t: T): Unit = {
+    val opts = t.lsOpts
+    val props = getQueryCondition(cfg, opts) match {
+      case Right(cond) =>
+        opts.directory match {
+          case Some(dir) =>
+            FileBackend.find(cond, dir, opts.recursive)
+          case _ =>
+            val sqlite = new SqliteBackend(cfg.getIndexDb)
+            val r = sqlite.find(cond).get
+            val filter = if (opts.all) MapGet.unit(true) else Predicates.fileExists
+            MapGet.filter(r, filter)
+        }
+      case Left(msg) =>
+        chee.UserError(msg)
+    }
+    exec(cfg, t, (opts.first match {
+      case Some(n) => props.take(n)
+      case _ => props
+    }))
+  }
+
+  def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit
+
+  def getQueryCondition(cfg: Config, opts: LsOpts): Either[String, Condition] = {
+    val query = cfg.makeQuery
+    opts.directory match {
+      case Some(_) => getFileCondition(query, opts.query, cfg, opts.all)
+      case _ => getIndexCondition(query, opts.query)
+    }
+  }
+}
+
+object AbstractLs {
+  def getIndexCondition(q: Query, query: String): Either[String, Condition] = {
+    if (query.trim.isEmpty) Right(TrueCondition)
+    else q(query.trim)
+  }
+
+  def getFileCondition(q: Query, query: String, cfg: Config, all: Boolean): Either[String, Condition] = {
+    val defquery =
+      if (all) Right(TrueCondition)
+      else cfg.fileDefaultQuery(q)
+
+    if (query.trim.isEmpty) defquery
+    else for {
+      q1 <- defquery.right
+      q2 <- q(query.trim).right
+    } yield Condition.and(q1, q2)
+  }
+}

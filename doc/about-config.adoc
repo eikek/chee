@@ -1,0 +1,113 @@
+=== Configuration
+
+This documents how chee is configured.
+
+Chee reads a configuration file from the following locations:
+
+- `$HOME`/.chee.conf
+- `$HOME`/.config/chee/chee.conf
+
+The first existing file is used. This is the user configuration. Chee
+never writes to this file, it is only read on start. But another
+config file is created (by default at `$HOME/.config/chee/system.cfg`)
+where chee stores data.
+
+A config file can be in three formats:
+
+- java properties
+- json
+- hocon (a json superset)
+
+The HOCON format is probably the most convenient of the three for us
+humans. Here is the default config file in HOCON format:
+
+[subs="attributes,specialchars"]
+.Default Config File
+----------------------------------------------------------------------
+{chee-configfile}
+----------------------------------------------------------------------
+
+The HOCON format allows to create a hierarchical layout, where a key
+is a path. Path elements are separated by a dot `.`. So writing
+
+----------------------------------------------------------------------
+chee {
+  formats {
+    key = "test"
+  }
+}
+----------------------------------------------------------------------
+
+is the same as
+
+----------------------------------------------------------------------
+chee {
+  formats.key = "test"
+}
+----------------------------------------------------------------------
+
+or
+
+----------------------------------------------------------------------
+chee.formats.key = "test"
+----------------------------------------------------------------------
+
+This way it translates easily into java property files. More detailed
+information about the HOCON format can be found
+https://github.com/typesafehub/config#using-hocon-the-json-superset[here]
+and in its
+https://github.com/typesafehub/config/blob/master/HOCON.md[specification].
+
+All config values are inside the `chee { … }` namespace. The two
+important properties are `workingdir` and `configdir`. The first
+defines the directory where chee can store work-data. The latter names
+a directory where chee stores user data. The difference is that
+`workingdir` contains data that can be removed without really loosing
+information. For instance, the index database is stored at
+`workingdir`, because it can be derived from the image files. And
+`configdir` contains user data that cannot be deleted safely.
+
+Any value in the config file can be overriden by a system property.
+
+==== Logging
+
+Logging is configured via another configuration file that is by
+default at `${chee.configdir}/logback.xml`. If this file does not
+exist, chee simply logs into a logfile. Only very few logging is done
+by default.
+
+Two things can be controled via the configuration file: where the log
+file should be (key `chee.logFile`) and the log level (key
+`chee.logLevel`). The log file is by default in chee's `workingdir`
+and the default log level is `INFO`. This logs only very little. If
+you encounter strange behaviour, try setting the `chee.logLevel` to
+`DEBUG` or even `TRACE` to see more log output. If you set it to
+`OFF`, no logging is done.
+
+You can also specify a custom logging configuration by providing a
+`logback.xml` file. How logging can be configured is beyound the scope
+of this manual. You can read it up
+http://logback.qos.ch/manual/configuration.html[here].
+
+
+==== System Properties
+
+System properties can be specfied by using the environment variable
+`CHEE_OPTS`. This is added to the java command that starts chee. It
+can be used to override config values for the next run of chee.
+
+For example to change the log level, you could do
+
+----------------------------------------------------------------------
+CHEE_OPTS=-Dchee.logLevel=TRACE chee find …
+----------------------------------------------------------------------
+
+Since the configuration file is used to configure logging, the process
+that reads the configuration cannot log itself. If you like to see
+which file chee is really reading, set a system property
+`chee.debugConfig=true`.
+
+.Example
+----------------------------------------------------------------------
+CHEE_OPTS=-Dchee.debugConfig=true chee config
+----------------------------------------------------------------------

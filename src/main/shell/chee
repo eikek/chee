@@ -1,0 +1,3 @@
+#!$shebang$
+
+exec $java-bin$ -Xbootclasspath/a:$assembly-jar$ $options$ $CHEE_OPTS chee.cli.Main "$@"

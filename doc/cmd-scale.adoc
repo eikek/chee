@@ -1,0 +1,49 @@
+=== scale
+
+Scales images.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-scale}
+----------------------------------------------------------------------
+
+.Example
+----------------------------------------------------------------------
+chee scale --maxlen 1200 -o ./scaledir 'date:201410*'
+----------------------------------------------------------------------
+
+This command resizes images. As with `thumb` images are not changed,
+but new files are written.
+
+The images to scale are selected by a `query`. If non-image files are
+selected, they are skipped silently. Other options for querying are
+the same as with the `find` command. See xref:_find[here] for more
+details.
+
+The output is rendered (like with `find`) using a format pattern. It
+can be specfified with `--pattern`. When evaluating the format
+pattern, standard properties are retrieved from the scaled image but
+image metadata (all image properties except `width` and `height`) is
+taken from the original image. Additionall, all properties from the
+original image are available and prefixed by `origin-`.
+
+By default, new images are written to a directory in chee's working
+directory. With `--outdir` another dircetory can be specified.
+
+With `--nameformat` you can specify a format pattern to determine the
+target filename. By default, a name containing the checksum of the
+original file and the target size is generated. This pattern is
+evaluated against the properties of the original file plus
+`target-width` and `target-height` that are set to the dimensions of
+the scaled image.
+
+The options `--maxlen` and `--multiply` specify how to scale. One of
+them must be specified.
+
+With `--maxlen` you can specify a maximum height or width. The image
+is scaled such that the larger side does not exceed `maxlen`.  If an
+image's dimension is already below this value, it is not scaled.
+
+With `multiply` an image is scaled by multiplying its height and width
+with the given factor.

@@ -1,0 +1,26 @@
+<configuration>
+
+  <define name="loglevel" class="chee.LoggingProperty">
+    <name>loglevel</name>
+  </define>
+  <define name="logfile" class="chee.LoggingProperty">
+    <name>logfile</name>
+  </define>
+
+  <logger name="chee" level="${loglevel}" />
+
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${logfile}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${logfile}.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>7</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="error">
+    <appender-ref ref="file"/>
+  </root>
+</configuration>

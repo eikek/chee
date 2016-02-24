@@ -1,0 +1,39 @@
+=== Collections
+
+A collection is a user defined query macro. Chee allows to manage a
+custom set of macros for storing complex queries behind a simple
+name. A collection therefore consists of a query condition and a
+name.
+
+Another way is to think of a collection as a tag: it associates a name
+to a set of files. The set of files is not fixed, but the result of
+executing a query.
+
+A collection can optionally have a description. The `collection`
+command allows to manage collections. A collection is referenced in a
+query using the identifier `collection` followed by any comparator
+followed by the collection name.
+
+For example, there is a collection with name _holidays2015_ and query
+`date/2015-08-14--2015-08-28`. Then you can use this in the `find`
+command:
+
+----------------------------------------------------------------------
+chee find coll:holidays2015
+----------------------------------------------------------------------
+
+This is would be expanded into this form:
+
+----------------------------------------------------------------------
+chee find date/2015-08-14--2015-08-28
+----------------------------------------------------------------------
+
+A collection may reference other collections, but be careful to not
+create cycles. Since collections are just queries, they can be
+combined with other conditions.
+
+----------------------------------------------------------------------
+chee find (& coll:holidays2015 model:nikon*)
+----------------------------------------------------------------------
+
+See the xref:_collection[collection command] for editing collections.

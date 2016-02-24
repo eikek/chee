@@ -1,0 +1,324 @@
+=== Format Patterns
+
+Format patterns are a flexible way to print property maps. A format
+pattern is a string with literal text and directives. A directive
+specfies how to print a certain value from the property map.
+
+Format patterns are used by a few commands (i.e. the `find` command)
+to generate human readable output for a property map.
+
+A directive always starts with a tilde `~` character followed by more
+characters that control its behaviour. There are basic directives that
+print a value of a property map and there are directives that change
+the output of other directives. This makes creating output very flexible.
+
+Since a directive starts with `~`, to really print a `~` it must be
+doubled, like `~~`.
+
+
+==== Value Directive
+
+The `~#` directive returns the value of a property. For example, the
+following prints the value of the `filename` property:
+
+----------------------------------------------------------------------
+~#filename
+----------------------------------------------------------------------
+
+Given a property map, it would look up the value for `filename` and
+interpolate it into the string.
+
+As in queries, the identifiers can be abbreviated to the shortest
+non-ambiguous term.
+
+
+==== Formatting Values
+
+Another directive can be appended to the `~#` directive, to further
+format the value. For example, the `width` property has a numeric
+value and could be printed with padded 0.
+
+----------------------------------------------------------------------
+~#width~f%08d
+----------------------------------------------------------------------
+
+would print `00002048` for a width of `2048`. The special format
+string _%08d_ is a printf-style format string.
+
+This is more useful for date/time values that should be printed using
+a custom pattern. For example
+
+----------------------------------------------------------------------
+~#created~fyyyy
+----------------------------------------------------------------------
+
+would only print the year of the created property in 4 digits. A
+description of possible date patterns can be found
+http://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[here].
+
+
+==== Readable Directive
+
+To print the file size, the `~#length` directive would print the
+number of bytes of the file. But this is usually not a very user
+friendly value. And others, like date and times are similiar.
+
+That is why the `~:` directive exists. It can be used to print more
+user friendly output: dates/times are printed in a specific pattern
+and the `length` value is converted to a string like “7.1mb”. Likewise
+the `pixel` property is printed in abbreviated form: instead of
+`4100000` it prints `4mp`.
+
+
+==== Newline Directive
+
+The directive `~%` prints a newline character. This is useful to
+generate multi line output.
+
+
+==== Fixed Width
+
+The `~xy` directive, where `x` is a number and `y` is either `l` or
+`r` (for “left” and “right”) wraps another directive and cuts or pads
+its output such that it is exactly `x` characters long. If `l` is
+specified, shorter strings are padded with spaces on the left. If `r`
+is specified, spaces are appended to shorter strings to yield the
+requested size.
+
+If the string is too long it is cut at some point and characters are
+removed until the required length is reached. The point where deletion
+started is marked with an ellipsis `…` character.
+
+For example:
+
+----------------------------------------------------------------------
+>~20l~#filename<
+----------------------------------------------------------------------
+
+would print for the value “test.jpg”
+
+----------------------------------------------------------------------
+>            test.jpg<
+----------------------------------------------------------------------
+
+and for a value “/home/pictures/2014/winter/test.jpg”
+
+----------------------------------------------------------------------
+>/home/pi…er/test.jpg<
+----------------------------------------------------------------------
+
+The `>` and `<` are not part of the directive; it is normal literal
+text.
+
+
+==== Max Length Directive
+
+This directive is similiar to the fixed width directive, but will only
+cut strings longer than the specified length. It is written `xmy`
+where `x` is the maximum length and `y` is either `l` for cut from
+left or `r` for cut from right.
+
+----------------------------------------------------------------------
+~8mr~:checksum
+----------------------------------------------------------------------
+
+would print the first 8 characters of the checksum
+
+----------------------------------------------------------------------
+a90545b8
+----------------------------------------------------------------------
+
+
+==== Sequence Directive
+
+The `~{` directive can be used to group more directives into one. It
+must be closed by a matching `~}`.
+
+This is useful, if you want to apply a modifying directive like the
+fixed-width directive to multiple directives.
+
+----------------------------------------------------------------------
+~20l~{~:width x ~:height~}
+----------------------------------------------------------------------
+
+This applies the fixed-width directive to the concatenation of the
+string inside `~{` and `~}`.
+
+
+==== Conditional Directive
+
+There is a directive that can be used to print something if a value
+exists for a property and a different thing in case it does not
+exist. The directive looks like this:
+
+----------------------------------------------------------------------
+~[<condition>~;<ifTrue>~;<ifFalse>~]
+----------------------------------------------------------------------
+
+There are three directives inside `~[` and `~]` that are separated by
+a `~;`.
+
+The `condition` directive is a property name. In case there is a value
+for this property, the `ifTrue` directive is used, otherwise the
+`ifFalse` directive.
+
+.Example
+----------------------------------------------------------------------
+~[model~;~:model~;no model~]
+----------------------------------------------------------------------
+
+This would print the camera model if it exists and otherwise the
+literal text `no model`.
+
+
+==== Loop Directive
+
+If you want to print all properties, the `~@` directive can be
+used. It must be followed by a sequence directive is evaluated for
+every known property identifier.
+
+Inside the sequence directive, there are two more property values
+available: `ident` and `value` refering to the current property
+identifier and associated value.
+
+For example, this print all properties in a comma separated line:
+
+----------------------------------------------------------------------
+~@~{~#value,~}
+----------------------------------------------------------------------
+
+It results in something like this:
+
+----------------------------------------------------------------------
+,2012-11-26 13:50:19,jpg,CIMG2590_s.JPG,1536,100,2015-12-21T21:33:04Z,48746,/workspace/projects/chee2,CASIO COMPUTER CO.,LTD,image/jpeg,EX-Z750,top, left side (horizontal / normal),/images/CIMG2590_s.JPG,2048,95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b,
+----------------------------------------------------------------------
+
+It would be nicer, if the last comma is not printed. For this the
+_stop directive_ `~^` can be used:
+
+----------------------------------------------------------------------
+~@~{~#value~^,~}
+----------------------------------------------------------------------
+
+It tells the loop directive, that everything following it should only
+be printed if the loop is not finished. If it is on the last element,
+everything after the stop directive is ignored. The stop directive
+itself prints nothing.
+
+The loop directive skips virtual properties. To include them, a `*`
+can be added:
+
+----------------------------------------------------------------------
+~@*~{~#value~^,~}
+----------------------------------------------------------------------
+
+With the newline directive, it is easy to print every property on its
+own line. And a fixed-width directive can provide a nicely formatted
+output:
+
+----------------------------------------------------------------------
+~@~{~20r~{~#ident:~} ~:value~^~%~}
+----------------------------------------------------------------------
+
+This prints all properties:
+
+----------------------------------------------------------------------
+added:               2015-12-22 15:33:37
+created:             2012-11-26 13:50:19
+extension:           jpg
+filename:            CIMG2590_s.JPG
+height:              1536
+iso:                 100
+lastmodified:        2015-12-21T21:33:04Z
+length:              2.3mb
+location:            /workspace/projects/chee2
+make:                CASIO COMPUTER CO.,LTD
+mimetype:            image/jpeg
+model:               EX-Z750
+orientation:         top, left side (horizontal / normal)
+path:                /images/CIMG2590_s.JPG
+width:               2048
+checksum:            95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b
+----------------------------------------------------------------------
+
+The variant `~@!` of the loop directive will skip non-existing
+properties. The body of the loop is only evaluated for existing
+properties.
+
+[NOTE]
+======================================================================
+Within the loop directive, the `value` identifier can only be used
+with the _ValueDirective_ or _ReadableDirective_. When using the
+_ValueDirective_ it is not possible to use the `~f` format pattern.
+======================================================================
+
+==== Quote Directive
+
+The loop directive is intended to print output that is parsed by other
+programs. It is often required to put strings in quotes to protect
+whitespace (in filenames for example). But numeric values don't need
+to be quoted (often it is more convenient, if not).
+
+The quote directive `~"` or `~'` wraps the output of the following
+directive in double and single quotation, respectively, if it is not
+numeric. Numeric values are not wrapped.
+
+For example, this can be used to format properties in a CSV style:
+
+----------------------------------------------------------------------
+~@~{~"~#value~^,~}
+----------------------------------------------------------------------
+
+Prints
+
+----------------------------------------------------------------------
+"","2012-11-26 13:50:19","jpg","CIMG2590_s.JPG",1536,100,"2015-12-21T21:33:04Z",48746,"/workspace/projects/chee2","CASIO COMPUTER CO.,LTD","image/jpeg","EX-Z750","top, left side (horizontal / normal)","/images/CIMG2590_s.JPG",2048,"95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b"
+----------------------------------------------------------------------
+
+
+==== Empty Directive
+
+Since the value directive ends in an identifier, it is not possible to
+write literal text immediately following it, because it would be
+interpreted as part of the identifier. In order to do this, use the
+_empty directive_ `~.`. It prints nothing and can be used to separate
+identifiers from literal text.
+
+.Example
+----------------------------------------------------------------------
+~:width~.x~:height
+----------------------------------------------------------------------
+
+would print
+
+----------------------------------------------------------------------
+2048x1536
+----------------------------------------------------------------------
+
+
+==== Predifined Formats
+
+These directives allow for very flexible output control. If patterns
+get too complex, they can be stored in the configuration file and
+referred to by name. Chee also provides a few patterns for some common
+uses:
+
+- `oneline` prints one line with columns of some of the properties
+- `lisp` prints a property list of all properties as a lisp data
+  structure
+- `detail` prints all properties, each on one line
+- `paths` prints only the absolute filenames separated by newline
+
+If you want to add your own bookmarks, add them in the configuration
+file to the key `chee.formats`. For example:
+
+----------------------------------------------------------------------
+chee {
+  formats {
+    mycsv : "~@~{~\"~:value~^,~}~%"
+  }
+}
+----------------------------------------------------------------------
+
+Then, whenever there is a pattern to be specified, you can use the
+name `mycsv` to refer to this pattern.

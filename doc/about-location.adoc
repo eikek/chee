@@ -1,0 +1,13 @@
+=== Locations
+
+Locations are directories with images that chee queries by
+default.
+
+Chee can be used to query images anywhere in the file system. But
+since most of the time photos are stored at the same places, chee can
+manage such places–called “locations”. By default, commands operating
+on a set of files search all known locations. Results can be
+restricted to specific locations with a query.
+
+Images from other directories can be “imported“ into a location. Chee
+simply copies the files and skips any duplicate by default.

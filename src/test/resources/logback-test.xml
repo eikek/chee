@@ -1,0 +1,17 @@
+<configuration>
+  <define name="loglevel" class="chee.LoggingProperty">
+    <name>loglevel</name>
+  </define>
+
+  <logger name="chee" level="${loglevel}" />
+
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date %level [%thread] [%file:%line] %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="warn">
+    <appender-ref ref="stdout"/>
+  </root>
+</configuration>
