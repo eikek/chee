@@ -72,10 +72,17 @@ abstract class ProcessingCommand extends AbstractLs {
     format.right(userError).map(name => dir / name)
   }
 
+  def getFormat(cfg: Config, opts: ProcOpts): Either[String, Pattern] =
+    opts.pattern match {
+      case None => Right(FormatPatterns.onelineNoLocation)
+      case Some("oneline") => Right(FormatPatterns.onelineNoLocation)
+      case _ => cfg.getFormat(opts.pattern, "")
+    }
+
   def processingAction(cfg: Config, opts: T): MapGet[Boolean]
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {
-    cfg.getFormat(opts.procOpts.pattern, "chee.formats.default-find-format") match {
+    getFormat(cfg, opts.procOpts) match {
       case Right(pattern) =>
         val proc = processingAction(cfg, opts)
         val action = MapGet.get.map(m => out(pattern.right(userError).result(m)))

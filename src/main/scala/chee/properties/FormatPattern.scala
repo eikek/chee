@@ -23,20 +23,24 @@ object FormatPatterns {
     newline
   )
 
-  val oneline: Pattern = seq(
-    fixedwidth(17,
-      cond(existsIdent(Ident.created, false),
-        lookup(Ident.created, Some("yyyy-MM-dd HH:mm")),
-        lookup(Ident.lastModified, Some("yyyy-MM-dd HH:mm"))),
-      frontPad = false),
+  val date = fixedwidth(17,
+    cond(existsIdent(Ident.created, false),
+      lookup(Ident.created, Some("yyyy-MM-dd HH:mm")),
+      lookup(Ident.lastModified, Some("yyyy-MM-dd HH:mm"))),
+    frontPad = false)
+
+  val dimensions = seq(
+    fixedwidth(4, lookup(Ident.width), frontPad = true),
+    raw("x"),
+    fixedwidth(4, lookup(Ident.height), frontPad = false),
     raw(" "),
-    seq(
-      fixedwidth(4, lookup(Ident.width), frontPad = true),
-      raw("x"),
-      fixedwidth(4, lookup(Ident.height), frontPad = false),
-      raw(" "),
-      fixedwidth(7, readable(VirtualProperty.idents.pixel), frontPad = false)
-    ),
+    fixedwidth(7, readable(VirtualProperty.idents.pixel), frontPad = false)
+  )
+
+  val oneline: Pattern = seq(
+    date,
+    raw(" "),
+    dimensions,
     raw(" ("),
     fixedwidth(16, seq(readable(Ident.model), raw(")")), frontPad = false),
     raw(" "),
@@ -47,6 +51,17 @@ object FormatPatterns {
     readable(Ident.filename),
     newline)
 
+  val onelineNoLocation: Pattern = seq(
+    date,
+    raw(" "),
+    dimensions,
+    raw(" ("),
+    fixedwidth(16, seq(readable(Ident.model), raw(")")), frontPad = false),
+    raw(" "),
+    fixedwidth(8, readable(Ident.length)),
+    raw(" "),
+    readable(Ident.filename),
+    newline)
 
   val paths = seq(lookup(Ident.path), newline)
 
