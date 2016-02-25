@@ -22,7 +22,7 @@ object Main extends LazyLogging {
     Version,
     Find,
     Location.root,
-    HubCommand("collection", List(CollectionList, CollectionEdit, CollectionShow)),
+    HubCommand("collection", List(CollectionEdit, CollectionShow)),
     View,
     MkTree,
     Thumb,

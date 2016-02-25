@@ -3,7 +3,6 @@ package chee.cli
 import com.typesafe.config.Config
 import chee.CheeConf.Implicits._
 import chee.Collection
-import chee.properties._
 import chee.properties.Patterns._
 
 object CollectionShow extends ScoptCommand {
@@ -11,6 +10,7 @@ object CollectionShow extends ScoptCommand {
   val name = "show"
 
   case class Opts(
+    pattern: String = "oneline",
     name: String = ""
   )
 
@@ -19,33 +19,42 @@ object CollectionShow extends ScoptCommand {
   val defaults = Opts()
 
   val parser = new CheeOptionParser[Opts](name) {
-    arg[String]("<name>") required() action { (n, c) =>
+    opt[String]('p', "pattern") optional() action { (p, c) =>
+      c.copy(pattern = p)
+    } text ("The format pattern.")
+
+    arg[String]("<name>") optional() action { (n, c) =>
       c.copy(name = n)
     } text ("The collection name or enough of it to uniquely identify a\n"+
       "        collection.")
   }
 
-  def makeMap(coll: Collection) =
-    LazyMap(
-      Ident("name") -> coll.name,
-      Ident("query") -> coll.query,
-      Ident("title") -> coll.description.split("\r?\n").head,
-      Ident("description") -> coll.description)
-
-  val pattern = seq(
-    raw("* "), lookup('title), raw(" ("), lookup('name), raw(")"), newline,
-    raw("** Query"), newline, newline,
-    lookup('query), newline, newline,
-    raw("** Description"), newline, newline,
-    lookup('description)
+  lazy val detailPattern = seq(
+    raw("Name: "), lookup('name), newline,
+    raw("Titel: "), lookup('title), newline,
+    raw("Query:"), lookup('query), newline,
+    raw("Description: "), lookup('description), newline,
+    newline
   )
 
+  lazy val onelinePattern =
+    seq(lookup('name), raw(" - "), lookup('title), newline)
+
+  def getPattern(cfg: Config, opts: Opts): Either[String, Pattern] =
+    opts.pattern match {
+      case "oneline" => Right(onelinePattern)
+      case "detail" => Right(detailPattern)
+      case f => cfg.getFormat(Some(f), "")
+    }
+
   def exec(cfg: Config, opts: Opts): Unit = {
-    cfg.getCollectionConf.find(opts.name).get match {
-      case Some(coll) =>
-        outln(pattern.right(userError).result(makeMap(coll)))
-      case _ =>
-        errln(s"Collection not found: ${opts.name}")
+    val colls = cfg.getCollectionConf.list.get.filter(_.name.startsWith(opts.name))
+    val pattern = getPattern(cfg, opts) match {
+      case Right(p) => p
+      case Left(err) => chee.UserError(err)
+    }
+    colls.foreach { coll =>
+      out(pattern.right(userError).result(coll))
     }
   }
 }

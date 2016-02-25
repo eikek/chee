@@ -55,12 +55,17 @@ final class CollectionConf(config: => ConfigFile) extends LazyLogging {
 case class Collection(
   name: String,
   query: String,
-  description: String = "")
+  description: String = "") {
+
+  lazy val title = description.split("\r?\n").head
+}
 
 object Collection {
   import ConfigFile.Conversion
   import ConfigFile.Conversion._
   import com.typesafe.config.ConfigObject
+  import chee.properties._
+  import scala.language.implicitConversions
 
   implicit val entryConv: Conversion[Collection] = Conversion(
     coll => fromMap.make(Map(
@@ -76,4 +81,11 @@ object Collection {
         description = cfg.getString("description"))
     }
   )
+
+  implicit def asMap(coll: Collection): LazyMap = LazyMap(
+    Ident("name") -> coll.name,
+    Ident("query") -> coll.query,
+    Ident("title") -> coll.title,
+    Ident("description") -> coll.description)
+
 }

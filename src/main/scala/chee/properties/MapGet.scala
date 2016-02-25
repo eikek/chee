@@ -44,11 +44,8 @@ object MapGet {
   val allKeys: MapGet[Set[Ident]] = propertyKeys.combine(virtualKeys){ _ ++ _ }
 
   def idents(includeVirtual: Boolean): MapGet[Seq[Ident]] = {
-    val sort: Set[Ident] => Seq[Ident] =
-      Ident.sort(_, includeDefaults = true, includeVirtual)
-
-    if (includeVirtual) allKeys.map(sort)
-    else propertyKeys.map(sort)
+    if (includeVirtual) allKeys.map(Ident.sort)
+    else propertyKeys.map(Ident.sort)
   }
 
   def find(id: Ident): GetProp = MapGet(map => map(id))

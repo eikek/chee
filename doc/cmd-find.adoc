@@ -38,7 +38,11 @@ The output can be controlled with a format pattern, specified by the
 `--pattern` option. Please see the chapter on
 xref:_format_patterns[Format Patterns] on how to use this. If no
 pattern is specified, certain properties of the files are printed,
-each on one line.
+each on one line. The value for `--pattern` can be a reference to a
+pattern in the configuration file or a pattern definition. There are
+three predefined patterns: `oneline` (the default), `detail` and
+`lisp`. If the pattern is not one of these, it is tried to find in the
+configuration file and then it is used as a pattern itself.
 
 The `query` is used to search a directory or the index. If multiple
 conditions are given, they are wrapped in a `(& …)`. Please see the

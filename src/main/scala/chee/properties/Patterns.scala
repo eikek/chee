@@ -131,7 +131,7 @@ object Patterns {
       value(id).modify(_.add(Ident("ident") -> id.name)).flatMap { v =>
         if (v.isEmpty && !includeEmpty) pair(empty, empty)
         else pair(main(id), stop(id))
-      }
+      }.modify(_.remove(Ident("ident")))
 
     def concat(xs: Seq[(Result, Result)]): Result =
       flatten2(xs) match {

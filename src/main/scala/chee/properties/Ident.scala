@@ -58,12 +58,12 @@ object Ident {
     }
   }
 
-  def sort(ids: Set[Ident], includeDefaults: Boolean = true, includeVirtual: Boolean = false): Seq[Ident] = {
+  def sort(ids: Set[Ident]): Seq[Ident] = {
     def loop(result: List[Ident],
-      list: List[Ident] = if (includeVirtual) defaults else fileProperties ::: imageProperties,
+      list: List[Ident] = defaults,
       rem: Set[Ident] = ids): List[Ident] = list match {
       case Nil => result.reverse ::: rem.toList
-      case i :: is if includeDefaults || ids(i) => loop(i :: result, is,  rem - i)
+      case i :: is if ids(i) => loop(i :: result, is,  rem - i)
       case i :: is => loop(result, is, rem)
     }
     loop(Nil)

@@ -49,22 +49,20 @@ class FormatPatternTest extends FlatSpec with Matchers {
     lookup('length).right.result(LazyMap(Ident.length -> "121212")) should be ("121212")
   }
 
-  "Loop" should "loop through all identts" in {
+  "Loop" should "loop through all idents" in {
     val patf: Ident => Pattern =
       id => seq(raw("test: "), Patterns.readable('ident), raw(" -> "), Patterns.readable(id))
 
     val image = chee.TestInfo.images.find(_.name == "test1.jpg").get
     val lastmod = DateTime(image.lastModifiedTime).format("yyyy-MM-dd HH:mm:ss")
-    val lmap = LazyMap.fromFile(image).addVirtual(VirtualProperty.defaults.pixel)
+    val lmap = LazyMap.fromFile(image)
     val expect = s"test: path -> ${TestInfo.baseDir.path}/src/test/resources/images/test1.jpg, " +
     "test: filename -> test1.jpg, " +
     "test: length -> 303.8kb, " +
     s"test: lastmodified -> ${lastmod}, " +
     "test: mimetype -> image/jpeg, " +
     "test: extension -> jpg, " +
-    "test: added -> , " +
     "test: checksum -> b6bdc5b62c489ebfa55738fb41a88133cdd52ee0785baf4ccdcc26bcd62a736e, " +
-    "test: location -> , " +
     "test: make -> NIKON CORPORATION, " +
     "test: model -> NIKON 1 J3, " +
     "test: width -> 1900, " +
@@ -75,6 +73,12 @@ class FormatPatternTest extends FlatSpec with Matchers {
     "test: pixel -> 2.4mp"
 
     Patterns.loop(patf, id => raw(", "), MapGet.idents(true)).right.result(lmap) should be (expect)
+  }
+
+  it should "remove 'ident key after body generation" in {
+    val lp = Patterns.loop(id => lookup('ident), id => raw(", "), MapGet.idents(false), includeEmpty = true)
+    val (next, _) = lp.right.run(LazyMap.fromFile(TestInfo.images.head))
+    next.propertyKeys(Ident("ident")) should be (false)
   }
 
   "lookup" should "expand idents" in {

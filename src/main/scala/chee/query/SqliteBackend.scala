@@ -2,7 +2,6 @@ package chee.query
 
 import java.sql._
 import chee.properties._
-import chee.properties.Patterns._
 import better.files._
 import scala.util.{Try, Success, Failure}
 import com.typesafe.scalalogging.LazyLogging
@@ -215,12 +214,14 @@ object SqliteBackend extends LazyLogging {
   }
 
   implicit class ResultSetOps(rs: ResultSet) {
+    import better.files._
     def toPropertyMap: LazyMap = {
-      val props = for {
-        id <- SqlBackend.idents
-        value <- Option(rs.getObject(id.name)).map(_.toString)
-      } yield Property(id, value)
-      LazyMap(props: _*).addVirtual(VirtualProperty.defaults.pixel)
+      val path = rs.getString(Ident.path.name)
+      val map = LazyMap.fromFile(File(path))
+      SqlBackend.idents.foldLeft(map) { (m, id) =>
+        val value = Option(rs.getObject(id.name)).map(_.toString)
+        m.add(value.map(v => Property(id, v)))
+      }
     }
   }
 

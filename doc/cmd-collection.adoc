@@ -4,20 +4,7 @@ Manages collections. The collection command requires subcommands.
 
 .Usage
 ----------------------------------------------------------------------
-collection [list|edit|show]
-----------------------------------------------------------------------
-
-
-==== list
-
-Lists all defined collections by name and optionally shows the
-description title. The description title is the first line of the
-description.
-
-[subs="attributes,specialchars"]
-.Usage
-----------------------------------------------------------------------
-{usage-collection-list}
+collection [edit|show]
 ----------------------------------------------------------------------
 
 
@@ -58,4 +45,20 @@ is reported.
 {usage-collection-show}
 ----------------------------------------------------------------------
 
-Shows all details of a collection.
+Shows details about collections.
+
+By default it lists all collections with name and title, one per line.
+
+A xref:_format_pattern[Format Pattern] can be used to customize the
+output. There are the same predefined patterns as with the `find`
+command: `oneline` (the default), `detail` and `lisp`. If the pattern
+is not one of these, it is tried to find in the configuration file or
+used as a pattern itself.
+
+The `detail` pattern prints all details about an collection. The
+properties to use in the format pattern are: `name`, `title`, `query`
+and `description`.
+
+The argument is a portion of a name to restrict the output to only
+those collection that start with `<name>`. If not given, all
+collections are listed.

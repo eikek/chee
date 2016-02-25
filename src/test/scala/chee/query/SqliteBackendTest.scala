@@ -35,8 +35,7 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
     import FormatPatterns.lisp
 
     val sqlite = new SqliteBackend(file)
-    val map0 = LazyMap.fromFile(TestInfo.images.head)
-
+    val map0 = LazyMap.fromFile(TestInfo.images.head) + (Ident.location -> "./")
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get
 
     val maps = sqlite.find(TrueCondition).get.toList
@@ -46,7 +45,7 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
 
   "exists" should "check for existing files" in withNewFile { file =>
     val sqlite = new SqliteBackend(file)
-    val map0 = LazyMap.fromFile(TestInfo.images.head).addVirtual(VirtualProperty.defaults.pixel)
+    val map0 = LazyMap.fromFile(TestInfo.images.head)
 
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get
 

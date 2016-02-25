@@ -72,7 +72,7 @@ class SqlBackendTest extends FlatSpec with Matchers {
 
   "updateRow statement" should "should not update added property" in {
     val image = chee.TestInfo.images.find(_.name == "CIMG2590_s.JPG").get
-    val map = LazyMap.fromFile(image)
+    val map = LazyMap.fromFile(image) + (Ident.location -> "./") + Extraction.added(DateTime.now)
     val Some(lastmod) = MapGet.value(Ident.lastModified).result(map)
     val Some(path) = MapGet.value(Ident.path).result(map)
 
@@ -82,7 +82,7 @@ class SqlBackendTest extends FlatSpec with Matchers {
         s"filename = 'CIMG2590_s.JPG', length = 48746, lastmodified = $lastmod, " +
         "mimetype = 'image/jpeg', extension = 'JPG', "+
         "checksum = '95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b', "+
-        "location = null, make = 'CASIO COMPUTER CO.,LTD', "+
+        "location = './', make = 'CASIO COMPUTER CO.,LTD', "+
         "model = 'EX-Z750', width = 2048, height = 1536, iso = null, " +
         "orientation = 1, created = '2012-11-26 13:50:19' " +
         s"WHERE path = '$path'")

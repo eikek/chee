@@ -67,11 +67,17 @@ sealed trait LazyMap { self =>
 object LazyMap {
   type VirtualMap = Map[Ident, VirtualProperty]
 
-  def fromFile(f: File, extr: Seq[Extraction] = Extraction.all): LazyMap =
-    new FromFile(f, extr, PropertyMap.empty, Set.empty, Map.empty).addVirtual(VirtualProperty.defaults.pixel)
+  def fromFile(f: File, extr: Seq[Extraction] = Extraction.all): LazyMap = {
+    val map = new FromFile(f, extr, PropertyMap.empty, Set.empty, Map.empty)
+    VirtualProperty.defaults.all.foldLeft(map) { (m, vp) =>
+      m.addVirtual(vp)
+    }
+  }
 
   def apply(m: PropertyMap): LazyMap =
-    new ConstantMap(m, Map.empty).addVirtual(VirtualProperty.defaults.pixel)
+    VirtualProperty.defaults.all.foldLeft(new ConstantMap(m, Map.empty)) { (m, vp) =>
+      m.addVirtual(vp)
+    }
 
   def apply(ps: Property*): LazyMap =
     apply(PropertyMap(ps: _*))
@@ -89,7 +95,7 @@ object LazyMap {
       }
     }
     lazy val virtualKeys: Set[Ident] = vmap.keySet
-    lazy val propertyKeys: Set[Ident] = extr.flatMap(_.idents).toSet
+    lazy val propertyKeys: Set[Ident] = extr.flatMap(_.idents).toSet ++ map.asSet.map(_.ident)
     def add(p: Property) =
       new FromFile(file, extr, map + p, seen + p.ident, vmap)
     def remove(id: Ident) =
