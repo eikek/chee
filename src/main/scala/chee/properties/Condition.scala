@@ -6,6 +6,7 @@ case class Prop(comp: Comp, prop: Property) extends Condition with Leaf {
   val ident = prop.ident
   val value = prop.value
 }
+case class IdentProp(comp: Comp, id1: Ident, id2: Ident) extends Condition with Leaf
 case object TrueCondition extends Condition with Leaf
 case class Exists(ident: Ident) extends Condition with Leaf
 case class Junc(op: Junc.Op, nodes: List[Condition]) extends Condition
@@ -85,6 +86,7 @@ object Condition {
     leaf => leaf match {
       case Exists(id) => s"${id.name}?"
       case Prop(comp, Property(id, value)) => s"""${id.name}${comp.name}'${value.replaceAll("'", "\'")}'"""
+      case IdentProp(comp, id1, id2) => s"${id1.name}${comp.name}'${id2.name}"
       case TrueCondition => "true"
     },
     op => (s1, s2) => s1 +" "+ s2,

@@ -12,6 +12,12 @@ class SqlBackendTest extends FlatSpec with Matchers {
     whereClause(Not(Exists('path))) should be ("not(path is not null)")
   }
 
+  it should "traslate identprops" in {
+    whereClause(IdentProp(Comp.Gt, Ident.width, Ident.height)) should be (
+      "width > height "
+    )
+  }
+
   it should "translate true to a tautologic condition" in {
     whereClause(TrueCondition) should be ("1=1")
   }

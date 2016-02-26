@@ -40,6 +40,10 @@ object QueryParser extends RegexParsers {
     case id ~ op ~ value => Prop(op, id -> value)
   }
 
+  def idprop(all: Set[Comp]): Parser[IdentProp] = ident ~ comp(all) ~ ("'" ~> ident) ^^ {
+    case id1 ~ op ~ id2 => IdentProp(op, id1, id2)
+  }
+
   def exists: Parser[Exists] = ident <~ "?" ^^ {
     case name => Exists(name)
   }
@@ -58,7 +62,7 @@ object QueryParser extends RegexParsers {
   }
 
   def condition(all: Set[Comp]): Parser[Condition] =
-    junc(all) | not(all) | prop(all) | exists
+    junc(all) | not(all) | prop(all) | idprop(all) | exists
 
   def apply(in: String, comps: Set[Comp] = Comp.all): Either[String, Condition] =
     parseAll(condition(comps), in.trim) match {

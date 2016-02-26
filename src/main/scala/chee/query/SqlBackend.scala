@@ -51,6 +51,7 @@ object SqlBackend {
   def whereClause(c: Condition): String = Condition.reduce[String](
     leaf => leaf match {
       case p: Prop => p.toSql
+      case i: IdentProp => i.toSql
       case e: Exists => e.toSql
       case TrueCondition => "1=1"
     },
@@ -66,6 +67,21 @@ object SqlBackend {
     s"SELECT COUNT(*) FROM $table WHERE ${whereClause(c)}"
 
 
+
+  private def columnSql(id: Ident, comp: Comp): String = id match {
+    case VirtualProperty.idents.pixel =>
+      s"(${Ident.width.name} * ${Ident.height.name})"
+    case Ident.added if comp == Comp.Like => "datetime(added/1000, 'unixepoch')"
+    case Ident.lastModified if comp == Comp.Like => "datetime(lastmodified/1000, 'unixepoch')"
+    case Ident.created if comp != Comp.Like => "datetime(created)"
+    case id => id.name
+  }
+
+  private def operatorSql(comp: Comp) = comp match {
+      case Comp.Like => "like"
+      case c => c.name
+    }
+
   private implicit class PropSql(p: Prop) {
 
     def parse(v: Value[_], s: String, comp: Comp, id: Ident): String = v.parse(s) match {
@@ -79,11 +95,6 @@ object SqlBackend {
         case Left(m) => chee.UserError(s"Cannot create a date/time value from `$s': $m")
       }
 
-    private def operator = p.comp match {
-      case Comp.Like => "like"
-      case c => c.name
-    }
-
     private def sqlValue = {
       def quote(s: String) = s"'$s'"
 
@@ -96,17 +107,13 @@ object SqlBackend {
       }
     }
 
-    private def column = p.prop.ident match {
-      case VirtualProperty.idents.pixel =>
-        s"(${Ident.width.name} * ${Ident.height.name})"
-      case Ident.added if p.comp == Comp.Like => "datetime(added/1000, 'unixepoch')"
-      case Ident.lastModified if p.comp == Comp.Like => "datetime(lastmodified/1000, 'unixepoch')"
-      case Ident.created if p.comp != Comp.Like => "datetime(created)"
-      case id => id.name
-    }
-
     def toSql: String =
-      s"${column} ${operator} ${sqlValue}"
+      s"${columnSql(p.ident, p.comp)} ${operatorSql(p.comp)} ${sqlValue}"
+  }
+
+  implicit class IdentPropSql(p: IdentProp) {
+    def toSql: String =
+      s"${columnSql(p.id1, p.comp)} ${operatorSql(p.comp)} ${columnSql(p.id2, p.comp)} "
   }
 
   implicit class ExistsSql(e: Exists) {

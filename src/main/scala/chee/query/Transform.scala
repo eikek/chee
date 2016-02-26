@@ -27,6 +27,8 @@ final class PrefixIdentTransform(val idents: Set[Ident]) extends Transform {
   def apply(c: Condition): Condition = Condition.mapAll({
     case Prop(comp, Property(ident, value)) =>
       Prop(comp, Property(findIdent(ident), value))
+    case IdentProp(comp, id1, id2) =>
+      IdentProp(comp, findIdent(id1), findIdent(id2))
     case Exists(ident) =>
       Exists(findIdent(ident))
     case n => n
@@ -53,6 +55,12 @@ object DateMacro extends Transform {
       Condition.or(
         Prop(comp, Ident.created -> value),
         Condition.and(Not(Exists(Ident.created)), Prop(comp, Ident.lastModified -> value)))
+    case IdentProp(_, _, `ident`) =>
+      chee.UserError(s"Cannot use `${ident.name}' as a right hand side")
+    case IdentProp(comp, `ident`, valueId) =>
+      Condition.or(
+        IdentProp(comp, Ident.created, valueId),
+        Condition.and(Not(Exists(Ident.created)), IdentProp(comp, Ident.lastModified, valueId)))
     case Exists(`ident`) =>
       Condition.or(Exists(Ident.created), Exists(Ident.lastModified))
     case n => n
@@ -67,6 +75,10 @@ object IdMacro extends Transform {
       if (value.length == 64) Prop(Comp.Eq, Ident.checksum -> value)
       else if (value.length > 64) chee.UserError(s"Invalid id value: ${value}. Must be <= 64 characters.")
       else Prop(Comp.Like, Ident.checksum -> s"${value}*")
+    case IdentProp(comp, id1, id2) =>
+      IdentProp(comp,
+        if (id1 == ident) Ident.checksum else id1,
+        if (id2 == ident) Ident.checksum else id2)
     case Exists(`ident`) =>
       Exists(Ident.checksum)
     case n => n
@@ -155,6 +167,10 @@ final class CollectionMacro(colls: Seq[Collection]) extends Transform {
         case None =>
           chee.UserError(s"Collection not found: `$value'")
       }
+    case IdentProp(_, id1, id2) if id1 == ident || id2 == ident =>
+      chee.UserError(s"Cannot compare `${ident.name}' to each other")
+    case Exists(`ident`) =>
+      chee.UserError(s"Cannot use `${ident.name}' in exists")
     case n => n
   })(c)
 }

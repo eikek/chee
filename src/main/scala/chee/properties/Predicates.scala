@@ -44,6 +44,14 @@ object Predicates {
     }
   }
 
+  def identprop(p: IdentProp): Predicate =
+    value(p.id2).flatMap {
+      case Some(ov2) =>
+        prop(Prop(p.comp, p.id1 -> ov2))
+      case None =>
+        unit(false)
+    }
+
   def and(ps: List[Predicate]): Predicate =
     ps.toStream.foldRight(unit(true))(combineAnd)
 
@@ -76,6 +84,7 @@ object Predicates {
     Condition.reduce[List[Predicate]](
       leaf => leaf match {
         case p: Prop => List(prop(p))
+        case i: IdentProp => List(identprop(i))
         case e: Exists => List(exists(e.ident))
         case TrueCondition => List(True)
       },

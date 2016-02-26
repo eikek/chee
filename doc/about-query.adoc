@@ -202,6 +202,22 @@ value as extracted from the file, where other comparators parse this
 value into a local date and place it into the system time zone.
 
 
+==== identifiers
+
+Properties can be compared against each other. A special value is used
+to indicate that a value should be interpreted as an identifier.
+
+.Example
+----------------------------------------------------------------------
+width>'height
+----------------------------------------------------------------------
+
+This condition compares the `width` against the `height` property of a
+file. The quote `'` without a closing one is used to indicate that the
+value to compare `width` to should be looked up with identifier
+`height`.
+
+
 ====  Macros
 
 Macros are query conditions that expand to some other query

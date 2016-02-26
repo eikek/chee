@@ -14,6 +14,14 @@ class PredicateTest extends FlatSpec with Matchers {
   val p4 = Property(model, "D200")
   val p5 = Property(Ident.length, "123423")
 
+  "identprop" should "compare like prop" in {
+    val pp1 = identprop(IdentProp(Comp.Gt, Ident.length, Ident.lastModified))
+    val pp2 = prop(Prop(Comp.Gt, Ident.length -> "00223233"))
+    val map = LazyMap(p5, Ident.lastModified -> "00223233")
+    pp2.result(map) should be (false)
+    pp1.result(map) should be (pp2.result(map))
+  }
+
   "PropPredicate" should "compare strings" in {
     val pp = prop(Prop(Comp.Eq, p1))
     pp.result(LazyMap(p1)) should be (true)

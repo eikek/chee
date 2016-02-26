@@ -7,6 +7,12 @@ class QueryParserTest extends FlatSpec with Matchers {
 
   import QueryParser._
 
+  "identprop" should "parse successful" in {
+    parseAll(idprop(Comp.all), "width>'height").get should be (
+      IdentProp(Comp.Gt, Ident.width, Ident.height)
+    )
+  }
+
   "simpleValue" should "parse successful" in {
     parseAll(simpleValue, "test").get should be ("test")
     parseAll(simpleValue, "12-test").get should be ("12-test")
