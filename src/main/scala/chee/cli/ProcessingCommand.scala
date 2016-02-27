@@ -13,6 +13,7 @@ abstract class ProcessingCommand extends AbstractLs {
 
   case class ProcOpts(
     pattern: Option[String] = None,
+    parallel: Boolean = false,
     outdir: Option[File] = None,
     nameformat: Option[String] = None
   )
@@ -28,7 +29,11 @@ abstract class ProcessingCommand extends AbstractLs {
     def copyLsOpts(o: T, lso: LsOpts): T
 
     def moreOptions(): Unit = {
-      opt[String]('p', "pattern") optional() action { (p, c) =>
+      opt[Unit]('c', "concurrent") action { (_, c) =>
+        copyProcOpts(c, c.procOpts.copy(parallel = true))
+      } text("Process files concurrently.")
+
+      opt[String]('p', "pattern") action { (p, c) =>
         copyProcOpts(c, c.procOpts.copy(pattern = Some(p)))
       } text ("The format pattern used to print the result to stdout.")
 
@@ -86,7 +91,11 @@ abstract class ProcessingCommand extends AbstractLs {
       case Right(pattern) =>
         val proc = processingAction(cfg, opts)
         val action = MapGet.get.map(m => out(pattern.right(userError).result(m)))
-        progress.foreach(0)(MapGet.filter(props, proc), action)
+        if (opts.procOpts.parallel) {
+          progress.foreach(0)(MapGet.parfilter(props, proc), action)
+        } else {
+          progress.foreach(0)(MapGet.filter(props, proc), action)
+        }
       case Left(msg) => chee.UserError(msg)
     }
   }

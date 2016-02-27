@@ -38,6 +38,9 @@ evaluated against the properties of the original file plus
 `target-width` and `target-height` that are set to the dimensions of
 the scaled image.
 
+With `--concurrent` the processing is done in parallel. Note, that the
+order of the result differs from the input list.
+
 The options `--maxlen` and `--multiply` specify how to scale. One of
 them must be specified.
 

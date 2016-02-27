@@ -44,6 +44,9 @@ evaluated against the properties of the original file plus
 `target-width` and `target-height` that are set to the dimensions of
 the scaled image.
 
+With `--concurrent` the processing is done in parallel. Note, that the
+order of the result differs from the input list.
+
 The `--size` option gives the size of the thumbnails to generate. It
 may be a string like `<width>x<height>` (e.g. `200x150`) or just one
 number, for example `200` which is the same as `200x200`.

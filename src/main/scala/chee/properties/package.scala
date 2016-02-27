@@ -22,4 +22,23 @@ package object properties {
       else Right((ea.right.get, eb.right.get) :: acc.right.get)
     }
   }
+
+  object Parallelism {
+    // note, this is copy&paste from scala's ExecutionContextImpl to know the effectively
+    // used pool size
+    private def getInt(name: String, default: String) = (try System.getProperty(name, default) catch {
+      case e: SecurityException => default
+    }) match {
+      case s if s.charAt(0) == 'x' => (Runtime.getRuntime.availableProcessors * s.substring(1).toDouble).ceil.toInt
+      case other => other.toInt
+    }
+
+    private def range(floor: Int, desired: Int, ceiling: Int) = scala.math.min(scala.math.max(floor, desired), ceiling)
+
+    val globalParallelism = range(
+      getInt("scala.concurrent.context.minThreads", "1"),
+      getInt("scala.concurrent.context.numThreads", "x1"),
+      getInt("scala.concurrent.context.maxThreads", "x1"))
+  }
+
 }

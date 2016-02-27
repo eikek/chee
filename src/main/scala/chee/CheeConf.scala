@@ -10,6 +10,8 @@ import com.typesafe.scalalogging.LazyLogging
 import com.sksamuel.scrimage.ScaleMethod
 
 object CheeConf {
+  // for scala.concurrent.ExecutionContext.Implicits.global
+  System.setProperty("scala.concurrent.context.numThreads", "x1.5")
 
   private val debug = {
     System.getProperty("chee.debugConfig", "false") == "true"

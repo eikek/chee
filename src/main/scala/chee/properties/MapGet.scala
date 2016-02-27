@@ -110,6 +110,48 @@ object MapGet {
       case (m, true) => m
     }
 
+  def parfilter(iter: Stream[LazyMap], pred: MapGet[Boolean]) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    import scala.concurrent.Future
+
+    sealed trait Data
+    case class MapData(m: LazyMap) extends Data
+    case object EOI extends Data
+
+    val nthreads = Parallelism.globalParallelism
+    val inq = new java.util.concurrent.LinkedBlockingQueue[Data]()
+    val outq = new java.util.concurrent.LinkedBlockingQueue[Data]()
+
+    Future {
+      iter.foreach(m => inq.offer(MapData(m)))
+      inq.offer(EOI)
+    }
+
+    def submit(): Future[Unit] = Future {
+      inq.take match {
+        case EOI =>
+          inq.offer(EOI)
+          outq.offer(EOI)
+        case MapData(m) =>
+          val (next, b) = pred.run(m)
+          if (b) outq.offer(MapData(next))
+          submit()
+      }
+    }
+    for (i <- 1 to nthreads) {
+      submit()
+    }
+
+    def result(i: Int): Stream[LazyMap] = outq.take match {
+      case EOI if i == 1 => Stream.empty
+      case EOI => result(i - 1)
+      case MapData(m) => m #:: result(i)
+    }
+
+    result(nthreads)
+  }
+
+
   def aroundEffect[A, B](before: MapGet[Unit], after: (A, Duration) => MapGet[B])(geta: MapGet[A]): MapGet[B] =
     before.flatMap( _ =>
       geta.timed.flatMap { case (a, dur) =>
