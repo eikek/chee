@@ -20,6 +20,7 @@ abstract class AbstractLs extends ScoptCommand {
     recursive: Boolean = false,
     all: Boolean = false,
     first: Option[Int] = None,
+    indexed: Option[Boolean] = None,
     query: String = "")
 
   abstract class LsOptionParser extends CheeOptionParser[T](name) {
@@ -30,6 +31,11 @@ abstract class AbstractLs extends ScoptCommand {
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       copyLsOpts(c, c.lsOpts.copy(recursive = true))
     } text ("Find files recursively. Only applicable if `-f' is specified.")
+
+    opt[Boolean]('i', "indexed") action { (b, c) =>
+      copyLsOpts(c, c.lsOpts.copy(indexed = Some(b)))
+    } text ("Find indexed or not indexed files. Only applicable if `-f' is\n"+
+      "        specified.")
 
     opt[Unit]('a', "all") optional() action { (_, c) =>
       copyLsOpts(c, c.lsOpts.copy(all = true))
@@ -58,7 +64,14 @@ abstract class AbstractLs extends ScoptCommand {
       case Right(cond) =>
         opts.directory match {
           case Some(dir) =>
-            FileBackend.find(cond, dir, opts.recursive)
+            val r = FileBackend.find(cond, dir, opts.recursive)
+            opts.indexed match {
+              case Some(b) =>
+                val sqlite = new SqliteBackend(cfg.getIndexDb)
+                MapGet.filter(r, sqlite.idExists.map(_.get == b))
+              case _ =>
+                r
+            }
           case _ =>
             val sqlite = new SqliteBackend(cfg.getIndexDb)
             val r = sqlite.find(cond).get

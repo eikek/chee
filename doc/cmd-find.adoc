@@ -19,7 +19,8 @@ searches a directory instead. Note that using `--file` takes longer,
 since the directory must be traversed. When searching locations, a
 index is used and searching this is much faster. If you use `--file`
 you can also specify `--recursive` to recursively traverse the
-directory.
+directory and `--indexed true|false` to find files that are indexed
+or not.
 
 The option `--all` has two meanings, whether `--file` is specified or
 not: Normally with `--file`, the directory is scanned for image and
