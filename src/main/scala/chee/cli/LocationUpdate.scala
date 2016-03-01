@@ -21,7 +21,7 @@ object LocationUpdate extends ScoptCommand with LockSupport {
       c.copy(all = true)
     } text ("Update all locations.")
 
-    arg[Seq[File]]("<directories>") unbounded() action { (x, c) =>
+    arg[Seq[File]]("<directories>") unbounded() optional() action { (x, c) =>
       c.copy(dirs = c.dirs ++ x)
     } validate { dirs =>
       dirs.find(d => !d.isDirectory) match {
@@ -45,11 +45,11 @@ object LocationUpdate extends ScoptCommand with LockSupport {
     }
     val sqlite = new SqliteBackend(cfg.getIndexDb)
     for (locEntry <- locs) {
-    val addOpts = LocationAdd.Opts().copy(
-      dirs = Seq(locEntry.dir),
-      recursive = locEntry.recursive,
-      all = locEntry.all,
-      query = locEntry.query)
+      val addOpts = LocationAdd.Opts().copy(
+        dirs = Seq(locEntry.dir),
+        recursive = locEntry.recursive,
+        all = locEntry.all,
+        query = locEntry.query)
       LocationAdd.indexDirs(cfg, addOpts, sqlite)
     }
   }

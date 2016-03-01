@@ -142,7 +142,7 @@ object ChecksumExtract {
   import java.io.{InputStream, BufferedInputStream}
   import java.security.{DigestInputStream, MessageDigest}
 
-    /** Reads the input stream while updating the message digest.
+   /** Reads the input stream while updating the message digest.
     *
     * After this method the input stream is exhausted, but not closed.
     */
