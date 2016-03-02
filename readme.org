@@ -22,8 +22,8 @@ this already allows some useful features.
 
 ** Building
 
-[[http://scala-sbt.com][sbt]] is used for building chee. Install sbt, then clone the repository
-and execute:
+[[http://scala-sbt.com][sbt]] and Java 8 is used for building (and running) chee. Install jdk8
+and sbt, then clone the repository and execute:
 
 #+begin_src shell :exports code
 sbt make-zip
