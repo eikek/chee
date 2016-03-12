@@ -17,3 +17,8 @@ project/plugins/project/
 .worksheet
 .ensime_cache/
 .ensime
+
+# Emacs/Cask
+*.elc
+dist/
+.cask/
