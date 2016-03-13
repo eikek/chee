@@ -1,0 +1,8 @@
+#+title: Chee for Emacs
+
+This is an Emacs client for the chee cli program. It uses [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html#Dired][dired]] and
+[[http://www.gnu.org/software/emacs/manual/html_node/emacs/Image_002dDired.html#Image_002dDired][image-dired]].
+
+It provides a special buffer where you can edit chee queries. Then
+chee is called in a subprocess and the results are added to a dired
+buffer and a thumbnail buffer.

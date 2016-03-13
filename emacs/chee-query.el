@@ -110,16 +110,16 @@ values have been inserted."
   (with-current-buffer (chee-query-get-buffer buffer-or-name)
     (let ((inhibit-read-only t)
           (pos (point))
-          (addflag (lambda (flag name)
-                     (concat (if flag "[X]" "[ ]") " " name))))
+          (makeflag (lambda (flag name)
+                      (concat (if flag "[X]" "[ ]") " " name))))
       (erase-buffer)
       (insert "# File: " (or dir "<index>"))
       (insert " (" (chee-describe-key 'chee-query-toggle-file) ")\n")
       (insert "# ")
-      (insert (funcall addflag concurrent "--concurrent"))
+      (insert (funcall makeflag concurrent "--concurrent"))
       (insert " (" (chee-describe-key 'chee-query-toggle-concurrent) ")")
       (insert "   ")
-      (insert (funcall addflag recursive "--recursive"))
+      (insert (funcall makeflag recursive "--recursive"))
       (insert " (" (chee-describe-key 'chee-query-toggle-recursive) ")")
       (insert "   ")
       (insert "[" (if (numberp first) (format "%3d" first) "   ") "]")
@@ -135,17 +135,15 @@ values have been inserted."
 (defun chee-query-get-args (&optional buffer)
   "Return the values in the query buffer as a list '(list query
 concurrent dir recursive first)."
-  (let ((buf (chee-query-get-buffer buffer))
-        (fkey (chee-describe-key 'chee-query-toggle-file))
-        query dir concurrent recursive first)
-    (with-current-buffer buf
+  (let (query dir concurrent recursive first)
+    (with-current-buffer (chee-query-get-buffer buffer)
       (save-excursion
         (goto-char (point-min))
         (search-forward "File: ")
         (unless (looking-at-p "<index>")
           (setq dir (s-trim (buffer-substring-no-properties
                              (point)
-                             (- (line-end-position) (+ 2 (length fkey)))))))
+                             (- (line-end-position) (+ 2 (length (chee-describe-key 'chee-query-toggle-file))))))))
         (search-forward-regexp "\\[\\(X\\| \\)\\]")
         (setq concurrent (string= (match-string-no-properties 1) "X"))
         (search-forward-regexp "\\[\\(X\\| \\)\\]")
@@ -223,9 +221,8 @@ buffer."
           (set-window-buffer win query-buf)
           (select-window win))))))
 
-
 (define-key chee-query-mode-map (kbd "C-c C-s") 'delete-window)
-(define-key chee-query-mode-map (kbd "<tab>") 'chee-query-helm-complete-ident)
+(define-key chee-query-mode-map (kbd "<tab>") 'chee-query-simple-complete-ident)
 (define-key chee-query-mode-map (kbd "C-c C-j") 'chee-query-toggle-concurrent)
 (define-key chee-query-mode-map (kbd "C-c C-r") 'chee-query-toggle-recursive)
 (define-key chee-query-mode-map (kbd "C-c C-l") 'chee-query-increment-limit)

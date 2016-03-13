@@ -74,4 +74,5 @@
         :buffer "*helm collection*"))
 
 
+(define-key chee-query-mode-map (kbd "<tab>") 'chee-query-helm-complete-ident)
 (define-key chee-query-mode-map (kbd "C-c i") 'chee-query-insert-collection-condition)

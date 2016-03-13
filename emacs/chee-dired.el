@@ -23,7 +23,6 @@
 
 ;;; Code:
 (require 'chee-proc)
-(require 'chee-utils)
 (require 'image-dired)
 (require 'dash)
 (eval-when-compile (require 'cl))
