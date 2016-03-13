@@ -27,9 +27,6 @@
 (require 'dash)
 (eval-when-compile (require 'cl))
 
-(defvar chee-executable "chee"
-  "The chee executable.")
-
 (defvar chee-dired-ls-switches nil
   "The switches to use with ls. Defaults to
   `dired-listing-switches' if nil.")
@@ -49,8 +46,7 @@
   "Create a list to use with `chee-proc-async-sexp'. The command
 assembles chee's `thumb' subcommand."
   (append
-   (list chee-executable
-         "thumb"
+   (list "thumb"
          "--size" chee-thumb-size
          "--pattern" "lisp")
    (if concurrent

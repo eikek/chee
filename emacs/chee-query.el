@@ -55,13 +55,13 @@
     st))
 
 
-(defun chee--query-complete-ident (do-complete)
+(defun chee--query-complete-ident (do-complete candidates)
   "Complete the ident at point. If there is no match, call
 DO-COMPLETE with the current thing-at-point to do the interactive
-completion."
+completion. CANDIDATES is a list of possible candidates."
   (let* ((end (point))
          (meat (or (thing-at-point 'symbol) ""))
-         (maxMatchResult  (try-completion meat chee-query-identifiers)))
+         (maxMatchResult  (try-completion meat candidates)))
     (cond ((eq maxMatchResult t))
           ((null maxMatchResult)
            (message "Can't find completion for “%s”" meat))
@@ -78,7 +78,8 @@ completion."
      (with-output-to-temp-buffer "*Completions*"
        (display-completion-list
         (all-completions meat chee-query-identifiers))
-       meat))))
+       meat))
+   chee-query-identifiers))
 
 (define-derived-mode chee-query-mode
   prog-mode "chee-query"
@@ -221,8 +222,17 @@ buffer."
           (set-window-buffer win query-buf)
           (select-window win))))))
 
+(defun chee-query-insert-collection ()
+  "Insert a collection condition of form `collection:<name>' in
+the current buffer, prompting the user for a name."
+  (interactive)
+  (let* ((candidates (chee-proc-sync-lines (list "collection" "show" "--pattern" "~:name~%")))
+         (coll (completing-read "Collection: " candidates nil t)))
+    (insert "collection:'" coll "'")))
+
 (define-key chee-query-mode-map (kbd "C-c C-s") 'delete-window)
 (define-key chee-query-mode-map (kbd "<tab>") 'chee-query-simple-complete-ident)
+(define-key chee-query-mode-map (kbd "C-c i") 'chee-query-insert-collection)
 (define-key chee-query-mode-map (kbd "C-c C-j") 'chee-query-toggle-concurrent)
 (define-key chee-query-mode-map (kbd "C-c C-r") 'chee-query-toggle-recursive)
 (define-key chee-query-mode-map (kbd "C-c C-l") 'chee-query-increment-limit)

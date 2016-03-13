@@ -35,7 +35,8 @@
                                 :nomark t
                                 :initial-input (concat "^" meat))))
        (delete-region (- (point) (length meat)) (point))
-       (insert str)))))
+       (insert str)))
+   chee-query-identifiers))
 
 (defun chee-query-helm-set-file ()
   "Set the directory to search."
@@ -50,24 +51,33 @@
                            :test 'file-directory-p)))
    2))
 
-
 (defvar chee-query-helm-source-collection
   (helm-build-sync-source "Find a collection"
     :candidates
     (lambda ()
-      (chee-proc-sync-sexp '("chee" "collection" "show" "--pattern" "lisp")))
+      (chee-proc-sync-sexp
+       '("collection" "show" "--pattern" "(:name ~\"~:name :title ~\"~:title :description ~\"~:description)")))
     :candidate-transformer
     (lambda (candidates)
       (-map (lambda (cand)
-              (cons (format "%s - %s" (plist-get cand :name) (plist-get cand :title))
+              (cons (format "%s - %s"
+                            (plist-get cand :name)
+                            (plist-get cand :title))
                     cand))
             candidates))
     :delayed t
-    :action '(("Insert condition" . (lambda (cand)
-                                      (insert "collection:'" (plist-get cand :name) "' ")))))
+    :persistent-action
+    (lambda (cand)
+      (with-current-buffer (get-buffer-create " *chee-collection-help*")
+        (pop-to-buffer (current-buffer))
+        (erase-buffer)
+        (insert (plist-get cand :description) "\n")))
+    :action '(("Insert condition" .
+               (lambda (cand)
+                 (insert "collection:'" (plist-get cand :name) "' ")))))
   "Helm source for searching collections.")
 
-(defun chee-query-insert-collection-condition ()
+(defun chee-query-helm-insert-collection-condition ()
   "Insert a collection to the current query prompting the user."
   (interactive)
   (helm :sources 'chee-query-helm-source-collection
@@ -75,4 +85,4 @@
 
 
 (define-key chee-query-mode-map (kbd "<tab>") 'chee-query-helm-complete-ident)
-(define-key chee-query-mode-map (kbd "C-c i") 'chee-query-insert-collection-condition)
+(define-key chee-query-mode-map (kbd "C-c i") 'chee-query-helm-insert-collection-condition)

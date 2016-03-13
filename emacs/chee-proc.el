@@ -25,17 +25,20 @@
 
 (require 's)
 
+(defvar chee-executable "chee"
+  "The chee executable.")
+
 (defvar chee-proc-buffer-name " *chee-proc*")
 
 (defvar chee-callback)
 (defvar chee--proc-error-result)
 
 (defun chee-proc-async-sexp (cmd callback &optional buffer-name)
-  "Start a process using CMD, which is a list containing the chee
-executable as first element and its the arguments. The output is
-collected and expected to be s-expressions. The sexps are read
-and CALLBACK is invoked with two arguments: the process object
-and one sexp from the output.
+  "Start a process using CMD, which is a list containing the
+arguments to the chee executable. The output is collected and
+expected to be s-expressions. The sexps are read and CALLBACK is
+invoked with two arguments: the process object and one sexp from
+the output.
 
 If chee returns with error, CALLBACK is called once with a plist
 containing one property `:error-message' with the output of
@@ -66,7 +69,7 @@ property."
         (use-local-map map)
         (set (make-local-variable 'chee-callback) callback)
         (set (make-local-variable 'chee--proc-error-result) nil)
-        (setq proc (apply 'start-process "chee" buf cmd))
+        (setq proc (apply 'start-process "chee" buf (cons chee-executable cmd)))
         (set-process-filter proc (function chee--sexp-filter))
         (set-process-sentinel proc (function chee--sexp-sentinel))
         (move-marker (process-mark proc) (point))
@@ -129,22 +132,22 @@ property."
            (error nil)))))
 
 (defun chee-proc-sync-sexp (cmd)
-  "Synchronously execute CMD which is a list, the first element
-is the executable and the rest its arguments. Read the output
-into a list of sexps and return it."
+  "Synchronously execute CMD which is a list of arguments to the
+chee executable. Read the output into a list of sexps and return
+it."
   (with-temp-buffer
     (insert "(")
-    (let ((rc (apply 'call-process (car cmd) nil t nil (cdr cmd))))
+    (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
       (insert ")")
-      (read-from-string (buffer-string)))))
+      (car (read-from-string (buffer-substring-no-properties (point-min) (point-max)))))))
 
 (defun chee-proc-sync-lines (cmd)
-  "Synchronously execute CMD which is a list, the first element
-is the executable and the rest its arguments. The output is split
-around line separators and returned as list of strings."
+  "Synchronously execute CMD which is a list of arguments to the
+chee executable. The output is split around line separators and
+returned as list of strings."
   (with-temp-buffer
-    (let ((rc (apply 'call-process (car cmd) nil t nil (cdr cmd))))
-      (split-string (buffer-string) "\r?\n"))))
+    (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
+      (split-string (buffer-string) "\r?\n" t))))
 
 
 (provide 'chee-proc)
