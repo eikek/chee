@@ -31,12 +31,20 @@
 (defvar chee-executable "chee"
   "The chee executable.")
 
+(defvar chee-dired-ls-switches nil
+  "The switches to use with ls. Defaults to
+  `dired-listing-switches' if nil.")
+
 (defvar chee-dired-buffer-name "*chee-dired*")
 
 (defvar chee-thumb-size (format "%sx%s"
                                 (or image-dired-thumb-width image-dired-thumb-size)
                                 (or image-dired-thumb-height image-dired-thumb-size))
   "Thumbnail size. Reuse image-dired-thumb-* values.")
+
+(defun chee-dired-get-ls-switches ()
+  "Return the switches to use with ls."
+  (or chee-dired-ls-switches dired-listing-switches))
 
 (defun chee--thumb-command (query &optional concurrent dir rec first)
   "Create a list to use with `chee-proc-async-sexp'. The command
@@ -77,8 +85,9 @@ assembles chee's `thumb' subcommand."
          (list (cons (or dir "/") (point-min-marker))))
     (let* ((pos (point))
            (inhibit-read-only t)
+           (ls-switches (chee-dired-get-ls-switches))
            (cmd (chee--thumb-command query concurrent dir rec first)))
-      (dired-mode (or dir "/") dired-listing-switches)
+      (dired-mode (or dir "/") ls-switches)
       (insert "  " (or dir "/") ":\n")
       (insert "  chee " (mapconcat 'identity cmd " ") "\n")
       (dired-insert-set-properties pos (point))
@@ -92,7 +101,8 @@ assembles chee's `thumb' subcommand."
     (let ((original (plist-get plist :origin-path))
           (thumb (plist-get plist :path))
           (buf (get-buffer "*chee-dired*"))
-          (inhibit-read-only t))
+          (inhibit-read-only t)
+          (ls-switches (chee-dired-get-ls-switches)))
       (when (and original (buffer-name buf))
         (with-current-buffer buf
           (save-excursion
@@ -100,7 +110,7 @@ assembles chee's `thumb' subcommand."
               (widen)
               (goto-char (point-max))
               (let ((pos (point)))
-                (insert (s-trim (shell-command-to-string (concat "ls " dired-listing-switches " " (shell-quote-argument original) "| tail -n -1"))))
+                (insert (s-trim (shell-command-to-string (concat "ls " ls-switches " " (shell-quote-argument original) "| tail -n -1"))))
                 (insert "\n")
                 (dired-insert-set-properties pos (point))))))
         (with-current-buffer (image-dired-create-thumbnail-buffer)
