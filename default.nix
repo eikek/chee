@@ -29,8 +29,11 @@ let
       mv $out/bin/cask $out/bin/_cask
       cat > $out/bin/cask <<-"EOF"
       #!${bash}/bin/bash
-      export EMACS=${emacs}/bin/emacs
-      $(dirname $0)/_cask
+      if ! ${which}/bin/which emacs > /dev/null 2>&1 && [ -z "$EMACS" ];
+      then
+          export EMACS=${emacs}/bin/emacs
+      fi
+      $(dirname $0)/_cask "$@"
       EOF
       chmod 755 $out/bin/cask
     '';
