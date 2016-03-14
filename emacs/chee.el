@@ -26,6 +26,7 @@
 ;;; Commentary:
 
 ;;; Code:
+(require 'chee-settings)
 (require 'chee-dired)
 (require 'chee-query)
 
@@ -42,6 +43,15 @@ buffer."
     (apply 'chee-dired (chee-query-get-args buf))
     (switch-to-buffer (chee-dired-get-buffer))))
 
+(defun chee-run-query-thumbnail ()
+  "Run the query from the chee-query buffer and display the
+results in a dired buffer and thumbnails in
+`image-dired-create-thumbnail-buffer'. Switch to the thumbnail
+buffer."
+  (interactive)
+  (chee-run-query-dired)
+  (switch-to-buffer (image-dired-create-thumbnail-buffer)))
+
 (defun chee-run-query-dwim ()
   "Run the query from the chee-query buffer and display the
 results in a dired buffer and thumbnails in
@@ -51,8 +61,12 @@ thumbnail buffer."
   (chee-run-query-dired)
   (pop-to-buffer (image-dired-create-thumbnail-buffer)))
 
-(define-key chee-query-mode-map (kbd "C-c C-c") 'chee-run-query-dwim)
-(define-key global-map (kbd "C-c C-s") 'chee-query-open)
+
+(defun chee-setup-default ()
+  (define-key global-map
+    (kbd "C-c C-s") 'chee-query-open)
+  (if (fboundp 'helm-mode)
+      (require 'chee-helm)))
 
 
 (provide 'chee)

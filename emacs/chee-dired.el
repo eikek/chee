@@ -22,25 +22,13 @@
 ;;; Commentary:
 
 ;;; Code:
-(require 'chee-proc)
+(eval-when-compile (require 'cl))
 (require 'image-dired)
 (require 'dash)
-(eval-when-compile (require 'cl))
-
-(defvar chee-dired-ls-switches nil
-  "The switches to use with ls. Defaults to
-  `dired-listing-switches' if nil.")
+(require 'chee-settings)
+(require 'chee-proc)
 
 (defvar chee-dired-buffer-name "*chee-dired*")
-
-(defvar chee-thumb-size (format "%sx%s"
-                                (or image-dired-thumb-width image-dired-thumb-size)
-                                (or image-dired-thumb-height image-dired-thumb-size))
-  "Thumbnail size. Reuse image-dired-thumb-* values.")
-
-(defvar chee-dired-properties-format " %l, %a (%m %o)"
-  "The properties format string that is amended to
-  `image-dired-display-properties-format'.")
 
 (defun chee-dired-get-ls-switches ()
   "Return the switches to use with ls."

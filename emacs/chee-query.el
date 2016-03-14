@@ -23,6 +23,7 @@
 
 ;;; Code:
 (require 's)
+(require 'chee-settings)
 (require 'chee-utils)
 (require 'chee-proc)
 
@@ -230,13 +231,22 @@ the current buffer, prompting the user for a name."
          (coll (completing-read "Collection: " candidates nil t)))
     (insert "collection:'" coll "'")))
 
-(define-key chee-query-mode-map (kbd "C-c C-s") 'delete-window)
-(define-key chee-query-mode-map (kbd "<tab>") 'chee-query-simple-complete-ident)
-(define-key chee-query-mode-map (kbd "C-c i") 'chee-query-insert-collection)
-(define-key chee-query-mode-map (kbd "C-c C-j") 'chee-query-toggle-concurrent)
-(define-key chee-query-mode-map (kbd "C-c C-r") 'chee-query-toggle-recursive)
-(define-key chee-query-mode-map (kbd "C-c C-l") 'chee-query-increment-limit)
-(define-key chee-query-mode-map (kbd "C-c C-f") 'chee-query-toggle-file)
+(define-key chee-query-mode-map
+  (kbd "C-c C-c") chee-run-function)
+(define-key chee-query-mode-map
+  (kbd "C-c C-s") 'delete-window)
+(define-key chee-query-mode-map
+  (kbd "<tab>") 'chee-query-simple-complete-ident)
+(define-key chee-query-mode-map
+  (kbd "C-c i") 'chee-query-insert-collection)
+(define-key chee-query-mode-map
+  (kbd "C-c C-j") 'chee-query-toggle-concurrent)
+(define-key chee-query-mode-map
+  (kbd "C-c C-r") 'chee-query-toggle-recursive)
+(define-key chee-query-mode-map
+  (kbd "C-c C-l") 'chee-query-increment-limit)
+(define-key chee-query-mode-map
+  (kbd "C-c C-f") 'chee-query-toggle-file)
 
 
 (provide 'chee-query)

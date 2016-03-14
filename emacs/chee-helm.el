@@ -23,6 +23,7 @@
 
 ;;; Code:
 (require 'helm-mode)
+(require 'helm-source)
 (require 'chee-query)
 
 (defun  chee-query-helm-complete-ident ()
@@ -33,7 +34,7 @@
      (let ((str (helm-comp-read "Ident: " chee-query-identifiers
                                 :must-match t
                                 :nomark t
-                                :initial-input (concat "^" meat))))
+                                :initial-input (if (s-blank? meat) "" (concat "^" meat)))))
        (delete-region (- (point) (length meat)) (point))
        (insert str)))
    chee-query-identifiers))
@@ -86,3 +87,7 @@
 
 (define-key chee-query-mode-map (kbd "<tab>") 'chee-query-helm-complete-ident)
 (define-key chee-query-mode-map (kbd "C-c i") 'chee-query-helm-insert-collection-condition)
+
+
+(provide 'chee-helm)
+;;; chee-helm.el ends here

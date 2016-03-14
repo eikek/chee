@@ -22,11 +22,8 @@
 ;;; Commentary:
 
 ;;; Code:
-
 (require 's)
-
-(defvar chee-executable "chee"
-  "The chee executable.")
+(require 'chee-settings)
 
 (defvar chee-proc-buffer-name " *chee-proc*")
 
