@@ -1,6 +1,6 @@
 #+title: Chee for Emacs
 
-This is an Emacs interfale to the chee cli program. It uses [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html#Dired][dired]] and
+This is an Emacs interface to the chee cli program. It uses [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html#Dired][dired]] and
 [[http://www.gnu.org/software/emacs/manual/html_node/emacs/Image_002dDired.html#Image_002dDired][image-dired]].
 
 It provides a special buffer where you can edit chee queries. Then
@@ -9,8 +9,8 @@ buffer and a thumbnail buffer.
 
 * Installation
 
-You must first install chee cli program. Please refer to the readme in
-the root folder.
+You must install the chee cli program first. Please refer to the
+readme in the root folder.
 
 If chee is installed, use the following lines in Emacs to load the
 interface:
@@ -30,8 +30,10 @@ buffer, run the query with ~C-c C-c~. The function
 
 * Usage
 
-#+title: Example
+#+name: Example
 [[file:example.gif]]
 
 Run ~chee-query-open~ and write a query. Run the query using ~C-c
-C-c~. Results are added to a dired buffer and an image-dired buffer.
+C-c~. Additional options can be toggled or set via the printed key
+strokes. Results are added to a dired buffer and an image-dired
+buffer.
