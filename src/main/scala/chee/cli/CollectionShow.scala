@@ -32,7 +32,7 @@ object CollectionShow extends ScoptCommand {
   lazy val detailPattern = seq(
     raw("Name: "), lookup('name), newline,
     raw("Titel: "), lookup('title), newline,
-    raw("Query:"), lookup('query), newline,
+    raw("Query: "), lookup('query), newline,
     raw("Description: "), lookup('description), newline,
     newline
   )
@@ -48,7 +48,9 @@ object CollectionShow extends ScoptCommand {
     }
 
   def exec(cfg: Config, opts: Opts): Unit = {
-    val colls = cfg.getCollectionConf.list.get.filter(_.name.startsWith(opts.name))
+    val colls = cfg.getCollectionConf.list.get
+      .filter(_.name.startsWith(opts.name))
+      .sortBy(_.name)
     val pattern = getPattern(cfg, opts) match {
       case Right(p) => p
       case Left(err) => chee.UserError(err)
