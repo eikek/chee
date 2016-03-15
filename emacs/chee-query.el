@@ -207,10 +207,10 @@ index."
       (chee-query-unset-file)
     (chee-query-set-file)))
 
+;;;###autoload
 (defun chee-query-open (&optional arg)
-  "Open the query buffer. If currently on a result buffer, open
-query buffer in a new window (below). Otherwise switch to query
-buffer."
+  "Open the query buffer. Open query buffer in a new
+window (below). With prefix argument switch to query buffer."
   (interactive "P")
   "Opens a query window."
   (let* ((query-buf (chee-query-get-buffer))

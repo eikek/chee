@@ -25,6 +25,20 @@
 
 ;;; Commentary:
 
+;; This is an interface to the chee program. Chee is a command line
+;; tool for managing photos. This package provides a buffer to
+;; conveniently execute the chee program. The results are displayed
+;; using dired and image-dired.
+
+;; Please see https://github.com/eikek/chee and
+;; https://github.com/eikek/chee/tree/master/emacs for more
+;; information.
+
+;; Use this package by invoking `chee-query-open'. A few things can be
+;; configured, but it is not necessary; see customize-group 'chee' for
+;; options. The function `chee-setup-default' adds a key binding for
+;; `chee-query-open' to `C-c C-s'.
+
 ;;; Code:
 (require 'chee-settings)
 (require 'chee-dired)
@@ -63,10 +77,14 @@ thumbnail buffer."
 
 
 (defun chee-setup-default ()
+  "Bind the entry point function `chee-query-open' to the key
+`C-c C-s' and load `chee-helm' if helm is there. Loading
+`chee-helm' replaces some functions with variants using helm."
   (define-key global-map
     (kbd "C-c C-s") 'chee-query-open)
   (if (fboundp 'helm-mode)
-      (require 'chee-helm)))
+      (require 'chee-helm))
+  t)
 
 
 (provide 'chee)
