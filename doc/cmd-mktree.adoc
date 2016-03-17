@@ -25,11 +25,14 @@ sorted in a directory structure based on their `created` or
 pattern at the command line or refer to a pattern from the config
 file under the key `chee.formats`.
 
-The `--target` option specifies the directory to transfer files to;
-and the name that results from `--pattern` is appended to this. It is
-by default the current working directory. If a target directory does
-not exist, it is created.
+The `--target` option specifies the directory to transfer
+files to. The name that results from `--pattern` is appended to
+this. It is by default the current working directory. If a target
+directory does not exist, it is created.
 
 The `query` argument is the query string that is run against the index
 or a directory (if `-f` is given). See xref:_query[query] concept page
 for details.
+
+Only one action option should be specified, if more are given, the
+last option wins.

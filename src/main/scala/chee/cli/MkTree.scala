@@ -19,6 +19,7 @@ object MkTree extends AbstractLs {
   sealed trait Action
   object Action {
     case object Symlink extends Action
+    case object RelativeSymlink extends Action
     case object Copy extends Action
   }
 
@@ -44,6 +45,11 @@ object MkTree extends AbstractLs {
       opt[Unit]('s', "symlink") action { (_, c) =>
         c.copy(action = Action.Symlink)
       } text ("Symlink files into the target directory (the default).")
+
+      opt[Unit]('u', "relative-symlink") action { (_, c) =>
+        c.copy(action = Action.RelativeSymlink)
+      } text ("Symlink files int the target directory using relative path\n" +
+        "        names.")
 
       opt[Unit]('c', "copy") action { (_, c) =>
         c.copy(action = Action.Copy)
@@ -97,9 +103,21 @@ object MkTree extends AbstractLs {
       case _ => Result.FileNotFound
     }
 
-  def symlink(source: File, target: File): Unit = {
-    if (target.exists) target.delete()
-    target.linkTo(source, true)
+  def symlink(relative: Boolean)(source: File, target: File): Unit = {
+    import java.nio.file.Files
+
+    if (target.exists) {
+      target.delete()
+    }
+    if (!relative) target.linkTo(source, true)
+    else {
+      val relPath = target.relativize(source)
+      val len = relPath.getNameCount
+      val src =
+        if (len > 1) relPath.subpath(1, len)
+        else relPath
+      Files.createSymbolicLink(target.path, src)
+    }
   }
 
   def copy(source: File, target: File): Unit = {
@@ -135,7 +153,8 @@ object MkTree extends AbstractLs {
 
     val target = filename.right(userError).map(n => opts.target / n)
     val action = target.flatMap(t => makeAction(opts.overwrite, t, opts.action match {
-      case Action.Symlink => symlink
+      case Action.Symlink => symlink(false)
+      case Action.RelativeSymlink => symlink(true)
       case Action.Copy => copy
     }))
     makeProgress(opts.action.toString, target).foreach(0)(props, action)
