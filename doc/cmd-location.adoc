@@ -39,7 +39,7 @@ index.
 
 The options are self explaining: without any options, chee searches
 the directory for image and video files. This means it looks for files
-with known extensions: `jpg`, `mov`, `mp4` and `mpg`, except those
+with known extensions like `jpg`, `mov`, `mp4` org `mpg`, except those
 starting with `.`. You can change this by either specifying `--all`,
 which will disable this condition, or by changing it.
 

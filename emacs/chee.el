@@ -1,4 +1,4 @@
-;;; chee.el --- frontend to chee using dired and image-dired
+;;; chee.el --- Interface to chee using dired and image-dired
 
 ;; Copyright © 2016- Eike Kettner
 

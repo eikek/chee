@@ -26,7 +26,7 @@ The option `--all` has two meanings, whether `--file` is specified or
 not: Normally with `--file`, the directory is scanned for image and
 video files and all other are skipped. This is done by using a default
 query and with `--all` this default query is ignored. The default
-query can be changed in the configuration file; see the
+query can also be changed in the configuration file; see the
 xref:_configuration[configuration] chapter for details.
 
 If `--file` is not specified, the index is searched and
