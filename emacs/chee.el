@@ -44,6 +44,7 @@
 (require 'chee-dired)
 (require 'chee-query)
 
+;;;###autoload
 (defun chee-run-query-dired ()
   "Run the query from the chee-query buffer and display the
 results in a dired buffer and thumbnails in
@@ -57,6 +58,7 @@ buffer."
     (apply 'chee-dired (chee-query-get-args buf))
     (switch-to-buffer (chee-dired-get-buffer))))
 
+;;;###autoload
 (defun chee-run-query-thumbnail ()
   "Run the query from the chee-query buffer and display the
 results in a dired buffer and thumbnails in
@@ -66,6 +68,7 @@ buffer."
   (chee-run-query-dired)
   (switch-to-buffer (image-dired-create-thumbnail-buffer)))
 
+;;;###autoload
 (defun chee-run-query-dwim ()
   "Run the query from the chee-query buffer and display the
 results in a dired buffer and thumbnails in
@@ -75,7 +78,7 @@ thumbnail buffer."
   (chee-run-query-dired)
   (pop-to-buffer (image-dired-create-thumbnail-buffer)))
 
-
+;;;###autoload
 (defun chee-setup-default ()
   "Bind the entry point function `chee-query-open' to the key
 `C-c C-s' and load `chee-helm' if helm is there. Loading
