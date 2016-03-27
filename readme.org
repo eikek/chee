@@ -22,8 +22,8 @@ this already allows some useful features.
 
 ** Building
 
-[[http://scala-sbt.com][sbt]] and Java 8 is used for building (and running) chee. Install jdk8
-and sbt, then clone the repository and execute:
+[[http://scala-sbt.com][sbt]] and Java 8 is used for building (and Java 8 running) chee. Install
+jdk8 and sbt, then clone the repository and execute:
 
 #+begin_src shell :exports code
 sbt make-zip
@@ -51,6 +51,18 @@ or install it with
 nix-env -if https://github.com/eikek/chee/archive/master.tar.gz
 #+end_src
 
+** Download
+
+Prebuild zip files are usually available for download here:
+
+- [[https://eknet.org/main/projects/chee/chee-0.1.0.zip][current]]
+
+Download and unzip the file. Then add the resulting directory to your
+~$PATH~. You need Java 8 for running it. Test it via
+
+#+begin_src shell :exports code
+chee version
+#+end_src
 
 * Documentation
 
