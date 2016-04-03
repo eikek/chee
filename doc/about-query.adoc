@@ -262,9 +262,9 @@ To abbreviate conditions like the following:
 (| ext:jpg ext:png ext:gif)
 ----------------------------------------------------------------------
 
-the `/` macro can be used, too. The value must be an enumeration,
-where each value is separated by a semi-colon `;`. The above query can
-be written as:
+the `~` macro can be used. The value must be an enumeration, where
+each item is separated by a semi-colon `;`. The above query can be
+written as:
 
 ----------------------------------------------------------------------
 ext~jpg;png;gif
