@@ -140,6 +140,19 @@ assembles chee's `thumb' subcommand."
           (or (plist-get plist :origin-make) "")
           (or (plist-get plist :origin-model) "")))
 
+(defun chee-dired--format-info (fmt plist)
+  (format-spec fmt
+               (list (cons ?a (or (plist-get plist :origin-created)
+                                  (format-time-string "%Y-%m-%d %H:%M:%S"
+                                                      (seconds-to-time
+                                                       (/ (plist-get plist :origin-lastmodified) 1000)))))
+                     (cons ?s (file-size-human-readable (plist-get plist :origin-length)))
+                     (cons ?m (or (plist-get plist :origin-make) ""))
+                     (cons ?o (or (plist-get plist :origin-model) ""))
+                     (cons ?w (or (plist-get plist :origin-width) ""))
+                     (cons ?h (or (plist-get plist :origin-height) ""))
+                     (cons ?f (or (plist-get plist :origin-filename) "<unkwown-file>")))))
+
 (defun chee-dired--modify-info (origfn &rest args)
   "Advice function to `image-dired-format-properties-string'
 adding more format specifiers. You can use additional format
@@ -153,17 +166,25 @@ specifiers with `image-dired-display-properties-format':
         (plist (get-text-property (point) :chee-data)))
     (if plist
         ;; b,f,t,c already used by image-dired-format-properties-string
-        (format-spec (concat res chee-dired-properties-format)
-                     (list (cons ?a (or (plist-get plist :origin-created)
-                                        (format-time-string "%Y-%m-%d %H:%M:%S"
-                                                            (seconds-to-time
-                                                             (/ (plist-get plist :origin-lastmodified) 1000)))))
-                           (cons ?l (file-size-human-readable (plist-get plist :origin-length)))
-                           (cons ?m (or (plist-get plist :origin-make) ""))
-                           (cons ?o (or (plist-get plist :origin-model) ""))))
+        (chee-dired--format-info (concat res chee-dired-properties-format) plist)
       res)))
 
 (advice-add 'image-dired-format-properties-string :around #'chee-dired--modify-info)
+
+(defun chee-dired--display-info (origfn &rest args)
+  "Advice function to `image-dired-display-thumbnail-original-image'."
+  (let ((cheedata (get-text-property (point) :chee-data))
+        (origres (apply origfn args)))
+    (when (and chee-dired-detail-info-format cheedata)
+      (with-current-buffer image-dired-display-image-buffer
+        (let ((inhibit-read-only t))
+          (save-excursion
+            (goto-char (point-max))
+            (insert "\n")
+            (insert (chee-dired--format-info chee-dired-detail-info-format cheedata))))))
+    origres))
+
+(advice-add 'image-dired-display-thumbnail-original-image :around #'chee-dired--display-info)
 
 (provide 'chee-dired)
 ;;; chee-dired.el ends here

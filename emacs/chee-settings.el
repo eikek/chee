@@ -45,10 +45,37 @@ value `dired-listing-switches' is used."
   :group 'chee)
 
 (defcustom chee-dired-properties-format
-  " %l, %a (%m %o)"
-  "Thet format string used to format properties line in
-minibuffer when navigating thumbnails. The result is appended to
-the result of `image-dired-display-properties-format'"
+  " %s, %a (%m %o)"
+  "The format string used to format properties line in minibuffer
+when navigating thumbnails. The result is appended to the result
+of `image-dired-display-properties-format'. Additional specifiers are:
+
+- s  file size
+- a  created or lastmodified time
+- w  image width
+- h  image height
+- m  camera make
+- o  camera model"
+  :type 'string
+  :group 'chee)
+
+(defcustom chee-dired-detail-info-format
+  "File: %f (%s, %wx%h)\nCreated: %a\nCamera: %m %o"
+  "The format string used to format properties when viewing the
+original file using image-dired's
+`image-dired-display-thumbnail-original-image'. The information
+is inserted below the image. Set it to `nil' to disable this
+feature.
+
+Format specifiers are:
+
+- f  file name (without path)
+- s  file size
+- a  created or lastmodified time
+- w  image width
+- h  image height
+- m  camera make
+- o  camera model"
   :type 'string
   :group 'chee)
 

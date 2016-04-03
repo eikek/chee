@@ -21,11 +21,14 @@ interface:
 (chee-setup-default)
 #+end_src
 
+It also is on melpa, so you can install from there, too:
+~(package-install 'chee)~
+
 The entry point function is ~chee-query-open~ which opens a buffer
 where you can edit the arguments to chee (i.e. the query). From this
 buffer, run the query with ~C-c C-c~. The function
-~chee-setup-default~ puts this function under key ~C-c C-s~ in the
-~global-map~.
+~chee-setup-default~ does a very simple setup: it puts this function
+under key ~C-c C-s~ in the ~global-map~.
 
 
 * Usage
@@ -36,4 +39,4 @@ buffer, run the query with ~C-c C-c~. The function
 Run ~chee-query-open~ and write a query. Run the query using ~C-c
 C-c~. Additional options can be toggled or set via the printed key
 strokes. Results are added to a dired buffer and an image-dired
-buffer.
+buffer. Use the great image-dired from there.
