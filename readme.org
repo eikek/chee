@@ -3,20 +3,30 @@
 #+attr_html: style="display:inline;"
 https://travis-ci.org/eikek/chee.svg
 
-Chee is a command line tool for managing photos.
+Chee is a command line tool for managing photos; also called “image
+organizer”.
 
 Some features are:
 
-- searches photos using standard file properties and image properties
-  (resolution, created-time, etc)
+- search photos using a simple query language by file and image
+  properties (resolution, created-time, etc)
 - manages collections (created from queries and can be used in
   queries)
-- copy/symlink images using a custom pattern
+- copy/symlink images using a custom pattern: keep original files
+  where they are and create symlink trees using a custom folder
+  structure
+- create thumbnails or scaled versions (creates new files, original
+  files are not touched)
 
 It is a simple program: the metadata of image (and other) files are
 put in a database which can then be queried more conveniently. But
 this already allows some useful features.
 
+It is written in Scala and runs on the JVM so it is quite platform
+neutral. Chee allows to query and print information from the database
+in very flexible ways. Still, in case you need raw data access, simply
+look at the [[http://sqlite.org][sqlite]] database with other tools (such as sqlite command
+line tool or [[http://sqliteman.com][sqliteman]]).
 
 * Installing
 
