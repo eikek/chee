@@ -10,7 +10,7 @@ The location command expects itself subcommands.
 
 .Usage
 ----------------------------------------------------------------------
-chee location [info|add|update|delete|mv|sync] […]
+chee location [info|add|update|import|delete|mv|sync] […]
 ----------------------------------------------------------------------
 
 
@@ -44,7 +44,7 @@ starting with `.`. You can change this by either specifying `--all`,
 which will disable this condition, or by changing it.
 
 Add a query condition to the config file using the key
-`chee.queries.file-default`. The default value is
+p`chee.queries.file-default`. The default value is
 
 ----------------------------------------------------------------------
 (& !filename:.* (| extension:jpg extension:mov extension:png extension:mp4))
@@ -91,6 +91,21 @@ copied unless `--duplicates` is specified. Files are never
 overwritten, new filenames are generated (appending a number until a
 non-existent file is found) if the a target file already exists.
 
+The directory structure in `<sourcedir>` is preserved in `<location>`
+directory.
+
+.Example
+----------------------------------------------------------------------
+chee location import -r /media/sdcard/DCIM /disk/fotos/camera2
+----------------------------------------------------------------------
+
+Searches recursively through `/media/sdcard/DCIM` and copies files to
+`/disk/fotos/camera2` while preserving the folder structure below
+`/media/sdcard/DCIM`. So the file
+`/media/sdcard/DCIM/102ND200/DSC0645.JPG` is copied to
+`/disk/fotos/camera2/102ND200/DSC0645.JPG`.
+
+
 ==== delete
 
 Removes all files of a location from the indexs.
@@ -102,8 +117,8 @@ Removes all files of a location from the indexs.
 ----------------------------------------------------------------------
 
 This command simply clears the index from all files in the given
-locations. It will also remove the given directories from the
-location set.
+locations. It will also unregister the given directories from the
+location set, but it does not touch any files on the file system.
 
 
 ==== mv (move)
