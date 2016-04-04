@@ -17,21 +17,38 @@ object Location {
     LocationSync,
     LocationMove))
 
-  private def compareFiles(conf: chee.LocationConf, msg: String, f: (Set[File], Set[File]) => Set[File], dirs: Seq[File]): Boolean = {
-    val given = dirs.toSet
-    val existing = conf.list.map(_.map(_.dir).toSet)
-    existing.map(ex => f(given, ex) match {
-      case s if s.isEmpty => true
-      case s if s.size == 1 => chee.UserError(s"`${s.head}' $msg")
-      case s => chee.UserError(s.map("`"+ _ +"'").mkString("", s" $msg\n", s" $msg"))
-    }).get
+  /** Test whether `f` is inside a location given by `locations`.
+    *
+    * Return the location that `f` is a child of, or `None`.
+    */
+  private def findFileLocation(locations: Set[File])(f: File): Option[File] =
+    locations.find(l => f.path.startsWith(l.path))
+
+  /** Filter a list of directories by whether they are childs of known
+    * locations.
+    *
+    * Apply the `include` function to the result of `findFileLocation`
+    * and if `true` include dir (from `dirs`) in the result.
+    */
+  private def filterFileLocation(conf: chee.LocationConf, include: Option[File] => Boolean)(dirs: Seq[File]): Seq[File] = {
+    val existing = conf.list.map(_.map(_.dir).toSet).get
+    val check = findFileLocation(existing)_
+    dirs.filter(d => include(check(d)))
   }
 
-  def checkRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
-    compareFiles(conf, "is not a known location", _ diff _, dirs)
+  private def checkFileLocation(conf: chee.LocationConf, msg: String, err: Option[File] => Boolean, dirs: Seq[File]): Unit = {
+    val failedDirs = filterFileLocation(conf, err)(dirs)
+    if (failedDirs.isEmpty) ()
+    else userError(failedDirs.map(d => s"`${d.path}' $msg").mkString("\n"))
+  }
 
+  /** Check if all `dirs` are known locations (or childs thereof). */
+  def checkRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
+    checkFileLocation(conf, "is not a known location", _.isEmpty, dirs)
+
+  /** Check if all `dirs` are not known locations. */
   def checkNotRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
-    compareFiles(conf, "is a known location", _ intersect _, dirs)
+    checkFileLocation(conf, "is a known location", _.nonEmpty, dirs)
 }
 
 object LocationInfo extends Command {

@@ -48,16 +48,87 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
     conf.list.get should be (List(entry1, entry2))
   }
 
-  // "contains" should "check all given paths" in withNewFile { f =>
-  //   val conf = new LocationConf(ConfigFile(f))
-  //   val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-  //   val entry2 = LE(file"/mnt/fotos/2", "", true, false)
-  //   conf.addAll(Seq(entry1, entry2))
+  "checkRegisteredLocations" should "throw for non-location dirs" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+    val check: Seq[File] => Unit =
+      s => cli.Location.checkRegisteredLocations(conf, s)
 
-  //   conf.contains(file"/mnt/fotos").get should be (Left("`/mnt/fotos' is not a known location"))
-  //   conf.contains(file"/mnt/fotos/1").get should be (Right(true))
-  //   conf.contains(file"/mnt/fotos/1", file"/mnt/fotos").get should be (Left("`/mnt/fotos' is not a known location"))
-  //   conf.contains(file"/mnt/xyz", file"/mnt/fotos/1", file"/mnt/fotos").get should be (Left(
-  //     "`/mnt/xyz' is not a known location\n`/mnt/fotos' is not a known location"))
-  // }
+    intercept[UserError] {
+      check(Seq(file"/a/b"))
+    }
+    intercept[UserError] {
+      check(Seq(file"/mnt/fotos/1", file"/a/b"))
+    }
+  }
+
+  it should "include every failed dir" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+    val check: Seq[File] => Unit =
+      s => cli.Location.checkRegisteredLocations(conf, s)
+
+    val Failure(error) = Try(check(Seq(file"/a/b", file"/mnt/fotos/3")))
+    error.getMessage should include ("/a/b")
+    error.getMessage should include ("/mnt/fotos/3")
+  }
+
+  it should "be successful for location and subdirs" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+
+    cli.Location.checkRegisteredLocations(conf, Seq(
+      file"/mnt/fotos/1",
+      file"/mnt/fotos/1/a",
+      file"/mnt/fotos/2/",
+      file"/mnt/fotos/2/a/z/n"))
+  }
+
+    "checkNotRegisteredLocations" should "throw for location dirs" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+    val check: Seq[File] => Unit =
+      s => cli.Location.checkNotRegisteredLocations(conf, s)
+
+    intercept[UserError] {
+      check(Seq(file"/mnt/fotos/1"))
+    }
+    intercept[UserError] {
+      check(Seq(file"/mnt/fotos/1/a", file"/a/b"))
+    }
+  }
+
+  it should "include every failed dir" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+    val check: Seq[File] => Unit =
+      s => cli.Location.checkNotRegisteredLocations(conf, s)
+
+    val Failure(error) = Try(check(Seq(file"/mnt/fotos/1", file"/mnt/fotos/2/a")))
+    error.getMessage should include ("/mnt/fotos/1")
+    error.getMessage should include ("/mnt/fotos/2/a")
+  }
+
+  it should "be successful for non-locations" in withNewFile { f =>
+    val conf = new LocationConf(ConfigFile(f))
+    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
+    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    conf.addAll(Seq(entry1, entry2))
+
+    cli.Location.checkNotRegisteredLocations(conf, Seq(
+      file"/a/b",
+      file"/mnt/fotos/3/a",
+      file"/mnt/fotos/",
+      file"/mnt/fotos/z"))
+  }
 }
