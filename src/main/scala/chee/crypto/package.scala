@@ -4,7 +4,6 @@ package crypto {
 
   import org.bouncycastle.bcpg.{SymmetricKeyAlgorithmTags => Tags}
 
-
   sealed trait Algorithm {
     def tag: Int
   }
@@ -35,5 +34,10 @@ package crypto {
 
 package object crypto {
 
+  import java.security.Security
+  import org.bouncycastle.jce.provider.BouncyCastleProvider
 
+  Security.addProvider(new BouncyCastleProvider)
+
+  val bcProvider = "BC"
 }

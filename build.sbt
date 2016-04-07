@@ -26,6 +26,7 @@ object TestInfo {
   val baseDir = file"${baseDirectory.value}"
   val targetDir = file"${(target in Test).value}"
   val resourceDir = file"${(resourceDirectory in Test).value}"
+  val gnupgDir = resourceDir / "gnupg"
   val images: List[File] =
     ${IO.listFiles((resourceDirectory in Test).value / "images").map( f => "resourceDir / \"images\" / \"" + f.getName + "\"").toList}
   val sampleDb = resourceDir / "sample.db"
