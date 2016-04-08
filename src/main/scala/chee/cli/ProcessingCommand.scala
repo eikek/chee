@@ -77,17 +77,17 @@ abstract class ProcessingCommand extends AbstractLs {
     format.right(userError).map(name => dir / name)
   }
 
-  def getFormat(cfg: Config, opts: ProcOpts): Either[String, Pattern] =
-    opts.pattern match {
+  def getFormat(cfg: Config, pattern: Option[String]): Either[String, Pattern] =
+    pattern match {
       case None => Right(FormatPatterns.onelineNoLocation)
       case Some("oneline") => Right(FormatPatterns.onelineNoLocation)
-      case _ => cfg.getFormat(opts.pattern, "")
+      case _ => cfg.getFormat(pattern, "")
     }
 
   def processingAction(cfg: Config, opts: T): MapGet[Boolean]
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {
-    getFormat(cfg, opts.procOpts) match {
+    getFormat(cfg, opts.procOpts.pattern) match {
       case Right(pattern) =>
         val proc = processingAction(cfg, opts)
         val action = MapGet.get.map(m => out(pattern.right(userError).result(m)))

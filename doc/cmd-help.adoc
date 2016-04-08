@@ -33,7 +33,8 @@ Choose from the following concept pages:
 3. query
 4. collection
 5. format
-6. config
+6. encryption
+7. config
 
 And here is a list of commands:
 
@@ -45,4 +46,5 @@ And here is a list of commands:
 - mktree
 - scale
 - thumb
+- encrypt
 - config

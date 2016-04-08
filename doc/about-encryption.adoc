@@ -1,0 +1,28 @@
+=== Encryption
+
+Chee can encrypt (and decrypt, of course) your files. It uses the
+OpenPGP standard which means you can use other tools (like for example
+`gnupg`) to decrypt the files. There is no application-lock-in, the
+data remains accessible using other (free) tools.
+
+Chee supports public key encryption and password based encryption. It
+utilises the bouncycastle library, that provides a pure Java
+implementation of the OpenPGP standard.
+
+While usually all modifications to files are non-destructive, the
+notably exception is encrypting: When chee encrypts a file, the
+original file is deleted! And likewise when decrypting a file, the
+encrypted file is deleted.
+
+When a file is encrypted, only the path property of that file is
+updated to reflect the new encrypted file. All other remain those of
+the original file. That allows to still search encrypted files.
+
+A virtual property `encrypted` is provided so that you can easily find
+encrypted files. It simply looks at the path property and checks its
+extension.
+
+Commands that operate on files (like `find`, `thumb`, etc) always skip
+encrypted files by default. You can change that by adding options to
+decrypt those files instead. The `find` command offers a special
+option to list encrypted files without decrypting.
