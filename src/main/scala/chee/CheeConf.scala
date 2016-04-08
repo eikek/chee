@@ -17,6 +17,12 @@ object CheeConf {
     System.getProperty("chee.debugConfig", "false") == "true"
   }
 
+  sealed trait CryptMethod
+  object CryptMethod {
+    case object Pubkey extends CryptMethod
+    case object Password extends CryptMethod
+  }
+
   object Implicits {
 
     implicit class ConfigOps(cfg: Config) {
@@ -70,6 +76,14 @@ object CheeConf {
           case "bspline" => ScaleMethod.BSpline
           case "bilinear" => ScaleMethod.Bilinear
           case v => UserError(s"No scale method: `$v'. Check your config at key `$key'.")
+        }
+      }
+
+      def getCryptMethod: CryptMethod = {
+        cfg.getString("chee.crypt.default-encryption").toLowerCase() match {
+          case "pubkey" => CryptMethod.Pubkey
+          case "password" => CryptMethod.Password
+          case v => UserError(s"Invalid config value for `chee.crypt.default.encryption': `${v}'")
         }
       }
     }

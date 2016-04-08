@@ -1,5 +1,7 @@
 package chee
 
+import chee.crypto.FileProcessor
+import org.bouncycastle.openpgp.PGPPublicKey
 import scala.util.Try
 import chee.properties._
 import chee.properties.MapGet._
@@ -88,4 +90,20 @@ object Processing {
       case _ =>
         unit(false)
     }
+
+
+
+  val encryptedPath = Ident("encryptedPath")
+
+  /** Encrypts the input file to `outFile' and amends the map with
+    * property `encryptedPath' pointing to `outFile'. */
+  def encryptPubkey(key: PGPPublicKey, outFile: MapGet[File]): MapGet[Boolean] =
+    pair(existingPath, outFile).flatMap {
+      case (Some(in), out) =>
+        FileProcessor.encryptPubkey(in, key, out)
+        modify(m => m.add(encryptedPath -> out.pathAsString)).map(_ => true)
+      case (None, _) =>
+        set(LazyMap()).map(_ => false)
+    }
+
 }

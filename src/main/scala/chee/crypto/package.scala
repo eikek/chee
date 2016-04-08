@@ -29,6 +29,12 @@ package crypto {
     case object CAST5 extends Algorithm {
       val tag = Tags.CAST5
     }
+    case object Camellia128 extends Algorithm {
+      val tag = Tags.CAMELLIA_128
+    }
+    case object Camellia256 extends Algorithm {
+      val tag = Tags.CAMELLIA_256
+    }
   }
 }
 
