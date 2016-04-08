@@ -4,6 +4,9 @@ import better.files._
 
 package object cli {
 
+  import better.files.File.LinkOptions
+
+
   implicit val _readFile: scopt.Read[File] =
     scopt.Read.reads(File(_))
 
@@ -18,6 +21,16 @@ package object cli {
       case sizeRegex(w, h) => Size(w.toInt, h.toInt)
       case _ => UserError(s"Invalid size string. Either a single number or `<width>x<height>' is allowed.")
     })
+
+  object Directory {
+    def unapply(f: File): Option[File] =
+      if (f.isDirectory(LinkOptions.follow)) Some(f) else None
+  }
+
+  object RegularFile {
+    def unapply(f: File): Option[File] =
+      if (f.isRegularFile(LinkOptions.follow)) Some(f) else None
+  }
 
   implicit class FileExt(f: File) {
 

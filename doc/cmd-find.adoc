@@ -15,18 +15,19 @@ chee find created:201410*
 ----------------------------------------------------------------------
 
 Find searches by default all locations. If `--file` is given, it
-searches a directory instead. Note that using `--file` takes longer,
-since the directory must be traversed. When searching locations, a
-index is used and searching this is much faster. If you use `--file`
-you can also specify `--recursive` to recursively traverse the
-directory and `--indexed true|false` to find files that are indexed
-or not.
+searches this directory instead. Note that using `--file` takes
+longer, since the directory must be traversed. Without `-f` an index
+is used and searching this is much faster. If you use `--file` you can
+also specify `--recursive` to recursively traverse the directory and
+`--indexed true|false` to find files that are indexed or not. You can
+also specify a single file to `--file`, then a query and a
+`--recursive` flag are simply ignored.
 
-The option `--all` has two meanings, whether `--file` is specified or
-not: Normally with `--file`, the directory is scanned for image and
-video files and all other are skipped. This is done by using a default
-query and with `--all` this default query is ignored. The default
-query can also be changed in the configuration file; see the
+The option `--all` has two meanings, depending on whether `--file` is
+specified or not: Normally with `--file`, the directory is scanned for
+image and video files and all other are skipped. This is done by using
+a default query and with `--all` this default query is ignored. The
+default query can also be changed in the configuration file; see the
 xref:_configuration[configuration] chapter for details.
 
 If `--file` is not specified, the index is searched and
@@ -38,12 +39,13 @@ With `--first` the result can be limited to the first `n` files.
 The output can be controlled with a format pattern, specified by the
 `--pattern` option. Please see the chapter on
 xref:_format_patterns[Format Patterns] on how to use this. If no
-pattern is specified, certain properties of the files are printed,
-each on one line. The value for `--pattern` can be a reference to a
-pattern in the configuration file or a pattern definition. There are
-three predefined patterns: `oneline` (the default), `detail` and
-`lisp`. If the pattern is not one of these, it is tried to find in the
-configuration file and then it is used as a pattern itself.
+pattern is specified, a default pattern is used which lists certain
+properties of the files, one file per line. The value for `--pattern`
+can be a reference to a pattern in the configuration file or a pattern
+definition. There are three predefined patterns: `oneline` (the
+default), `detail` and `lisp`. If the pattern is not one of these, it
+is tried to find in the configuration file and then it is used as a
+pattern itself.
 
 The `query` is used to search a directory or the index. If multiple
 conditions are given, they are wrapped in a `(& …)`. Please see the

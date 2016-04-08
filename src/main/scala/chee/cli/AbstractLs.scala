@@ -1,5 +1,6 @@
 package chee.cli
 
+import better.files.File.LinkOptions
 import com.typesafe.config.Config
 import better.files._
 import chee.properties._
@@ -26,7 +27,8 @@ abstract class AbstractLs extends ScoptCommand {
   abstract class LsOptionParser extends CheeOptionParser[T](name) {
     opt[File]('f', "file") optional() action { (f, c) =>
       copyLsOpts(c, c.lsOpts.copy(directory = Some(f)))
-    } text ("A directory to search instead of the index.")
+    } text ("A directory to search instead of the index. It can also be a\n"+
+      "        file, in which case a query and the `-r' flag are ignored.")
 
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       copyLsOpts(c, c.lsOpts.copy(recursive = true))
@@ -64,7 +66,14 @@ abstract class AbstractLs extends ScoptCommand {
       case Right(cond) =>
         opts.directory match {
           case Some(dir) =>
-            val r = FileBackend.find(cond, dir, opts.recursive)
+            val r = dir match {
+              case Directory(d) =>
+                FileBackend.find(cond, d, opts.recursive)
+              case RegularFile(f) =>
+                Stream(LazyMap.fromFile(f).add(Ident.location -> f.parent.pathAsString))
+              case _ =>
+                Stream.empty[LazyMap]
+            }
             opts.indexed match {
               case Some(b) =>
                 val sqlite = new SqliteBackend(cfg.getIndexDb)
