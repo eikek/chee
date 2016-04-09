@@ -11,10 +11,12 @@ trait VirtualValue {
 
 object VirtualProperty {
   import MapGet._
+  import chee.crypto.CheeCrypt
 
   object idents {
     val pixel: Ident = 'pixel
-    val all = List(pixel)
+    val encrypted: Ident = 'encrypted
+    val all = List(pixel, encrypted)
   }
 
   val defaults = new Collection()
@@ -29,9 +31,23 @@ object VirtualProperty {
       def map(f: Ident => Ident) = mapIdents(f).pixelValue
     }
 
-    val pixel = VirtualProperty('pixel, pixelValue)
+    private def encryptedValue: VirtualValue = new VirtualValue {
+      import CheeCrypt._
+      def value = MapGet.value(mapping(Ident.path)).map {
+        case Some(path) =>
+          if (path.endsWith("."+ passwortEncryptExtension)) Some(passwortEncryptExtension)
+          else if (path.endsWith("."+ publicKeyEncryptExtension)) Some(publicKeyEncryptExtension)
+          else None
+        case None => None
+      }
+      def map(f: Ident => Ident) = mapIdents(f).encryptedValue
+    }
 
-    val all = List(pixel)
+    val pixel = VirtualProperty(idents.pixel, pixelValue)
+
+    val encrypted = VirtualProperty(idents.encrypted, encryptedValue)
+
+    val all = List(pixel, encrypted)
 
     def aliasValue(id: Ident): VirtualValue = new VirtualValue {
       def value = MapGet.value(mapping(id))
