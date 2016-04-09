@@ -115,7 +115,7 @@ object Processing {
            .add(Ident.path -> out.pathAsString)
         } map (_ => true)
       case _ =>
-        set(LazyMap()).map(_ => false)
+        unit(false)
     }
 
   /** Encrypts the input file to `outFile' and updates the `path'
@@ -139,8 +139,28 @@ object Processing {
   /** Decrypts the input file to `outFile' and updates the `path'
     * property to the new decrypted file. The original path property
     * is saved to `origin-path'. */
-  def decryptPasswcord(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
+  def decryptPassword(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
     cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), Predicates.not(CheeCrypt.isEncrypted))
+
+  case class DecryptSecret(keyFile: File, keyPass: Array[Char])
+
+  /** Decrypts the file either with the given password or secret key. If
+    * one is not given, those files are skipped. If both are not
+    * given, an exception is thrown. */
+  def decryptFile(pubSecret: Option[DecryptSecret], passphrase: Option[Array[Char]], outFile: MapGet[File]): MapGet[Boolean] = {
+    import CheeCrypt._
+    if (pubSecret.isEmpty && passphrase.isEmpty) {
+      throw UserError("Either a secret key or passphrase muste be given!")
+    }
+    value(VirtualProperty.idents.encrypted).flatMap {
+      case Some(`passwordEncryptExtension`) if passphrase.isDefined =>
+        decryptPassword(passphrase.get, outFile)
+      case Some(`publicKeyEncryptExtension`) if pubSecret.isDefined =>
+        val s = pubSecret.get
+        decryptPubkey(s.keyFile, s.keyPass, outFile)
+      case _ => unit(false)
+    }
+  }
 
   /** Postprocess encryption/decryption.
     *

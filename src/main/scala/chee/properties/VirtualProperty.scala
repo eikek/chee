@@ -35,7 +35,7 @@ object VirtualProperty {
       import CheeCrypt._
       def value = MapGet.value(mapping(Ident.path)).map {
         case Some(path) =>
-          if (path.endsWith("."+ passwortEncryptExtension)) Some(passwortEncryptExtension)
+          if (path.endsWith("."+ passwordEncryptExtension)) Some(passwordEncryptExtension)
           else if (path.endsWith("."+ publicKeyEncryptExtension)) Some(publicKeyEncryptExtension)
           else None
         case None => None

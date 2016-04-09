@@ -66,4 +66,6 @@ include::cmd-scale.adoc[]
 
 include::cmd-encrypt.adoc[]
 
+include::cmd-decrypt.adoc[]
+
 include::cmd-config.adoc[]

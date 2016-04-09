@@ -5,19 +5,30 @@ import better.files._
 package object cli {
 
   import chee.CheeConf.CryptMethod
+  import com.typesafe.config.Config
 
   def userError(s: String) = chee.UserError(s)
 
-  def promptPassphrase(): Array[Char] = {
+  def promptPassphrase(prompt: String = "Passphrase: "): Array[Char] = {
     def equals(a1: Array[Char], a2: Array[Char]): Boolean =
       a1.zip(a2).foldLeft(true) { case (r, (e1, e2)) => r && (e1 == e2) }
 
-    print("Passphrase: ")
+    print(prompt)
     val p1 = System.console().readPassword()
     print("Retype: ")
     val p2 = System.console().readPassword()
     if (p1.nonEmpty && equals(p1, p2)) p1
     else userError("Passphrases did not match or empty passphrase specified!")
+  }
+
+  def findPassphrase(cfg: Config, passPrompt: Boolean, passphrase: Option[Array[Char]], prompt: String = "Passphrase: "): Array[Char] = {
+    val p = if (passPrompt) {
+      promptPassphrase(prompt)
+    } else passphrase.getOrElse {
+      cfg.getString("chee.crypt.default-passphrase").toCharArray
+    }
+    if (p.isEmpty) promptPassphrase(prompt)
+    else p
   }
 
   implicit val _readFile: scopt.Read[File] =

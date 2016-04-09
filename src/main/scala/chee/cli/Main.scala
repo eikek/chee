@@ -28,7 +28,8 @@ object Main extends LazyLogging {
     Thumb,
     Scale,
     ConfigCmd,
-    Encrypt
+    Encrypt,
+    Decrypt
   )
 
   def setupLogging(cfg: Config): Unit = {

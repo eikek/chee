@@ -12,9 +12,9 @@ import chee.properties.MapGet._
 import chee.Processing
 import org.bouncycastle.openpgp.PGPPublicKey
 
-object Encrypt extends AbstractLs with CryptProgress {
+object Decrypt extends AbstractLs with CryptProgress {
 
-  val name = "encrypt"
+  val name = "decrypt"
 
   case class Opts(
     lsOpts: LsOpts = LsOpts(),
@@ -23,7 +23,7 @@ object Encrypt extends AbstractLs with CryptProgress {
     passphrase: Option[Array[Char]] = None,
     passPrompt: Boolean = false,
     keyFile: Option[File] = None,
-    keyId: Option[String] = None
+    secretKeyPass: Option[Array[Char]] = None
   ) extends CommandOpts
 
   type T = Opts
@@ -43,7 +43,10 @@ object Encrypt extends AbstractLs with CryptProgress {
       } text ("The encryption method: either pubkey or password. Using public\n"+
         "        key encryption requires a public key that must be specified in\n"+
         "        the config file or via options. For password-based encryption\n"+
-        "        a passphrase must be specified (via config file or options).")
+        "        a passphrase must be specified (via config file or options).\n"+
+        "        If one method is specified, files encrypted with the other \n"+
+        "        method are not touched. If this option is not specified, both\n"+
+        "        methods are used.")
 
       opt[Unit]('W', "passprompt") action { (_, c) =>
         c.copy(passPrompt = true)
@@ -53,13 +56,13 @@ object Encrypt extends AbstractLs with CryptProgress {
 
       opt[File]("key-file") valueName("<file>") action { (f, c) =>
         c.copy(keyFile = Some(f))
-      } text ("The file containing the public key. A key-id must also be\n"+
+      } text ("The file containing the secret key. A key-id must also be\n"+
         "        specified. The openpgp formats (ascii and binary) can be used.")
 
-      opt[String]("key-id") action { (k, c) =>
-        c.copy(keyId = Some(k))
-      } text ("A key id matching a public key in the `key-file'. Can be part\n"+
-        "        of the user-id or key-id and must uniquely identify a key.")
+      opt[String]("secret-key-pass") action { (p, c) =>
+        c.copy(secretKeyPass = Some(p.toCharArray()))
+      } text ("The passphrase to access the private key. If not specified, it\n"+
+        "        is prompted for.")
 
       opt[String]("passphrase") action { (p, c) =>
         c.copy(passphrase = Some(p.toCharArray()))
@@ -68,39 +71,31 @@ object Encrypt extends AbstractLs with CryptProgress {
     }
   }
 
-  def findPublicKey(cfg: Config, opts: Opts): PGPPublicKey = {
-    val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.public-key-file"))
-    val keyId = opts.keyId.getOrElse(cfg.getString("chee.crypt.key-id"))
-    if (!keyFile.exists) userError(s"Key file `${keyFile}' does not exists!")
-    if (keyId.isEmpty) userError("No keyId specified!")
-    KeyFind.findPublicKey(keyFile, keyId)
-  }
-
   def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] = {
     import Processing._
     val sqlite = new SqliteBackend(cfg.getIndexDb)
-    opts.cryptMethod.getOrElse(cfg.getCryptMethod) match {
-      case CryptMethod.Password =>
-        outln("Using password based encryption.")
-        val pass = findPassphrase(cfg, opts.passPrompt, opts.passphrase)
-        encryptPassword(pass, cfg.getAlgorithm, CheeCrypt.passwordEncryptedFile).flatMap {
-          case true => cryptInplacePostProcess(sqlite)
-          case false => unit(false)
-        }
-      case CryptMethod.Pubkey =>
-        outln("Using public key encryption.")
-        val key = findPublicKey(cfg, opts)
-        encryptPubkey(key, CheeCrypt.publicKeyEncryptedFile).flatMap {
-          case true => cryptInplacePostProcess(sqlite)
-          case false => unit(false)
-        }
+    val out = path.map(_.mapFileName(n => n.substring(0, n.length -4)))
+    val decryptSecret = opts.cryptMethod match {
+      case Some(CryptMethod.Password) => None
+      case _ =>
+        val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.secret-key-file"))
+        val pass = opts.secretKeyPass.getOrElse(promptPassphrase("Passphrase for private key: "))
+        Some(DecryptSecret(keyFile, pass))
+    }
+    val passphrase = opts.cryptMethod match {
+      case Some(CryptMethod.Pubkey) => None
+      case _ => Some(findPassphrase(cfg, opts.passPrompt, opts.passphrase, "Password for decryption: "))
+    }
+    decryptFile(decryptSecret, passphrase, out).flatMap {
+      case true => cryptInplacePostProcess(sqlite)
+      case false => unit(false)
     }
   }
 
   def exec(cfg: Config, opts: Opts, props: Stream[LazyMap]): Unit = {
     val proc = processingAction(cfg, opts)
-    val action = MapGet.unit(())
-    val prog = progress("Encrypt", opts.parallel)
+    val action = unit(())
+    val prog = progress("Decrypt", opts.parallel)
     if (opts.parallel) {
       prog.foreach(0)(MapGet.parfilter(props, proc), action)
     } else {

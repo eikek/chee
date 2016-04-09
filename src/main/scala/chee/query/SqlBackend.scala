@@ -67,7 +67,7 @@ object SqlBackend {
   def count(table: String, c: Condition): String =
     s"SELECT COUNT(*) FROM $table WHERE ${whereClause(c)}"
 
-  private val pbc = CheeCrypt.passwortEncryptExtension
+  private val pbc = CheeCrypt.passwordEncryptExtension
   private val pkc = CheeCrypt.publicKeyEncryptExtension
   private val encryptedExpr =
     s"(case when substr(${Ident.path.name}, -4) = '.$pbc' then '$pbc' when substr(${Ident.path.name}, -4) = '.$pkc' then '$pkc' else null end)"
