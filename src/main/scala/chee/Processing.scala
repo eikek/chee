@@ -1,7 +1,8 @@
 package chee
 
-import chee.crypto.FileProcessor
-import org.bouncycastle.openpgp.PGPPublicKey
+import chee.crypto.{ Algorithm, CheeCrypt, FileProcessor }
+import chee.query.SqliteBackend
+import org.bouncycastle.openpgp.{ PGPPrivateKey, PGPPublicKey }
 import scala.util.Try
 import chee.properties._
 import chee.properties.MapGet._
@@ -10,6 +11,9 @@ import com.sksamuel.scrimage.nio._
 import better.files._
 
 object Processing {
+
+  // -- image procesing ----------------------------------------------------------------------------
+
   private val image: MapGet[Option[Image]] = existingPath.map {
     case Some(f) => Try(Image.fromPath(f.path)).toOption
     case _ => None
@@ -92,18 +96,71 @@ object Processing {
     }
 
 
+  // -- encryption ----------------------------------------------------------------------------
 
-  val encryptedPath = Ident("encryptedPath")
+  val originPath = originMapping(Ident.path)
 
-  /** Encrypts the input file to `outFile' and amends the map with
-    * property `encryptedPath' pointing to `outFile'. */
-  def encryptPubkey(key: PGPPublicKey, outFile: MapGet[File]): MapGet[Boolean] =
-    pair(existingPath, outFile).flatMap {
-      case (Some(in), out) =>
-        FileProcessor.encryptPubkey(in, key, out)
-        modify(m => m.add(encryptedPath -> out.pathAsString)).map(_ => true)
-      case (None, _) =>
+  private val originFile: MapGet[File] =
+    valueForce(originPath).map(File(_))
+
+  private def originPathIndexed(sqlite: SqliteBackend): MapGet[Boolean] =
+    valueForce(originPath).map(sqlite.pathExists).map(_.get)
+
+  private def cryptFile(outFile: MapGet[File], cf: (File, File) => Unit, skip: MapGet[Boolean]) =
+    pair(existingPath.whenNot(skip), outFile).flatMap {
+      case (Some(Some(in)), out) =>
+        cf(in, out)
+        modify { m =>
+          m.add(originPath -> in.pathAsString)
+           .add(Ident.path -> out.pathAsString)
+        } map (_ => true)
+      case _ =>
         set(LazyMap()).map(_ => false)
+    }
+
+  /** Encrypts the input file to `outFile' and updates the `path'
+    * property to the new encrypted file. The original path property
+    * is saved to `origin-path'. */
+  def encryptPubkey(key: PGPPublicKey, outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.encryptPubkey(_, key, _), CheeCrypt.isEncrypted)
+
+  /** Encrypts the input file to `outFile' and updates the `path'
+    * property to the new encrypted file. The original path property
+    * is saved to `origin-path'. */
+  def encryptPassword(passphrase: Array[Char], algo: Algorithm, outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.encryptSymmetric(_, _, passphrase, algo), CheeCrypt.isEncrypted)
+
+  /** Decrypts the input file to `outFile' and updates the `path'
+    * property to the new decrypted file. The original path property
+    * is saved to `origin-path'. */
+  def decryptPubkey(keyFile: File, pass: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.decryptPubkey(_, keyFile, pass, _), Predicates.not(CheeCrypt.isEncrypted))
+
+  /** Decrypts the input file to `outFile' and updates the `path'
+    * property to the new decrypted file. The original path property
+    * is saved to `origin-path'. */
+  def decryptPasswcord(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), Predicates.not(CheeCrypt.isEncrypted))
+
+  /** Postprocess encryption/decryption.
+    *
+    * Deletes the old file. If the old file is indexed, its path
+    * property is updated to reflect the new existing file. */
+  def cryptInplacePostProcess(sqlite: SqliteBackend): MapGet[Boolean] =
+    pair(pair(path, originFile), originPathIndexed(sqlite)).flatMap {
+      case ((newFile, oldFile), indexed) if newFile.exists =>
+        if (indexed) {
+          modify { m =>
+            val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), Ident.path -> originPath).get
+            if (success && oldFile.exists) oldFile.delete()
+            next.add(originPath -> oldFile.pathAsString)
+          } map (_ => true)
+        } else {
+          if (oldFile.exists) oldFile.delete()
+          unit(true)
+        }
+      case _ =>
+        unit(false)
     }
 
 }

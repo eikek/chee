@@ -3,7 +3,7 @@ package chee.properties
 import better.files._
 import java.time.Duration
 
-case class MapGet[+A](run: LazyMap => (LazyMap, A)) {
+case class MapGet[+A](run: LazyMap => (LazyMap, A)) { self =>
 
   def map[B](f: A => B): MapGet[B] = MapGet { map =>
     val (next, a) = run(map)
@@ -14,6 +14,14 @@ case class MapGet[+A](run: LazyMap => (LazyMap, A)) {
     val (next, va) = run(map)
     f(va).run(next)
   }
+
+  def when(f: MapGet[Boolean]): MapGet[Option[A]] = f.flatMap {
+    case true => self.map(Some(_))
+    case _ => MapGet.unit(None)
+  }
+
+  def whenNot(f: MapGet[Boolean]): MapGet[Option[A]] =
+    when(Predicates.not(f))
 
   def combine[B, C](h: MapGet[B])(f: (A, B) => C): MapGet[C] = MapGet { map =>
     val (nexta, a) = run(map)

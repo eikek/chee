@@ -26,16 +26,16 @@ object SqlBackend {
         includeEmpty = false),
       raw(")")).right
 
-  def updateRowStatement(table: String, where: Ident = Ident.path): MapGet[String] =
+  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path)): MapGet[String] =
     seq(
       raw("UPDATE "), raw(table), raw(" SET "),
       loop(
         id => seq(lookup('ident), raw(" = "), cond(existsIdent(id), quote(''', lookup(id)), raw("null"))),
         id => raw(", "),
-        MapGet.idents(false).map(_.filterNot(_ == Ident.added)),
+        columns.map(_.filterNot(_ == Ident.added).intersect(idents)),
         includeEmpty = true),
       raw(" WHERE "),
-      raw(where.name), raw(" = "), quote(''', lookup(where))).right
+      raw(where._1.name), raw(" = "), quote(''', lookup(where._2))).right
 
   def createTable(name: String): String = {
     val cols = idents.foldLeft(List[String]()){ (sql, id) =>

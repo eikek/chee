@@ -1,5 +1,6 @@
 package chee
 
+import chee.crypto.Algorithm
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
 import better.files._
@@ -84,6 +85,14 @@ object CheeConf {
           case "pubkey" => CryptMethod.Pubkey
           case "password" => CryptMethod.Password
           case v => UserError(s"Invalid config value for `chee.crypt.default.encryption': `${v}'")
+        }
+      }
+
+      def getAlgorithm: Algorithm = {
+        val v = cfg.getString("chee.crypt.algorithm")
+        Algorithm.find(v) match {
+          case Some(a) => a
+          case None => UserError(s"Invalid config value for `chee.crypt.algorithm': `${v}")
         }
       }
     }

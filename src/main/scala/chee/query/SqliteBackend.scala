@@ -54,16 +54,16 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
     n.map(_ == 1)
   }
 
-  final def update(maps: Iterable[LazyMap], where: Ident = Ident.path, p: Progress[Boolean, Int] = Progress.empty): Try[Unit] = {
+  final def update(maps: Iterable[LazyMap], columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path), p: Progress[Boolean, Int] = Progress.empty): Try[Unit] = {
     withConn(dbfile) { conn =>
-      val (count, dur) = p.foreach(0)(maps, updateProperties(where)(conn))
+      val (count, dur) = p.foreach(0)(maps, updateProperties(columns, where)(conn))
       logger.trace(s"Updated $count properties in ${Timing.format(dur)}")
     }
   }
 
-  final def updateOne(lm: LazyMap, where: Ident = Ident.path): Try[(LazyMap, Boolean)] =
+  final def updateOne(lm: LazyMap, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path)): Try[(LazyMap, Boolean)] =
     withConn(dbfile) { conn =>
-      updateProperties(where)(conn).run(lm)
+      updateProperties(columns, where)(conn).run(lm)
     }
 
   final def changeLocation(old: Path, next: Path): Try[Int] =
@@ -156,8 +156,8 @@ object SqliteBackend extends LazyLogging {
       else SqlBackend.insertStatement("chee_index").map(sql => { sqlUpdate(sql); true})
     }
 
-  def updateProperties(where: Ident)(implicit conn: Connection): MapGet[Boolean] = {
-    SqlBackend.updateRowStatement("chee_index", where).map { sql =>
+  def updateProperties(columns: MapGet[Seq[Ident]], where: (Ident, Ident))(implicit conn: Connection): MapGet[Boolean] = {
+    SqlBackend.updateRowStatement("chee_index", columns, where).map { sql =>
       sqlUpdate(sql) != 0
     }
   }

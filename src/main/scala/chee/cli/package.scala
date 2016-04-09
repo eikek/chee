@@ -4,19 +4,40 @@ import better.files._
 
 package object cli {
 
+  import chee.CheeConf.CryptMethod
+
+  def userError(s: String) = chee.UserError(s)
+
+  def promptPassphrase(): Array[Char] = {
+    def equals(a1: Array[Char], a2: Array[Char]): Boolean =
+      a1.zip(a2).foldLeft(true) { case (r, (e1, e2)) => r && (e1 == e2) }
+
+    print("Passphrase: ")
+    val p1 = System.console().readPassword()
+    print("Retype: ")
+    val p2 = System.console().readPassword()
+    if (p1.nonEmpty && equals(p1, p2)) p1
+    else userError("Passphrases did not match or empty passphrase specified!")
+  }
+
   implicit val _readFile: scopt.Read[File] =
     scopt.Read.reads(File(_))
 
   private val numberRegex = """([0-9]+)""".r
   private val sizeRegex = """([0-9]+)x([0-9]+)""".r
 
-  def userError(s: String) = chee.UserError(s)
-
   implicit val _readWitdhxHeight: scopt.Read[Size] =
     scopt.Read.reads(str => str match {
       case numberRegex(n) => Size(n.toInt)
       case sizeRegex(w, h) => Size(w.toInt, h.toInt)
       case _ => UserError(s"Invalid size string. Either a single number or `<width>x<height>' is allowed.")
+    })
+
+  implicit val _readCryptMethod: scopt.Read[CryptMethod] =
+    scopt.Read.reads(v => v.toLowerCase() match {
+      case "password" => CryptMethod.Password
+      case "pubkey" => CryptMethod.Pubkey
+      case _ => userError(s"Allowed are: password or pubkey")
     })
 
   implicit class FileExt(f: File) {
