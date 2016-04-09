@@ -70,7 +70,8 @@ class FormatPatternTest extends FlatSpec with Matchers {
     "test: iso -> 160, " +
     "test: orientation -> 1, " +
     "test: created -> 2014-06-12 20:31:23, " +
-    "test: pixel -> 2.4mp"
+    "test: pixel -> 2.4mp, " +
+    "test: encrypted -> "
 
     Patterns.loop(patf, id => raw(", "), MapGet.idents(true)).right.result(lmap) should be (expect)
   }
