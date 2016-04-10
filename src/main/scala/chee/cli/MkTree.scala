@@ -48,8 +48,7 @@ object MkTree extends AbstractLs {
 
       opt[Unit]('u', "relative-symlink") action { (_, c) =>
         c.copy(action = Action.RelativeSymlink)
-      } text ("Symlink files int the target directory using relative path\n" +
-        "        names.")
+      } textW ("Symlink files int the target directory using relative path names.")
 
       opt[Unit]('c', "copy") action { (_, c) =>
         c.copy(action = Action.Copy)
@@ -65,8 +64,7 @@ object MkTree extends AbstractLs {
 
       opt[File]("target") valueName("<directory>") action { (f, c) =>
         c.copy(target = f)
-      } text ("The target directory. If not specified the current working\n" +
-        "        directory is used.")
+      } textW ("The target directory. If not specified the current working directory is used.")
     }
   }
 

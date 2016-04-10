@@ -46,9 +46,9 @@ abstract class ProcessingCommand extends AbstractLs {
 
       opt[String]("nameformat") action { (f, c) =>
         copyProcOpts(c, c.procOpts.copy(nameformat = Some(f)))
-      } text ("The format pattern used to create the target file name. It is\n"+
-        "        evaluated with the properties of the original file with\n"+
-        "        `width' and `height' replaced by the desired target values.")
+      } textW ("The format pattern used to create the target file name. It is evaluated "+
+        "with the properties of the original file with `width' and `height' replaced "+
+        "by the desired target values.")
     }
   }
 

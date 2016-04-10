@@ -33,8 +33,7 @@ object Scale extends ProcessingCommand {
 
       opt[Int]('l', "maxlen") action { (n, c) =>
         c.copy(maxLen = Some(n))
-      } text ("Scale such that the longest side of the image is not more than\n"+
-        "        `maxlen'.")
+      } textW ("Scale such that the longest side of the image is not more than `maxlen'.")
 
       checkConfig { opts =>
         (opts.factor, opts.maxLen) match {

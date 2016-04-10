@@ -28,7 +28,7 @@ object LocationUpdate extends ScoptCommand with LockSupport {
         case Some(dir) => failure(s"Path `${dir.path}' is not a directory (or does not exist)")
         case _ => success
       }
-    } text ("One or more directories to update. They must be registered\n        locations.")
+    } textW ("One or more directories to update. They must be registered locations.")
 
     checkConfig { opts =>
       if (opts.dirs.isEmpty && !opts.all) failure("Use --all to update all known locations.")

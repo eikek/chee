@@ -27,22 +27,20 @@ abstract class AbstractLs extends ScoptCommand {
   abstract class LsOptionParser extends CheeOptionParser[T](name) {
     opt[File]('f', "file") optional() action { (f, c) =>
       copyLsOpts(c, c.lsOpts.copy(directory = Some(f)))
-    } text ("A directory to search instead of the index. It can also be a\n"+
-      "        file, in which case a query and the `-r' flag are ignored.")
+    } textW ("A directory to search instead of the index. It can also be a "+
+      "file, in which case a query and the `-r' flag are ignored.")
 
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       copyLsOpts(c, c.lsOpts.copy(recursive = true))
-    } text ("Find files recursively. Only applicable if `-f' is specified.")
+    } textW ("Find files recursively. Only applicable if `-f' is specified.")
 
     opt[Boolean]('i', "indexed") action { (b, c) =>
       copyLsOpts(c, c.lsOpts.copy(indexed = Some(b)))
-    } text ("Find indexed or not indexed files. Only applicable if `-f' is\n"+
-      "        specified.")
+    } textW ("Find indexed or not indexed files. Only applicable if `-f' is specified.")
 
     opt[Unit]('a', "all") optional() action { (_, c) =>
       copyLsOpts(c, c.lsOpts.copy(all = true))
-    } text ("When used with `-f', ignore the default query, otherwise\n" +
-      "        select non-existing files.")
+    } textW ("When used with `-f', ignore the default query, otherwise select non-existing files.")
 
     opt[Int]("first") valueName("<n>") optional() action { (n, c) =>
       copyLsOpts(c, c.lsOpts.copy(first = Some(n)))
@@ -52,8 +50,7 @@ abstract class AbstractLs extends ScoptCommand {
 
     arg[String]("<query>") optional() unbounded() action { (q, c) =>
       copyLsOpts(c, c.lsOpts.copy(query = c.lsOpts.query +" "+ q))
-    } text ("The query string. See the manual page about queries for\n" +
-      "        more information.")
+    } textW ("The query string. See the manual page about queries for more information.")
 
     def moreOptions(): Unit
 

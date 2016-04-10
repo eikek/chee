@@ -35,8 +35,7 @@ object LocationAdd extends ScoptCommand with LockSupport {
 
     opt[String]('q', "query") optional() action { (q, c) =>
       c.copy(query = q)
-    } text ("The query string. See the manual page about queries for\n" +
-      "        more information.")
+    } textW ("The query string. See the manual page about queries for more information.")
 
     arg[Seq[File]]("<directories>") unbounded() action { (x, c) =>
       c.copy(dirs = c.dirs ++ x)

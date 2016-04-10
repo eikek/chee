@@ -6,6 +6,29 @@ package object cli {
 
   import better.files.File.LinkOptions
 
+  def wrapLines(len: Int)(text: String): String = {
+    def index(idx: (String, Int) => Int): String => Int = s =>
+      idx(s, '\n') match { //wrap at newline if present
+        case -1 => idx(s, ' ') // otherwise wrap at spaces
+        case n => n
+      }
+    val searchBack: String => Int = index(_.lastIndexOf(_, len))
+    val searchForward: String => Int = index(_.indexOf(_))
+    @scala.annotation.tailrec
+    def loop(start: Int, sepIndex: String => Int, result: StringBuilder): String =
+      text.substring(start) match {
+        case s if s.length() <= len => (result append s).toString
+        case s => sepIndex(s) match {
+          case -1 =>
+            if (sepIndex eq searchForward) (result append s).toString
+            else loop(start, searchForward, result)
+          case n =>
+            loop(start + n + 1, searchBack, result append s.substring(0, n) append '\n')
+        }
+      }
+
+    loop(0, searchBack, new StringBuilder)
+  }
 
   implicit val _readFile: scopt.Read[File] =
     scopt.Read.reads(File(_))

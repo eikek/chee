@@ -40,9 +40,8 @@ object Help extends ScoptCommand {
 
     arg[String]("<name>") optional() action { (n, c) =>
       c.copy(name = n)
-    } text (
-      "The name of a page or command; or `manual' to open the complete\n" +
-      "        manual in a browser."
+    } textW (
+      "The name of a page or command; or `manual' to open the complete manual in a browser."
     )
   }
 
