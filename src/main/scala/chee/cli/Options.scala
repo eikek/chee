@@ -1,0 +1,199 @@
+package chee.cli
+
+import better.files._
+import chee.CheeConf.CryptMethod
+
+// A collection of cli options that are shared among some
+// commands. Parsers can mix in the traits and add desired options.
+//
+// For convenience options accept a function that is used to implement
+// an action using a default case class for holding the
+// options. However, it is set to the identity function so parsers can
+// specify their own action.
+
+trait Options {
+  def noAction[C, F]: (C, F) => C = (c, _) => c
+}
+
+trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
+  import LsOptions.Opts
+
+  def file(a: (C, Opts => Opts) => C = noAction) =
+    opt[File]('f', "file") optional() action { (f, c) =>
+      a(c, _.copy(directory = Some(f)))
+    } text ("A directory to search instead of the index.")
+
+  def recursive(a: (C, Opts => Opts) => C = noAction) =
+    opt[Unit]('r', "recursive") optional() action { (_, c) =>
+      a(c, _.copy(recursive = true))
+    } text ("Find files recursively. Only applicable if `-f' is specified.")
+
+  def indexed(a: (C, Opts => Opts) => C = noAction) =
+    opt[Boolean]('i', "indexed") action { (b, c) =>
+      a(c, _.copy(indexed = Some(b)))
+    } text ("Find indexed or not indexed files. Only applicable if `-f' is\n"+
+      "        specified.")
+
+  def all(a: (C, Opts => Opts) => C = noAction) =
+    opt[Unit]('a', "all") optional() action { (_, c) =>
+      a(c, _.copy(all = true))
+    } text ("When used with `-f', ignore the default query, otherwise\n" +
+      "        select non-existing files.")
+
+  def first(a: (C, Opts => Opts) => C = noAction) =
+    opt[Int]("first") valueName("<n>") optional() action { (n, c) =>
+      a(c, _.copy(first = Some(n)))
+    } text ("Limit output to the first n items.")
+
+
+  def queryArg(a: (C, Opts => Opts) => C = noAction) =
+    arg[String]("<query>") optional() unbounded() action { (q, c) =>
+      a(c, _.appendQuery(q))
+    } text ("The query string. See the manual page about queries for\n" +
+      "        more information.")
+
+  def addLsOptions(a: (C, Opts => Opts) => C): Unit = {
+    file(a)
+    recursive(a)
+    indexed(a)
+    all(a)
+    first(a)
+  }
+}
+
+object LsOptions {
+  case class Opts(
+    directory: Option[File] = None,
+    recursive: Boolean = false,
+    all: Boolean = false,
+    first: Option[Int] = None,
+    indexed: Option[Boolean] = None,
+    query: String = "") {
+    def appendQuery(q: String) = copy(query = query +" "+ q)
+  }
+}
+
+trait ProcessingOptions[C] extends Options { self: CheeOptionParser[C] =>
+  import ProcessingOptions.Opts
+
+  def concurrent(a: (C, Opts => Opts) => C = noAction) =
+    opt[Unit]('c', "concurrent") action { (_, c) =>
+      a(c, _.copy(parallel = true))
+    } text("Process files concurrently.")
+
+  def pattern(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]('p', "pattern") action { (p, c) =>
+      a(c, _.copy(pattern = Some(p)))
+    } text ("The format pattern used to print the result to stdout.")
+
+  def outDir(a: (C, Opts => Opts) => C = noAction) =
+    opt[File]('o', "outdir") action { (d, c) =>
+      a(c, _.copy(outdir = Some(d)))
+    } text ("The directory to place generated images.") validate { f =>
+      if (f.exists && !f.isDirectory) failure(s"${f.path} is an existing file")
+      else success
+    }
+
+  def nameformat(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]("nameformat") action { (f, c) =>
+      a(c, _.copy(nameformat = Some(f)))
+    } text ("The format pattern used to create the target file name. It is\n"+
+      "        evaluated with the properties of the original file with\n"+
+      "        `width' and `height' replaced by the desired target values.")
+
+  def addProcessingOptions(a: (C, Opts => Opts) => C) = {
+    concurrent(a)
+    pattern(a)
+    outDir(a)
+    nameformat(a)
+  }
+}
+
+object ProcessingOptions {
+  case class Opts(
+    pattern: Option[String] = None,
+    parallel: Boolean = false,
+    outdir: Option[File] = None,
+    nameformat: Option[String] = None
+  )
+}
+
+trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
+
+  import CryptOptions.Opts
+
+  def enable(a: (C, Opts => Opts) => C = noAction) =
+    opt[Unit]('d', "decrypt") action { (_, c) =>
+      a(c, _.copy(enable = true))
+    } text ("Enable transparent decryption.")
+
+  def cryptMethod(a: (C, Opts => Opts) => C = noAction) =
+    opt[CryptMethod]("method") valueName("password|pubkey") action { (m, c) =>
+      a(c, _.copy(cryptMethod = Some(m)))
+    } text ("The encryption method: either pubkey or password. Using public\n"+
+        "        key encryption requires a public key that must be specified in\n"+
+        "        the config file or via options. For password-based encryption\n"+
+        "        a passphrase must be specified (via config file or options).\n"+
+        "        If one method is specified, files encrypted with the other \n"+
+        "        method are not touched. If this option is not specified, both\n"+
+        "        methods are used.")
+
+  def passPrompt(a: (C, Opts => Opts) => C = noAction) =
+    opt[Unit]('W', "passprompt") action { (_, c) =>
+      a(c, _.copy(passPrompt = true))
+    } text ("Always prompt for a passphrase. Do not use the default-\n"+
+      "        passphrase from in the config file. Only applicable when\n"+
+      "        password-based encryption is used.")
+
+  def keyFile(a: (C, Opts => Opts) => C = noAction) =
+    opt[File]("key-file") valueName("<file>") action { (f, c) =>
+      a(c, _.copy(keyFile = Some(f)))
+    } text ("The file containing the secret key. A key-id must also be\n"+
+      "        specified. The openpgp formats (ascii and binary) can be used.")
+
+  def keyId(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]("key-id") action { (k, c) =>
+      a(c, _.copy(keyId = Some(k)))
+    } text ("A key id matching a public key in the `key-file'. Can be part\n"+
+      "        of the user-id or key-id and must uniquely identify a key.")
+
+  def keyPass(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]("secret-key-pass") action { (p, c) =>
+      a(c, _.copy(secretKeyPass = Some(p.toCharArray)))
+    } text ("The passphrase to access the private key. If not specified, it\n"+
+      "        is prompted for.")
+
+  def passphrase(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]("passphrase") action { (p, c) =>
+      a(c, _.copy(passphrase = Some(p.toCharArray)))
+    } text ("Specify a passphrase to use for password-based encryption. The\n"+
+      "        `-W' option overrides this.")
+
+  def addEncryptOptions(a: (C, Opts => Opts) => C): Unit = {
+    cryptMethod(a)
+    passPrompt(a)
+    keyFile(a)
+    keyId(a)
+    passphrase(a)
+  }
+
+  def addDecryptOptions(a: (C, Opts => Opts) => C): Unit = {
+    cryptMethod(a)
+    passPrompt(a)
+    keyFile(a)
+    keyPass(a)
+    passphrase(a)
+  }
+}
+
+object CryptOptions {
+  case class Opts(
+    enable: Boolean = false,
+    cryptMethod: Option[CryptMethod] = None,
+    keyFile: Option[File] = None,
+    keyId: Option[String] = None,
+    passPrompt: Boolean = false,
+    secretKeyPass: Option[Array[Char]] = None,
+    passphrase: Option[Array[Char]] = None
+  )
+}

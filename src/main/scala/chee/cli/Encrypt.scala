@@ -1,6 +1,5 @@
 package chee.cli
 
-import better.files._
 import chee.crypto.{ Algorithm, CheeCrypt, KeyFind }
 import chee.query.{ Progress, SqliteBackend }
 import com.typesafe.config.Config
@@ -12,63 +11,19 @@ import chee.properties.MapGet._
 import chee.Processing
 import org.bouncycastle.openpgp.PGPPublicKey
 
-object Encrypt extends AbstractLs with CryptProgress {
+object Encrypt extends ScoptCommand with AbstractLs with CryptCommand {
 
   val name = "encrypt"
 
-  case class Opts(
-    lsOpts: LsOpts = LsOpts(),
-    parallel: Boolean = false,
-    cryptMethod: Option[CryptMethod] = None,
-    passphrase: Option[Array[Char]] = None,
-    passPrompt: Boolean = false,
-    keyFile: Option[File] = None,
-    keyId: Option[String] = None
-  ) extends CommandOpts
+  val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] with ProcessingOptions[Opts] {
+    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    concurrent() action { (_, c) => c.copy(parallel = true) }
+    addEncryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
 
-  type T = Opts
-
-  val defaults = Opts()
-
-  val parser = new LsOptionParser {
-    def copyLsOpts(o: Opts, lso: LsOpts) = o.copy(lsOpts = lso)
-
-    def moreOptions(): Unit = {
-      opt[Unit]('c', "concurrent") action { (_, c) =>
-        c.copy(parallel = true)
-      } text("Process files concurrently.")
-
-      opt[CryptMethod]("method") valueName("password|pubkey") action { (m, c) =>
-        c.copy(cryptMethod = Some(m))
-      } text ("The encryption method: either pubkey or password. Using public\n"+
-        "        key encryption requires a public key that must be specified in\n"+
-        "        the config file or via options. For password-based encryption\n"+
-        "        a passphrase must be specified (via config file or options).")
-
-      opt[Unit]('W', "passprompt") action { (_, c) =>
-        c.copy(passPrompt = true)
-      } text ("Always prompt for a passphrase. Do not use the default-\n"+
-        "        passphrase from in the config file. Only applicable when\n"+
-        "        password-based encryption is used.")
-
-      opt[File]("key-file") valueName("<file>") action { (f, c) =>
-        c.copy(keyFile = Some(f))
-      } text ("The file containing the public key. A key-id must also be\n"+
-        "        specified. The openpgp formats (ascii and binary) can be used.")
-
-      opt[String]("key-id") action { (k, c) =>
-        c.copy(keyId = Some(k))
-      } text ("A key id matching a public key in the `key-file'. Can be part\n"+
-        "        of the user-id or key-id and must uniquely identify a key.")
-
-      opt[String]("passphrase") action { (p, c) =>
-        c.copy(passphrase = Some(p.toCharArray()))
-      } text ("Specify a passphrase to use for password-based encryption. The\n"+
-        "        `-W' option overrides this.")
-    }
+    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 
-  def findPublicKey(cfg: Config, opts: Opts): PGPPublicKey = {
+  def findPublicKey(cfg: Config, opts: CryptOptions.Opts): PGPPublicKey = {
     val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.public-key-file"))
     val keyId = opts.keyId.getOrElse(cfg.getString("chee.crypt.key-id"))
     if (!keyFile.exists) userError(s"Key file `${keyFile}' does not exists!")
@@ -76,7 +31,7 @@ object Encrypt extends AbstractLs with CryptProgress {
     KeyFind.findPublicKey(keyFile, keyId)
   }
 
-  def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] = {
+  def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] = {
     import Processing._
     val sqlite = new SqliteBackend(cfg.getIndexDb)
     opts.cryptMethod.getOrElse(cfg.getCryptMethod) match {
@@ -94,17 +49,6 @@ object Encrypt extends AbstractLs with CryptProgress {
           case true => cryptInplacePostProcess(sqlite)
           case false => unit(false)
         }
-    }
-  }
-
-  def exec(cfg: Config, opts: Opts, props: Stream[LazyMap]): Unit = {
-    val proc = processingAction(cfg, opts)
-    val action = MapGet.unit(())
-    val prog = progress("Encrypt", opts.parallel)
-    if (opts.parallel) {
-      prog.foreach(0)(MapGet.parfilter(props, proc), action)
-    } else {
-      prog.foreach(0)(MapGet.filter(props, proc), action)
     }
   }
 }

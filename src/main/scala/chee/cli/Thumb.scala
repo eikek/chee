@@ -6,34 +6,38 @@ import chee.Size
 import chee.properties._
 import chee.Processing
 
-object Thumb extends ProcessingCommand {
+object Thumb extends ScoptCommand with AbstractLs with ProcessingCommand {
 
   val name = "thumb"
 
   case class Opts(
-    lsOpts: LsOpts = LsOpts(),
-    procOpts: ProcOpts = ProcOpts(),
+    lsOpts: LsOptions.Opts = LsOptions.Opts(),
+    procOpts: ProcessingOptions.Opts = ProcessingOptions.Opts(),
     size: Size = Size(100, 100)
-  ) extends ProcessingOpts
+  )
 
   type T = Opts
 
   val defaults = Opts()
 
-  val parser = new ProcessingOptionParser {
-    def copyLsOpts(o: Opts, lso: LsOpts) = o.copy(lsOpts = lso)
-    def copyProcOpts(o: Opts, po: ProcOpts) = o.copy(procOpts = po)
-    override def moreOptions(): Unit = {
-      super.moreOptions()
+  val parser = new Parser with LsOptions[Opts] with ProcessingOptions[Opts] {
+    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    addProcessingOptions((c, f) => c.copy(procOpts = f(c.procOpts)))
 
-      opt[Size]("size") valueName("<width>x<height>") action { (s, c) =>
-        c.copy(size = s)
-      } text ("The size to scale to. Default is 100x100.")
-    }
+    opt[Size]("size") valueName("<width>x<height>") action { (s, c) =>
+      c.copy(size = s)
+    } text ("The size to scale to. Default is 100x100.")
+
+    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+  }
+
+  def exec(cfg: Config, opts: Opts): Unit = {
+    exec(cfg, opts, find(cfg, opts.lsOpts))
   }
 
   def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =
-    Processing.cover(opts.size, makeOutFile(cfg, "cover", opts),
+    Processing.cover(opts.size, makeOutFile(cfg, "cover", opts.procOpts),
       cfg.getScaleMethod("chee.scalemethod.thumb"))
 
+  def procOpts(opts: Opts) = opts.procOpts
 }

@@ -9,7 +9,15 @@ import chee.query._
 import chee.properties.MapGet._
 import chee.CheeConf.Implicits._
 
-object MkTree extends AbstractLs {
+object MkTree extends ScoptCommand with AbstractLs {
+
+  case class Opts(
+    lsOpts: LsOptions.Opts = LsOptions.Opts(),
+    overwrite: Boolean = false,
+    action: Action = Action.Symlink,
+    pattern: String = "",
+    target: File = file"."
+  )
 
   type T = Opts
 
@@ -31,43 +39,37 @@ object MkTree extends AbstractLs {
     case object FileNotFound extends Result
   }
 
-  case class Opts(
-    lsOpts: LsOpts = LsOpts(),
-    overwrite: Boolean = false,
-    action: Action = Action.Symlink,
-    pattern: String = "",
-    target: File = file"."
-  ) extends CommandOpts
 
-  val parser = new LsOptionParser {
-    def copyLsOpts(o: Opts, lso: LsOpts) = o.copy(lsOpts = lso)
-    def moreOptions(): Unit = {
-      opt[Unit]('s', "symlink") action { (_, c) =>
-        c.copy(action = Action.Symlink)
-      } text ("Symlink files into the target directory (the default).")
+  val parser = new Parser with LsOptions[Opts] {
+    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
 
-      opt[Unit]('u', "relative-symlink") action { (_, c) =>
-        c.copy(action = Action.RelativeSymlink)
-      } text ("Symlink files int the target directory using relative path\n" +
-        "        names.")
+    opt[Unit]('s', "symlink") action { (_, c) =>
+      c.copy(action = Action.Symlink)
+    } text ("Symlink files into the target directory (the default).")
 
-      opt[Unit]('c', "copy") action { (_, c) =>
-        c.copy(action = Action.Copy)
-      } text ("Copy files into the target directory.")
+    opt[Unit]('u', "relative-symlink") action { (_, c) =>
+      c.copy(action = Action.RelativeSymlink)
+    } text ("Symlink files int the target directory using relative path\n" +
+      "        names.")
 
-      opt[Unit]("overwrite") action { (_, c) =>
-        c.copy(overwrite = true)
-      } text ("Whether to overwrite existing files.")
+    opt[Unit]('c', "copy") action { (_, c) =>
+      c.copy(action = Action.Copy)
+    } text ("Copy files into the target directory.")
 
-      opt[String]('p', "pattern") action { (p, c) =>
-        c.copy(pattern = p)
-      } text ("The pattern used to create the target path.")
+    opt[Unit]("overwrite") action { (_, c) =>
+      c.copy(overwrite = true)
+    } text ("Whether to overwrite existing files.")
 
-      opt[File]("target") valueName("<directory>") action { (f, c) =>
-        c.copy(target = f)
-      } text ("The target directory. If not specified the current working\n" +
-        "        directory is used.")
-    }
+    opt[String]('p', "pattern") action { (p, c) =>
+      c.copy(pattern = p)
+    } text ("The pattern used to create the target path.")
+
+    opt[File]("target") valueName("<directory>") action { (f, c) =>
+      c.copy(target = f)
+    } text ("The target directory. If not specified the current working\n" +
+      "        directory is used.")
+
+    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 
   val defaultPattern: Pattern = {
@@ -80,14 +82,6 @@ object MkTree extends AbstractLs {
       lookupAlt(Seq(Ident.created, Ident.lastModified), Some("dd-HH-mm")),
       raw("_"),
       lookup(Ident.filename))
-  }
-
-  override def exec(cfg: Config, opts: T): Unit = {
-    if (opts.lsOpts.query.isEmpty) {
-      chee.UserError("You must specify a query. If you really want to select all files, use a query like `len>0'.")
-    } else {
-      super.exec(cfg, opts)
-    }
   }
 
   def makeAction(overwrite: Boolean, target: File, a: (File, File) => Unit): MapGet[Result] =
@@ -141,6 +135,14 @@ object MkTree extends AbstractLs {
       }
     }
     progress andThen logDone
+  }
+
+  def exec(cfg: Config, opts: Opts): Unit = {
+    if (opts.lsOpts.query.isEmpty) {
+      chee.UserError("You must specify a query. If you really want to select all files, use a query like `len>0'.")
+    } else {
+      exec(cfg, opts, find(cfg, opts.lsOpts))
+    }
   }
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {
