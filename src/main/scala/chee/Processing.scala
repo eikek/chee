@@ -134,13 +134,13 @@ object Processing {
     * property to the new decrypted file. The original path property
     * is saved to `origin-path'. */
   def decryptPubkey(keyFile: File, pass: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
-    cryptFile(outFile, FileProcessor.decryptPubkey(_, keyFile, pass, _), Predicates.not(CheeCrypt.isEncrypted))
+    cryptFile(outFile, FileProcessor.decryptPubkey(_, keyFile, pass, _), CheeCrypt.isNotEncrypted)
 
   /** Decrypts the input file to `outFile' and updates the `path'
     * property to the new decrypted file. The original path property
     * is saved to `origin-path'. */
   def decryptPassword(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
-    cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), Predicates.not(CheeCrypt.isEncrypted))
+    cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), CheeCrypt.isNotEncrypted)
 
   case class DecryptSecret(keyFile: File, keyPass: Array[Char])
 
