@@ -139,11 +139,11 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
       "        passphrase from in the config file. Only applicable when\n"+
       "        password-based encryption is used.")
 
-  def keyFile(a: (C, Opts => Opts) => C = noAction) =
+  def keyFile(what: String, a: (C, Opts => Opts) => C = noAction) =
     opt[File]("key-file") valueName("<file>") action { (f, c) =>
       a(c, _.copy(keyFile = Some(f)))
-    } text ("The file containing the secret key. A key-id must also be\n"+
-      "        specified. The openpgp formats (ascii and binary) can be used.")
+    } text (s"The file containing the $what." + (if (what.startsWith("public")) " A key-id must also be\n"+
+      "        specified." else "") +" The openpgp formats (ascii and binary) can be used.")
 
   def keyId(a: (C, Opts => Opts) => C = noAction) =
     opt[String]("key-id") action { (k, c) =>
@@ -166,7 +166,7 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
   def addEncryptOptions(a: (C, Opts => Opts) => C): Unit = {
     cryptMethod(a)
     passPrompt(a)
-    keyFile(a)
+    keyFile("public key", a)
     keyId(a)
     passphrase(a)
   }
@@ -174,7 +174,7 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
   def addDecryptOptions(a: (C, Opts => Opts) => C): Unit = {
     cryptMethod(a)
     passPrompt(a)
-    keyFile(a)
+    keyFile("secret key", a)
     keyPass(a)
     passphrase(a)
   }
