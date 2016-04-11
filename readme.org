@@ -8,6 +8,12 @@ organizer”.
 
 Some features are:
 
+- No “application lock-in”; chee uses open formats for storing data so
+  that it can be easily accessed using other (free or open-source)
+  tools. For example, OpenPGP is used for encryption so the data
+  remains accessible using tools like gnupg. The metadata derived from
+  files is stored in an sqlite db for which many tools exists to
+  access its data.
 - search photos using a simple query language by file and image
   properties (resolution, created-time, etc)
 - manages collections (created from queries and can be used in
@@ -17,6 +23,8 @@ Some features are:
   structure
 - create thumbnails or scaled versions (creates new files, original
   files are not touched)
+- encrypt files using a password or a public key. Encryption is done
+  via OpenPGP.
 
 It is a simple program: the metadata of image (and other) files are
 put in a database which can then be queried more conveniently. But
