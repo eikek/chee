@@ -109,7 +109,7 @@ object Processing {
   private def cryptFile(outFile: MapGet[File], cf: (File, File) => Unit, skip: MapGet[Boolean]) =
     pair(existingPath.whenNot(skip), outFile).flatMap {
       case (Some(Some(in)), out) =>
-        cf(in, out)
+        if (!out.exists) cf(in, out)
         modify { m =>
           m.add(originPath -> in.pathAsString)
            .add(Ident.path -> out.pathAsString)

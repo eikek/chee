@@ -42,6 +42,7 @@ object FileProcessor {
   private def makeBuffer = Array.fill[Byte](1 << 16)(0)
 
   def encryptSymmetric(in: File, out: File, passPhrase: Array[Char], algo: Algorithm): Unit = {
+    if (out.exists) throw new java.io.IOException(s"File ${out.path} already exists")
     val encGen = new PGPEncryptedDataGenerator(
       new JcePGPDataEncryptorBuilder(algo.tag)
         .setWithIntegrityPacket(true)
@@ -53,6 +54,7 @@ object FileProcessor {
   }
 
   def decryptSymmetric(in: File, out: File, passPhrase: Array[Char]): Unit = {
+    if (out.exists) throw new java.io.IOException(s"File ${out.path} already exists")
     val inStream = PGPUtil.getDecoderStream(in.newInputStream)
     val pgpf = new JcaPGPObjectFactory(inStream)
     val enc = pgpf.nextObject() match {
@@ -96,6 +98,7 @@ object FileProcessor {
   }
 
   def encryptPubkey(in: File, key: PGPPublicKey, out: File): Unit = {
+    if (out.exists) throw new java.io.IOException(s"File ${out.path} already exists")
     val encGen = new PGPEncryptedDataGenerator(
       new JcePGPDataEncryptorBuilder(Algorithm.CAST5.tag)
         .setWithIntegrityPacket(true)
@@ -108,7 +111,7 @@ object FileProcessor {
 
   def decryptPubkey(in: File, key: File, pass: Array[Char], out: File): Unit = {
     import scala.collection.JavaConverters._
-
+    if (out.exists) throw new java.io.IOException(s"File ${out.path} already exists")
     val inStream = PGPUtil.getDecoderStream(in.newInputStream)
     val pgpf = new JcaPGPObjectFactory(inStream)
     val enc = pgpf.nextObject() match {

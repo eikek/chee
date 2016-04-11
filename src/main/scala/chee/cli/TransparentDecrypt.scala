@@ -28,7 +28,10 @@ trait TransparentDecrypt { self: AbstractLs =>
     if (cryptOpts.enable) {
       val tempdir = cfg.getFile("chee.crypt.decrypt-temp")
       if (!tempdir.exists) tempdir.createDirectories()
-      val out = MapGet.valueForce(Ident.filename).map(f => tempdir / f)
+      val out = MapGet.valueForce(Ident.checksum).combine(MapGet.value(Ident.extension)) {
+        case (hash, Some(ext)) => tempdir / s"$hash.$ext"
+        case (hash, None) => tempdir / hash
+      }
       val decryptAction = Decrypt.decryptFile(cfg, cryptOpts, out)
       val filter = CheeCrypt.isEncrypted.flatMap {
         case true => decryptAction
