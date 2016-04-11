@@ -47,7 +47,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.4",
   "com.github.pathikrit"       %% "better-files"             % "2.14.0",
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.1.0",
-  "com.github.scopt"           %% "scopt"                    % "3.3.0",
+  "com.github.scopt"           %% "scopt"                    % "3.4.0",
   "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.0",
   "ch.qos.logback"              % "logback-classic"          % "1.1.3",
   "org.xerial"                  % "sqlite-jdbc"              % "3.8.11.2",

@@ -22,9 +22,9 @@ object CollectionEdit extends ScoptCommand {
   val defaults = Opts()
 
   val parser = new CheeOptionParser[Opts](name) {
-    note("\nOptions are optional, if not specified an editor opens to edit a\n"+
-      "collection or create a new one. If any option is given, the value\n"+
-      "is set non-interactively.\n")
+    noteW("\nOptions are optional, if not specified an editor opens to edit a "+
+      "collection or create a new one. If any option is given, the value is "+
+      "set non-interactively.\n")
 
     opt[String]("name") action { (n, c) =>
       c.copy(newName = Some(n))
@@ -40,8 +40,7 @@ object CollectionEdit extends ScoptCommand {
 
     arg[String]("<name>") required() action { (n, c) =>
       c.copy(name = n)
-    } text ("The collection name to edit. Creates a new collection if\n"+
-      "        there is none with this name.")
+    } textW ("The collection name to edit. Creates a new collection if there is none with this name.")
   }
 
   private def createTemplate(title: String, coll: Collection) = (s"""# $title

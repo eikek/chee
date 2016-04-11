@@ -6,6 +6,7 @@ package object cli {
 
   import chee.CheeConf.CryptMethod
   import com.typesafe.config.Config
+  import better.files.File.LinkOptions
 
   def userError(s: String) = chee.UserError(s)
 
@@ -31,6 +32,30 @@ package object cli {
     else p
   }
 
+  def wrapLines(len: Int)(text: String): String = {
+    def index(idx: (String, Int) => Int): String => Int = s =>
+      idx(s, '\n') match { //wrap at newline if present
+        case -1 => idx(s, ' ') // otherwise wrap at spaces
+        case n => n
+      }
+    val searchBack: String => Int = index(_.lastIndexOf(_, len))
+    val searchForward: String => Int = index(_.indexOf(_))
+    @scala.annotation.tailrec
+    def loop(start: Int, sepIndex: String => Int, result: StringBuilder): String =
+      text.substring(start) match {
+        case s if s.length() <= len => (result append s).toString
+        case s => sepIndex(s) match {
+          case -1 =>
+            if (sepIndex eq searchForward) (result append s).toString
+            else loop(start, searchForward, result)
+          case n =>
+            loop(start + n + 1, searchBack, result append s.substring(0, n) append '\n')
+        }
+      }
+
+    loop(0, searchBack, new StringBuilder)
+  }
+
   implicit val _readFile: scopt.Read[File] =
     scopt.Read.reads(File(_))
 
@@ -50,6 +75,16 @@ package object cli {
       case "pubkey" => CryptMethod.Pubkey
       case _ => userError(s"Allowed are: password or pubkey")
     })
+
+  object Directory {
+    def unapply(f: File): Option[File] =
+      if (f.isDirectory(LinkOptions.follow)) Some(f) else None
+  }
+
+  object RegularFile {
+    def unapply(f: File): Option[File] =
+      if (f.isRegularFile(LinkOptions.follow)) Some(f) else None
+  }
 
   implicit class FileExt(f: File) {
 

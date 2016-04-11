@@ -83,7 +83,7 @@ object LocationDelete extends ScoptCommand with LockSupport {
 
     arg[Seq[File]]("<directories>") optional() unbounded() action { (x, c) =>
       c.copy(dirs = c.dirs ++ x)
-    } text ("One or many directories that are deleted from the index and location\n        set.")
+    } textW ("One or many directories that are deleted from the index and location set.")
   }
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {

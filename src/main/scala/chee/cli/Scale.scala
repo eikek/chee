@@ -37,8 +37,7 @@ object Scale extends ScoptCommand with AbstractLs with TransparentDecrypt with P
 
     opt[Int]('l', "maxlen") action { (n, c) =>
       c.copy(maxLen = Some(n))
-    } text ("Scale such that the longest side of the image is not more than\n"+
-      "        `maxlen'.")
+    } textW ("Scale such that the longest side of the image is not more than `maxlen'.")
 
     note("")
     queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))

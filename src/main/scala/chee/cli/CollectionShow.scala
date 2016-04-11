@@ -25,8 +25,7 @@ object CollectionShow extends ScoptCommand {
 
     arg[String]("<name>") optional() action { (n, c) =>
       c.copy(name = n)
-    } text ("The collection name or enough of it to uniquely identify a\n"+
-      "        collection.")
+    } textW ("The collection name or enough of it to uniquely identify a collection.")
   }
 
   lazy val detailPattern = seq(

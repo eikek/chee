@@ -13,7 +13,14 @@ trait AbstractLs {
       case Right(cond) =>
         opts.directory match {
           case Some(dir) =>
-            val r = FileBackend.find(cond, dir, opts.recursive)
+            val r = dir match {
+              case Directory(d) =>
+                FileBackend.find(cond, d, opts.recursive)
+              case RegularFile(f) =>
+                Stream(LazyMap.fromFile(f).add(Ident.location -> f.parent.pathAsString))
+              case _ =>
+                Stream.empty[LazyMap]
+            }
             opts.indexed match {
               case Some(b) =>
                 val sqlite = new SqliteBackend(cfg.getIndexDb)

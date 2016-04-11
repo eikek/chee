@@ -40,7 +40,6 @@ object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
     case object FileNotFound extends Result
   }
 
-
   val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] {
     note("\nFind options:")
     addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
@@ -51,12 +50,12 @@ object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
     note("\nMktree options:")
     opt[Unit]('s', "symlink") action { (_, c) =>
       c.copy(action = Action.Symlink)
-    } text ("Symlink files into the target directory (the default).")
+    } textW ("Symlink files into the target directory (the default).")
 
     opt[Unit]('u', "relative-symlink") action { (_, c) =>
       c.copy(action = Action.RelativeSymlink)
-    } text ("Symlink files int the target directory using relative path\n" +
-      "        names.")
+    } textW ("Symlink files int the target directory using relative path" +
+      " names.")
 
     opt[Unit]('c', "copy") action { (_, c) =>
       c.copy(action = Action.Copy)
@@ -72,8 +71,8 @@ object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
     opt[File]("target") valueName("<directory>") action { (f, c) =>
       c.copy(target = f)
-    } text ("The target directory. If not specified the current working\n" +
-      "        directory is used.")
+    } textW ("The target directory. If not specified the current working" +
+      " directory is used.")
 
     note("")
     queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
