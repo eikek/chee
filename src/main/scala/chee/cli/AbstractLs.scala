@@ -5,7 +5,7 @@ import chee.properties._
 import chee.query._
 import chee.CheeConf.Implicits._
 
-trait AbstractLs { self: ScoptCommand =>
+trait AbstractLs {
   import AbstractLs._
 
   def find(cfg: Config, opts: LsOptions.Opts): Stream[LazyMap] = {

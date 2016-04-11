@@ -9,10 +9,11 @@ import chee.query._
 import chee.properties.MapGet._
 import chee.CheeConf.Implicits._
 
-object MkTree extends ScoptCommand with AbstractLs {
+object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
   case class Opts(
     lsOpts: LsOptions.Opts = LsOptions.Opts(),
+    cryptOpts: CryptOptions.Opts = CryptOptions.Opts(),
     overwrite: Boolean = false,
     action: Action = Action.Symlink,
     pattern: String = "",
@@ -40,9 +41,14 @@ object MkTree extends ScoptCommand with AbstractLs {
   }
 
 
-  val parser = new Parser with LsOptions[Opts] {
+  val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] {
+    note("\nFind options:")
     addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    note("\nDecrypt options:")
+    enable((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
+    addDecryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
 
+    note("\nMktree options:")
     opt[Unit]('s', "symlink") action { (_, c) =>
       c.copy(action = Action.Symlink)
     } text ("Symlink files into the target directory (the default).")
@@ -69,6 +75,7 @@ object MkTree extends ScoptCommand with AbstractLs {
     } text ("The target directory. If not specified the current working\n" +
       "        directory is used.")
 
+    note("")
     queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 
@@ -141,7 +148,7 @@ object MkTree extends ScoptCommand with AbstractLs {
     if (opts.lsOpts.query.isEmpty) {
       chee.UserError("You must specify a query. If you really want to select all files, use a query like `len>0'.")
     } else {
-      exec(cfg, opts, find(cfg, opts.lsOpts))
+      exec(cfg, opts, findDecrypt(cfg, opts.lsOpts, opts.cryptOpts))
     }
   }
 

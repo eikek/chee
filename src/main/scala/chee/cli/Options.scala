@@ -130,13 +130,7 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
   def cryptMethod(a: (C, Opts => Opts) => C = noAction) =
     opt[CryptMethod]("method") valueName("password|pubkey") action { (m, c) =>
       a(c, _.copy(cryptMethod = Some(m)))
-    } text ("The encryption method: either pubkey or password. Using public\n"+
-        "        key encryption requires a public key that must be specified in\n"+
-        "        the config file or via options. For password-based encryption\n"+
-        "        a passphrase must be specified (via config file or options).\n"+
-        "        If one method is specified, files encrypted with the other \n"+
-        "        method are not touched. If this option is not specified, both\n"+
-        "        methods are used.")
+    } text ("The encryption method: either pubkey or password.")
 
   def passPrompt(a: (C, Opts => Opts) => C = noAction) =
     opt[Unit]('W', "passprompt") action { (_, c) =>
