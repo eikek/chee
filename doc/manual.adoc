@@ -77,4 +77,6 @@ include::cmd-encrypt.adoc[]
 
 include::cmd-decrypt.adoc[]
 
+include::cmd-clean.adoc[]
+
 include::cmd-config.adoc[]

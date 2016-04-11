@@ -1,0 +1,17 @@
+=== clean
+
+The `clean` command removes temporary data.
+
+[subs="attributes,specialchars"]
+.Usage
+----------------------------------------------------------------------
+{usage-clean}
+----------------------------------------------------------------------
+
+Chee stores data in different places. When scaling images or creating
+thumbnails, these files are stored in a separate directory than other
+temporary data.
+
+Commands that decrypt files (like `view`) store the decrypted files in
+another separate directory. The `clean` command deletes these
+directories.
