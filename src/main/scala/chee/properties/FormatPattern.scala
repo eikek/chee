@@ -48,6 +48,7 @@ object FormatPatterns {
     raw(" "),
     fixedwidth(30, readable(Ident.location)),
     raw(" "),
+    cond(existsIdent(VirtualProperty.idents.encrypted, false), raw("🔒 "), empty),
     readable(Ident.filename),
     newline)
 

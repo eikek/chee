@@ -27,7 +27,9 @@ object Main extends LazyLogging {
     MkTree,
     Thumb,
     Scale,
-    ConfigCmd
+    ConfigCmd,
+    Encrypt,
+    Decrypt
   )
 
   def setupLogging(cfg: Config): Unit = {

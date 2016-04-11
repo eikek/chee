@@ -1,5 +1,6 @@
 package chee.query
 
+import chee.crypto.CheeCrypt
 import chee.properties._
 
 // todo: despite its name SqlBackend, some queries  are sqlite specific
@@ -26,16 +27,16 @@ object SqlBackend {
         includeEmpty = false),
       raw(")")).right
 
-  def updateRowStatement(table: String): MapGet[String] =
+  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path)): MapGet[String] =
     seq(
       raw("UPDATE "), raw(table), raw(" SET "),
       loop(
         id => seq(lookup('ident), raw(" = "), cond(existsIdent(id), quote(''', lookup(id)), raw("null"))),
         id => raw(", "),
-        MapGet.idents(false).map(_.filterNot(_ == Ident.added)),
+        columns.map(_.filterNot(_ == Ident.added).intersect(idents)),
         includeEmpty = true),
       raw(" WHERE "),
-      raw(Ident.path.name), raw(" = "), quote(''', lookup(Ident.path))).right
+      raw(where._1.name), raw(" = "), quote(''', lookup(where._2))).right
 
   def createTable(name: String): String = {
     val cols = idents.foldLeft(List[String]()){ (sql, id) =>
@@ -66,11 +67,16 @@ object SqlBackend {
   def count(table: String, c: Condition): String =
     s"SELECT COUNT(*) FROM $table WHERE ${whereClause(c)}"
 
-
+  private val pbc = CheeCrypt.passwordEncryptExtension
+  private val pkc = CheeCrypt.publicKeyEncryptExtension
+  private val encryptedExpr =
+    s"(case when substr(${Ident.path.name}, -4) = '.$pbc' then '$pbc' when substr(${Ident.path.name}, -4) = '.$pkc' then '$pkc' else null end)"
 
   private def columnSql(id: Ident, comp: Comp): String = id match {
     case VirtualProperty.idents.pixel =>
       s"(${Ident.width.name} * ${Ident.height.name})"
+    case VirtualProperty.idents.encrypted =>
+      encryptedExpr
     case Ident.added if comp == Comp.Like => "datetime(added/1000, 'unixepoch')"
     case Ident.lastModified if comp == Comp.Like => "datetime(lastmodified/1000, 'unixepoch')"
     case Ident.created if comp != Comp.Like => "datetime(created)"
@@ -103,7 +109,7 @@ object SqlBackend {
         case c: IntCompare => parse(c, p.prop.value, p.comp, p.prop.ident)
         case c: LongCompare => parse(c, p.prop.value, p.comp, p.prop.ident)
         case LocalDateTimeValue => localDateTimeValue(p.prop.value)
-        case c => quote(p.prop.value)
+        case _ => quote(p.prop.value)
       }
     }
 
@@ -117,6 +123,13 @@ object SqlBackend {
   }
 
   implicit class ExistsSql(e: Exists) {
-    def toSql: String = s"${e.ident.name} is not null"
+    def toSql: String = e.ident match {
+      case VirtualProperty.idents.pixel =>
+        s"(${Ident.width.name} is not null and ${Ident.height.name} is not null)"
+      case VirtualProperty.idents.encrypted =>
+        s"$encryptedExpr is not null"
+      case _ =>
+        s"${e.ident.name} is not null"
+    }
   }
 }

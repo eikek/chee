@@ -167,6 +167,8 @@ object DocPlugin extends AutoPlugin {
       Seq("config"),
       Seq("thumb"),
       Seq("scale"),
+      Seq("encrypt"),
+      Seq("decrypt"),
       Seq("collection", "edit"),
       Seq("collection", "show"),
       Seq("location", "info"),

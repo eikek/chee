@@ -1,5 +1,6 @@
 package chee
 
+import chee.crypto.Algorithm
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
 import better.files._
@@ -15,6 +16,12 @@ object CheeConf {
 
   private val debug = {
     System.getProperty("chee.debugConfig", "false") == "true"
+  }
+
+  sealed trait CryptMethod
+  object CryptMethod {
+    case object Pubkey extends CryptMethod
+    case object Password extends CryptMethod
   }
 
   object Implicits {
@@ -70,6 +77,22 @@ object CheeConf {
           case "bspline" => ScaleMethod.BSpline
           case "bilinear" => ScaleMethod.Bilinear
           case v => UserError(s"No scale method: `$v'. Check your config at key `$key'.")
+        }
+      }
+
+      def getCryptMethod: CryptMethod = {
+        cfg.getString("chee.crypt.default-encryption").toLowerCase() match {
+          case "pubkey" => CryptMethod.Pubkey
+          case "password" => CryptMethod.Password
+          case v => UserError(s"Invalid config value for `chee.crypt.default.encryption': `${v}'")
+        }
+      }
+
+      def getAlgorithm: Algorithm = {
+        val v = cfg.getString("chee.crypt.algorithm")
+        Algorithm.find(v) match {
+          case Some(a) => a
+          case None => UserError(s"Invalid config value for `chee.crypt.algorithm': `${v}")
         }
       }
     }

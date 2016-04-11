@@ -4,7 +4,33 @@ import better.files._
 
 package object cli {
 
+  import chee.CheeConf.CryptMethod
+  import com.typesafe.config.Config
   import better.files.File.LinkOptions
+
+  def userError(s: String) = chee.UserError(s)
+
+  def promptPassphrase(prompt: String = "Passphrase: "): Array[Char] = {
+    def equals(a1: Array[Char], a2: Array[Char]): Boolean =
+      a1.zip(a2).foldLeft(true) { case (r, (e1, e2)) => r && (e1 == e2) }
+
+    print(prompt)
+    val p1 = System.console().readPassword()
+    print("Retype: ")
+    val p2 = System.console().readPassword()
+    if (p1.nonEmpty && equals(p1, p2)) p1
+    else userError("Passphrases did not match or empty passphrase specified!")
+  }
+
+  def findPassphrase(cfg: Config, passPrompt: Boolean, passphrase: Option[Array[Char]], prompt: String = "Passphrase: "): Array[Char] = {
+    val p = if (passPrompt) {
+      promptPassphrase(prompt)
+    } else passphrase.getOrElse {
+      cfg.getString("chee.crypt.default-passphrase").toCharArray
+    }
+    if (p.isEmpty) promptPassphrase(prompt)
+    else p
+  }
 
   def wrapLines(len: Int)(text: String): String = {
     def index(idx: (String, Int) => Int): String => Int = s =>
@@ -36,13 +62,18 @@ package object cli {
   private val numberRegex = """([0-9]+)""".r
   private val sizeRegex = """([0-9]+)x([0-9]+)""".r
 
-  def userError(s: String) = chee.UserError(s)
-
   implicit val _readWitdhxHeight: scopt.Read[Size] =
     scopt.Read.reads(str => str match {
       case numberRegex(n) => Size(n.toInt)
       case sizeRegex(w, h) => Size(w.toInt, h.toInt)
       case _ => UserError(s"Invalid size string. Either a single number or `<width>x<height>' is allowed.")
+    })
+
+  implicit val _readCryptMethod: scopt.Read[CryptMethod] =
+    scopt.Read.reads(v => v.toLowerCase() match {
+      case "password" => CryptMethod.Password
+      case "pubkey" => CryptMethod.Pubkey
+      case _ => userError(s"Allowed are: password or pubkey")
     })
 
   object Directory {

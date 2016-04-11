@@ -43,7 +43,7 @@ virtual properties provide a way to have predefined functions. See the
 chapters about xref:_query[queries] and xref:_format_patterns[format
 patterns] for more information.
 
-Currently there is one such property:
+Currently there are the following virtual properties:
 
 ===== pixel
 
@@ -51,3 +51,11 @@ It is the product of `width` and `height` and allows to query images
 based on their pixel size.
 
 For instance, find photos with more than 5 mega pixel: `pixel>5m`.
+
+
+===== encrypted
+
+This property is present if the file is encrypted. It contains either
+`pbc` or `pkc` indicating that the file is password encrypted (the
+former) or public key encrypted (the latter). Files that are not
+encrypted don't have a value for this property.

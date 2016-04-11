@@ -9,7 +9,16 @@ import chee.query._
 import chee.properties.MapGet._
 import chee.CheeConf.Implicits._
 
-object MkTree extends AbstractLs {
+object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
+
+  case class Opts(
+    lsOpts: LsOptions.Opts = LsOptions.Opts(),
+    cryptOpts: CryptOptions.Opts = CryptOptions.Opts(),
+    overwrite: Boolean = false,
+    action: Action = Action.Symlink,
+    pattern: String = "",
+    target: File = file"."
+  )
 
   type T = Opts
 
@@ -31,41 +40,42 @@ object MkTree extends AbstractLs {
     case object FileNotFound extends Result
   }
 
-  case class Opts(
-    lsOpts: LsOpts = LsOpts(),
-    overwrite: Boolean = false,
-    action: Action = Action.Symlink,
-    pattern: String = "",
-    target: File = file"."
-  ) extends CommandOpts
+  val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] {
+    note("\nFind options:")
+    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    note("\nDecrypt options:")
+    enable((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
+    addDecryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
 
-  val parser = new LsOptionParser {
-    def copyLsOpts(o: Opts, lso: LsOpts) = o.copy(lsOpts = lso)
-    def moreOptions(): Unit = {
-      opt[Unit]('s', "symlink") action { (_, c) =>
-        c.copy(action = Action.Symlink)
-      } text ("Symlink files into the target directory (the default).")
+    note("\nMktree options:")
+    opt[Unit]('s', "symlink") action { (_, c) =>
+      c.copy(action = Action.Symlink)
+    } textW ("Symlink files into the target directory (the default).")
 
-      opt[Unit]('u', "relative-symlink") action { (_, c) =>
-        c.copy(action = Action.RelativeSymlink)
-      } textW ("Symlink files int the target directory using relative path names.")
+    opt[Unit]('u', "relative-symlink") action { (_, c) =>
+      c.copy(action = Action.RelativeSymlink)
+    } textW ("Symlink files int the target directory using relative path" +
+      " names.")
 
-      opt[Unit]('c', "copy") action { (_, c) =>
-        c.copy(action = Action.Copy)
-      } text ("Copy files into the target directory.")
+    opt[Unit]('c', "copy") action { (_, c) =>
+      c.copy(action = Action.Copy)
+    } text ("Copy files into the target directory.")
 
-      opt[Unit]("overwrite") action { (_, c) =>
-        c.copy(overwrite = true)
-      } text ("Whether to overwrite existing files.")
+    opt[Unit]("overwrite") action { (_, c) =>
+      c.copy(overwrite = true)
+    } text ("Whether to overwrite existing files.")
 
-      opt[String]('p', "pattern") action { (p, c) =>
-        c.copy(pattern = p)
-      } text ("The pattern used to create the target path.")
+    opt[String]('p', "pattern") action { (p, c) =>
+      c.copy(pattern = p)
+    } text ("The pattern used to create the target path.")
 
-      opt[File]("target") valueName("<directory>") action { (f, c) =>
-        c.copy(target = f)
-      } textW ("The target directory. If not specified the current working directory is used.")
-    }
+    opt[File]("target") valueName("<directory>") action { (f, c) =>
+      c.copy(target = f)
+    } textW ("The target directory. If not specified the current working" +
+      " directory is used.")
+
+    note("")
+    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 
   val defaultPattern: Pattern = {
@@ -78,14 +88,6 @@ object MkTree extends AbstractLs {
       lookupAlt(Seq(Ident.created, Ident.lastModified), Some("dd-HH-mm")),
       raw("_"),
       lookup(Ident.filename))
-  }
-
-  override def exec(cfg: Config, opts: T): Unit = {
-    if (opts.lsOpts.query.isEmpty) {
-      chee.UserError("You must specify a query. If you really want to select all files, use a query like `len>0'.")
-    } else {
-      super.exec(cfg, opts)
-    }
   }
 
   def makeAction(overwrite: Boolean, target: File, a: (File, File) => Unit): MapGet[Result] =
@@ -139,6 +141,14 @@ object MkTree extends AbstractLs {
       }
     }
     progress andThen logDone
+  }
+
+  def exec(cfg: Config, opts: Opts): Unit = {
+    if (opts.lsOpts.query.isEmpty) {
+      chee.UserError("You must specify a query. If you really want to select all files, use a query like `len>0'.")
+    } else {
+      exec(cfg, opts, findDecrypt(cfg, opts.lsOpts, opts.cryptOpts))
+    }
   }
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {

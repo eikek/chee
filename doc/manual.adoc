@@ -20,6 +20,9 @@ Some features are:
 - manages collections (created from queries and can be used in
   queries)
 - copy/symlink images using a custom pattern
+- encrypt files using a password or a public key. Encryption is done
+  via OpenPGP, so the data remains accessible using other (free)
+  tools.
 
 It is a simple program: the metadata of image (and other) files are
 put in a database which can then be queried more conveniently. But
@@ -37,6 +40,8 @@ include::about-query.adoc[]
 include::about-collection.adoc[]
 
 include::about-format.adoc[]
+
+include::about-encryption.adoc[]
 
 include::about-config.adoc[]
 
@@ -58,5 +63,9 @@ include::cmd-mktree.adoc[]
 include::cmd-thumb.adoc[]
 
 include::cmd-scale.adoc[]
+
+include::cmd-encrypt.adoc[]
+
+include::cmd-decrypt.adoc[]
 
 include::cmd-config.adoc[]

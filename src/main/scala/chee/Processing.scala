@@ -1,5 +1,8 @@
 package chee
 
+import chee.crypto.{ Algorithm, CheeCrypt, FileProcessor }
+import chee.query.SqliteBackend
+import org.bouncycastle.openpgp.{ PGPPrivateKey, PGPPublicKey }
 import scala.util.Try
 import chee.properties._
 import chee.properties.MapGet._
@@ -8,6 +11,9 @@ import com.sksamuel.scrimage.nio._
 import better.files._
 
 object Processing {
+
+  // -- image procesing ----------------------------------------------------------------------------
+
   private val image: MapGet[Option[Image]] = existingPath.map {
     case Some(f) => Try(Image.fromPath(f.path)).toOption
     case _ => None
@@ -88,4 +94,93 @@ object Processing {
       case _ =>
         unit(false)
     }
+
+
+  // -- encryption ----------------------------------------------------------------------------
+
+  val originPath = originMapping(Ident.path)
+
+  private val originFile: MapGet[File] =
+    valueForce(originPath).map(File(_))
+
+  private def originPathIndexed(sqlite: SqliteBackend): MapGet[Boolean] =
+    valueForce(originPath).map(sqlite.pathExists).map(_.get)
+
+  private def cryptFile(outFile: MapGet[File], cf: (File, File) => Unit, skip: MapGet[Boolean]) =
+    pair(existingPath.whenNot(skip), outFile).flatMap {
+      case (Some(Some(in)), out) =>
+        if (!out.exists) cf(in, out)
+        modify { m =>
+          m.add(originPath -> in.pathAsString)
+           .add(Ident.path -> out.pathAsString)
+        } map (_ => true)
+      case _ =>
+        unit(false)
+    }
+
+  /** Encrypts the input file to `outFile' and updates the `path'
+    * property to the new encrypted file. The original path property
+    * is saved to `origin-path'. */
+  def encryptPubkey(key: PGPPublicKey, outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.encryptPubkey(_, key, _), CheeCrypt.isEncrypted)
+
+  /** Encrypts the input file to `outFile' and updates the `path'
+    * property to the new encrypted file. The original path property
+    * is saved to `origin-path'. */
+  def encryptPassword(passphrase: Array[Char], algo: Algorithm, outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.encryptSymmetric(_, _, passphrase, algo), CheeCrypt.isEncrypted)
+
+  /** Decrypts the input file to `outFile' and updates the `path'
+    * property to the new decrypted file. The original path property
+    * is saved to `origin-path'. */
+  def decryptPubkey(keyFile: File, pass: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.decryptPubkey(_, keyFile, pass, _), CheeCrypt.isNotEncrypted)
+
+  /** Decrypts the input file to `outFile' and updates the `path'
+    * property to the new decrypted file. The original path property
+    * is saved to `origin-path'. */
+  def decryptPassword(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
+    cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), CheeCrypt.isNotEncrypted)
+
+  case class DecryptSecret(keyFile: File, keyPass: Array[Char])
+
+  /** Decrypts the file either with the given password or secret key. If
+    * one is not given, those files are skipped. If both are not
+    * given, an exception is thrown. */
+  def decryptFile(pubSecret: Option[DecryptSecret], passphrase: Option[Array[Char]], outFile: MapGet[File]): MapGet[Boolean] = {
+    import CheeCrypt._
+    if (pubSecret.isEmpty && passphrase.isEmpty) {
+      throw UserError("Either a secret key or passphrase muste be given!")
+    }
+    value(VirtualProperty.idents.encrypted).flatMap {
+      case Some(`passwordEncryptExtension`) if passphrase.isDefined =>
+        decryptPassword(passphrase.get, outFile)
+      case Some(`publicKeyEncryptExtension`) if pubSecret.isDefined =>
+        val s = pubSecret.get
+        decryptPubkey(s.keyFile, s.keyPass, outFile)
+      case _ => unit(false)
+    }
+  }
+
+  /** Postprocess encryption/decryption.
+    *
+    * Deletes the old file. If the old file is indexed, its path
+    * property is updated to reflect the new existing file. */
+  def cryptInplacePostProcess(sqlite: SqliteBackend): MapGet[Boolean] =
+    pair(pair(path, originFile), originPathIndexed(sqlite)).flatMap {
+      case ((newFile, oldFile), indexed) if newFile.exists =>
+        if (indexed) {
+          modify { m =>
+            val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), Ident.path -> originPath).get
+            if (success && oldFile.exists) oldFile.delete()
+            next.add(originPath -> oldFile.pathAsString)
+          } map (_ => true)
+        } else {
+          if (oldFile.exists) oldFile.delete()
+          unit(true)
+        }
+      case _ =>
+        unit(false)
+    }
+
 }

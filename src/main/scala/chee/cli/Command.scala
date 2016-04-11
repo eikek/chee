@@ -53,6 +53,8 @@ trait ScoptCommand extends Command with LazyLogging {
   def defaults: T
   def exec(cfg: Config, opts: T): Unit
 
+  abstract class Parser extends CheeOptionParser[T](name)
+
   final def exec(cfg: Config, args: Array[String]): Unit =
     parser.parse(args, defaults) match {
       case Some(t) =>

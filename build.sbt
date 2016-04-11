@@ -26,6 +26,7 @@ object TestInfo {
   val baseDir = file"${baseDirectory.value}"
   val targetDir = file"${(target in Test).value}"
   val resourceDir = file"${(resourceDirectory in Test).value}"
+  val gnupgDir = resourceDir / "gnupg"
   val images: List[File] =
     ${IO.listFiles((resourceDirectory in Test).value / "images").map( f => "resourceDir / \"images\" / \"" + f.getName + "\"").toList}
   val sampleDb = resourceDir / "sample.db"
@@ -50,5 +51,6 @@ libraryDependencies ++= Seq(
   "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.0",
   "ch.qos.logback"              % "logback-classic"          % "1.1.3",
   "org.xerial"                  % "sqlite-jdbc"              % "3.8.11.2",
-  "com.typesafe"                % "config"                   % "1.3.0"
+  "com.typesafe"                % "config"                   % "1.3.0",
+  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.54"
 )
