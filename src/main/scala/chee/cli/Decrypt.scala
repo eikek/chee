@@ -1,11 +1,10 @@
 package chee.cli
 
 import better.files._
-import chee.crypto.{ Algorithm, CheeCrypt, KeyFind }
+import chee.crypto.{ Algorithm, CheeCrypt, CryptMethod, KeyFind }
 import chee.query.{ Progress, SqliteBackend }
 import com.typesafe.config.Config
 import chee.CheeConf.Implicits._
-import chee.CheeConf.CryptMethod
 import chee.Size
 import chee.properties._
 import chee.properties.MapGet._

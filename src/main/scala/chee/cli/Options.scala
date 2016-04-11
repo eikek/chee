@@ -1,7 +1,7 @@
 package chee.cli
 
 import better.files._
-import chee.CheeConf.CryptMethod
+import chee.crypto.CryptMethod
 
 // A collection of cli options that are shared among some
 // commands. Parsers can mix in the traits and add desired options.

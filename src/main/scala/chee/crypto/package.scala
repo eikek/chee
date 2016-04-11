@@ -30,6 +30,13 @@ package crypto {
 
     def find(algo: String): Option[Algorithm] = all.get(algo.toUpperCase)
   }
+
+  sealed trait CryptMethod
+  object CryptMethod {
+    case object Pubkey extends CryptMethod
+    case object Password extends CryptMethod
+  }
+
 }
 
 package object crypto {

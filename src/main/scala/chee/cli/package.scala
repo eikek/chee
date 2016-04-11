@@ -4,7 +4,7 @@ import better.files._
 
 package object cli {
 
-  import chee.CheeConf.CryptMethod
+  import chee.crypto.CryptMethod
   import com.typesafe.config.Config
   import better.files.File.LinkOptions
 

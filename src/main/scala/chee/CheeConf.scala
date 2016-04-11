@@ -1,6 +1,6 @@
 package chee
 
-import chee.crypto.Algorithm
+import chee.crypto.{ Algorithm, CryptMethod }
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
 import better.files._
@@ -16,12 +16,6 @@ object CheeConf {
 
   private val debug = {
     System.getProperty("chee.debugConfig", "false") == "true"
-  }
-
-  sealed trait CryptMethod
-  object CryptMethod {
-    case object Pubkey extends CryptMethod
-    case object Password extends CryptMethod
   }
 
   object Implicits {
