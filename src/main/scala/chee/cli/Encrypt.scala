@@ -15,10 +15,14 @@ object Encrypt extends ScoptCommand with AbstractLs with CryptCommand {
   val name = "encrypt"
 
   val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] with ProcessingOptions[Opts] {
+    note("\nFind options:")
     addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+
+    note("\nEncryption options:")
     concurrent() action { (_, c) => c.copy(parallel = true) }
     addEncryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
 
+    note("")
     queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 

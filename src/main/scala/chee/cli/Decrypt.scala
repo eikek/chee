@@ -16,23 +16,28 @@ object Decrypt extends ScoptCommand with AbstractLs with CryptCommand {
   val name = "decrypt"
 
   val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] with ProcessingOptions[Opts] {
+    note("\nFind options:")
     addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+
+    note("\nDecryption options:")
     concurrent() action { (_, c) => c.copy(parallel = true) }
     addDecryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
 
+    note("")
     queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
   }
 
   def decryptFile(cfg: Config, opts: CryptOptions.Opts, out: MapGet[File]): MapGet[Boolean] = {
-    val decryptSecret = opts.cryptMethod match {
-      case Some(CryptMethod.Password) => None
+    val method = opts.cryptMethod.getOrElse(cfg.getCryptMethod)
+    val decryptSecret = method match {
+      case CryptMethod.Password => None
       case _ =>
         val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.secret-key-file"))
         val pass = opts.secretKeyPass.getOrElse(promptPassphrase("Passphrase for private key: "))
         Some(Processing.DecryptSecret(keyFile, pass))
     }
-    val passphrase = opts.cryptMethod match {
-      case Some(CryptMethod.Pubkey) => None
+    val passphrase = method match {
+      case CryptMethod.Pubkey => None
       case _ => Some(findPassphrase(cfg, opts.passPrompt, opts.passphrase, "Password for decryption: "))
     }
     Processing.decryptFile(decryptSecret, passphrase, out)
