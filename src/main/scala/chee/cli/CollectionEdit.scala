@@ -21,7 +21,7 @@ object CollectionEdit extends ScoptCommand {
 
   val defaults = Opts()
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     noteW("\nOptions are optional, if not specified an editor opens to edit a "+
       "collection or create a new one. If any option is given, the value is "+
       "set non-interactively.\n")

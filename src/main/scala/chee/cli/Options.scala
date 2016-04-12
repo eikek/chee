@@ -52,12 +52,18 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
     } textW ("The query string. See the manual page about queries for" +
       " more information.")
 
-  def addLsOptions(a: (C, Opts => Opts) => C): Unit = {
+  def addLsOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nFind options:")): Unit = {
+    title.foreach(noteW)
     file(a)
     recursive(a)
     indexed(a)
     all(a)
     first(a)
+  }
+
+  def addQuery(a: (C, Opts => Opts) => C, title: Option[String] = Some("")): Unit = {
+    title.foreach(noteW)
+    queryArg(a)
   }
 }
 
@@ -101,7 +107,8 @@ trait ProcessingOptions[C] extends Options { self: CheeOptionParser[C] =>
       " evaluated with the properties of the original file with"+
       " `width' and `height' replaced by the desired target values.")
 
-  def addProcessingOptions(a: (C, Opts => Opts) => C) = {
+  def addProcessingOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nProcessing options")) = {
+    title.foreach(noteW)
     concurrent(a)
     pattern(a)
     outDir(a)
@@ -142,7 +149,9 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
   def keyFile(what: String, a: (C, Opts => Opts) => C = noAction) =
     opt[File]("key-file") valueName("<file>") action { (f, c) =>
       a(c, _.copy(keyFile = Some(f)))
-    } textW (s"The file containing the $what." + (if (what.startsWith("public")) " A key-id must also be specified." else "") +" The openpgp formats (ascii and binary) can be used.")
+    } textW (s"The file containing the $what." +
+      (if (what.startsWith("public")) " A key-id must also be specified." else "") +
+      " The openpgp formats (ascii and binary) can be used.")
 
   def keyId(a: (C, Opts => Opts) => C = noAction) =
     opt[String]("key-id") action { (k, c) =>
@@ -162,7 +171,8 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
     } textW ("Specify a passphrase to use for password-based encryption. The"+
       " `-W' option overrides this.")
 
-  def addEncryptOptions(a: (C, Opts => Opts) => C): Unit = {
+  def addEncryptOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nEncrypt options:")): Unit = {
+    title.foreach(noteW)
     cryptMethod(a)
     passPrompt(a)
     keyFile("public key", a)
@@ -170,7 +180,11 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
     passphrase(a)
   }
 
-  def addDecryptOptions(a: (C, Opts => Opts) => C): Unit = {
+  def addDecryptOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nDecrypt options:"), enableOpt: Boolean = false): Unit = {
+    title.foreach(noteW)
+    if (enableOpt) {
+      enable(a)
+    }
     cryptMethod(a)
     passPrompt(a)
     keyFile("secret key", a)

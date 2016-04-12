@@ -25,7 +25,7 @@ object Help extends ScoptCommand {
   val topics =  CheeDocInfo.docFiles.filter(_.startsWith("about-"))
     .map(_.replaceAll("\\.adoc", ""))
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[Unit]("html") action { (_, c) =>
       c.copy(format = "html")
     } text ("Show the manual page in html (opens the browser).")

@@ -1,8 +1,9 @@
 package chee.cli
 
-import com.typesafe.config.Config
-import chee.properties.Patterns._
 import chee.CheeConf.Implicits._
+import chee.cli.LsOptions.{Opts => LsOpts}
+import chee.properties.Patterns._
+import com.typesafe.config.Config
 
 object Find extends ScoptCommand with AbstractLs {
 
@@ -13,16 +14,19 @@ object Find extends ScoptCommand with AbstractLs {
 
   case class Opts(
     lsOpts: LsOptions.Opts = LsOptions.Opts(),
-    pattern: Option[String] = None)
+    pattern: Option[String] = None) {
+    def updateLsOpts(f: LsOpts =>  LsOpts) =
+      copy(lsOpts = f(lsOpts))
+  }
 
   val parser = new Parser with LsOptions[Opts] {
-    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    addLsOptions(_ updateLsOpts _, title = None)
 
     opt[String]('p', "pattern") optional() action { (p, c) =>
       c.copy(pattern = Some(p))
     } text ("The format pattern.")
 
-    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    addQuery(_ updateLsOpts _)
   }
 
   def exec(cfg: Config, opts: Opts): Unit = {

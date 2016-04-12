@@ -18,7 +18,7 @@ object CollectionShow extends ScoptCommand {
 
   val defaults = Opts()
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[String]('p', "pattern") optional() action { (p, c) =>
       c.copy(pattern = p)
     } text ("The format pattern.")

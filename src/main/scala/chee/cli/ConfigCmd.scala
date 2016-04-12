@@ -15,7 +15,7 @@ object ConfigCmd extends ScoptCommand {
 
   val name = "config"
 
-  val parser = new CheeOptionParser[Opts](name: String) {
+  val parser = new Parser {
     opt[Unit]("origin") action { (_, c) =>
       c.copy(render = c.render.setOriginComments(true))
     } text ("Print comments showing the origin of the value.")

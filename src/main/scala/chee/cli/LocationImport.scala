@@ -26,7 +26,7 @@ object LocationImport extends ScoptCommand with LockSupport {
 
   val name = "import"
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       c.copy(recursive = true)
     } text ("Find files recursively.")

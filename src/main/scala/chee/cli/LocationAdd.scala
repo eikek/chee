@@ -24,7 +24,7 @@ object LocationAdd extends ScoptCommand with LockSupport {
     query: String = "",
     dirs: Seq[File] = Seq.empty)
 
-  val parser = new CheeOptionParser[Opts]("add") {
+  val parser = new Parser {
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       c.copy(recursive = true)
     } text ("Find files recursively.")

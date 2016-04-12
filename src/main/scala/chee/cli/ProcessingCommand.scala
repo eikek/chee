@@ -1,17 +1,34 @@
 package chee.cli
 
 import better.files._
-import com.typesafe.config.Config
-import chee.Size
+import chee.CheeConf.Implicits._
+import chee.Processing
+import chee.cli.CryptOptions.{Opts => CryptOpts}
+import chee.cli.LsOptions.{Opts => LsOpts}
+import chee.cli.ProcessingOptions.{Opts => ProcOpts}
 import chee.properties._
 import chee.properties.Patterns._
 import chee.query._
-import chee.Processing
-import chee.CheeConf.Implicits._
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-trait ProcessingCommand {
-  self: ScoptCommand =>
+trait ProcessingCommand extends ScoptCommand {
+
+  trait ProcessingOpts {
+    def updateCryptOpts(f: CryptOpts => CryptOpts): T
+    def updateLsOpts(f: LsOpts =>  LsOpts): T
+    def updateProcOpts(f: ProcOpts => ProcOpts): T
+  }
+
+  type T <: ProcessingOpts
+
+  abstract class ProcessingParser extends Parser with LsOptions[T] with CryptOptions[T] with ProcessingOptions[T] {
+    def addDefaultOptions(): Unit = {
+      addLsOptions(_ updateLsOpts _)
+      addDecryptOptions(_ updateCryptOpts _, enableOpt = true)
+      addProcessingOptions(_ updateProcOpts _)
+    }
+  }
 
   val progress = Progress.seq[Unit, Int](
     Progress.after { n => n + 1},

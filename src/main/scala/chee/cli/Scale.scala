@@ -1,35 +1,38 @@
 package chee.cli
 
-import com.typesafe.config.Config
 import chee.CheeConf.Implicits._
-import chee.Size
-import chee.properties._
 import chee.Processing
+import chee.cli.CryptOptions.{Opts => CryptOpts}
+import chee.cli.LsOptions.{Opts => LsOpts}
+import chee.cli.ProcessingOptions.{Opts => ProcOpts}
+import chee.properties._
+import com.typesafe.config.Config
 
 object Scale extends ScoptCommand with AbstractLs with TransparentDecrypt with ProcessingCommand {
 
   val name = "scale"
 
   case class Opts(
-    lsOpts: LsOptions.Opts = LsOptions.Opts(),
-    cryptOpts: CryptOptions.Opts = CryptOptions.Opts(),
-    procOpts: ProcessingOptions.Opts = ProcessingOptions.Opts(),
+    lsOpts: LsOpts = LsOpts(),
+    cryptOpts: CryptOpts = CryptOpts(),
+    procOpts: ProcOpts = ProcOpts(),
     factor: Option[Double] = None,
     maxLen: Option[Int] = None
-  )
+  ) extends ProcessingOpts {
+    def updateCryptOpts(f: CryptOpts => CryptOpts) =
+      copy(cryptOpts = f(cryptOpts))
+    def updateLsOpts(f: LsOpts =>  LsOpts) =
+      copy(lsOpts = f(lsOpts))
+    def updateProcOpts(f: ProcOpts => ProcOpts) =
+      copy(procOpts = f(procOpts))
+  }
 
   type T = Opts
 
   val defaults = Opts()
 
-  val parser = new Parser with LsOptions[Opts] with CryptOptions[Opts] with ProcessingOptions[Opts] {
-    note("\nFind options:")
-    addLsOptions((c, f) => c.copy(lsOpts = f(c.lsOpts)))
-    note("\nDecrypt options:")
-    enable((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
-    addDecryptOptions((c, f) => c.copy(cryptOpts = f(c.cryptOpts)))
-    note("\nProcessing options:")
-    addProcessingOptions((c, f) => c.copy(procOpts = f(c.procOpts)))
+  val parser = new ProcessingParser {
+    addDefaultOptions()
 
     opt[Double]('m', "multiply") action { (m, c) =>
       c.copy(factor = Some(m))
@@ -39,8 +42,7 @@ object Scale extends ScoptCommand with AbstractLs with TransparentDecrypt with P
       c.copy(maxLen = Some(n))
     } textW ("Scale such that the longest side of the image is not more than `maxlen'.")
 
-    note("")
-    queryArg((c, f) => c.copy(lsOpts = f(c.lsOpts)))
+    addQuery(_ updateLsOpts _)
 
     checkConfig { opts =>
       (opts.factor, opts.maxLen) match {

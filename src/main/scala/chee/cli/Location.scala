@@ -76,7 +76,7 @@ object LocationDelete extends ScoptCommand with LockSupport {
     all: Boolean = false,
     dirs: Seq[File] = Seq.empty)
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[Unit]("all") optional() action { (_, c) =>
       c.copy(all = true)
     } text("Remove all locations.")

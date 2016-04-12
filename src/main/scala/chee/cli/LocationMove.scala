@@ -21,7 +21,7 @@ object LocationMove extends ScoptCommand with LockSupport {
     src: File = file"",
     target: File = file"")
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[Unit]("index") optional() action { (_, c) =>
       c.copy(indexOnly = true)
     } text ("Only update the index but don't move the directory.")

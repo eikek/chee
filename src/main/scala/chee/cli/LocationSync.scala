@@ -24,7 +24,7 @@ object LocationSync extends ScoptCommand with LockSupport {
     all: Boolean = false,
     dirs: Seq[File] = Seq.empty)
 
-  val parser = new CheeOptionParser[Opts](name) {
+  val parser = new Parser {
     opt[Unit]("reindex") optional() action { (_, c) =>
       c.copy(reindex = true)
     } text ("Drop the index and read in registered locations again.")
