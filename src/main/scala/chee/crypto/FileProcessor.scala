@@ -1,39 +1,11 @@
 package chee.crypto
 
-import better.files._
-import java.io.{ BufferedOutputStream, FileOutputStream }
-
 import java.security.SecureRandom
-import java.security.Security
 
-import org.bouncycastle.bcpg.ArmoredOutputStream
-import org.bouncycastle.bcpg.CompressionAlgorithmTags
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder
-import org.bouncycastle.openpgp.{ PGPCompressedData, PGPPublicKeyEncryptedData }
-import org.bouncycastle.openpgp.PGPPrivateKey;
-import org.bouncycastle.openpgp.PGPPublicKey;
-import org.bouncycastle.openpgp.PGPPublicKeyRing;
-import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
-import org.bouncycastle.openpgp.PGPSecretKey;
-import org.bouncycastle.openpgp.PGPSecretKeyRing;
-import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
-import org.bouncycastle.openpgp.PGPEncryptedData
-import org.bouncycastle.openpgp.PGPEncryptedDataGenerator
-import org.bouncycastle.openpgp.PGPEncryptedDataList
-import org.bouncycastle.openpgp.PGPException
-import org.bouncycastle.openpgp.PGPLiteralData
-import org.bouncycastle.openpgp.PGPPBEEncryptedData
-import org.bouncycastle.openpgp.PGPUtil
+import better.files._
+import org.bouncycastle.openpgp.{PGPUtil, PGPSecretKey, PGPPublicKey, PGPPrivateKey, PGPPBEEncryptedData, PGPLiteralData, PGPEncryptedDataList, PGPEncryptedDataGenerator, PGPEncryptedData, PGPCompressedData, PGPPublicKeyEncryptedData}
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory
-import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder
-import org.bouncycastle.openpgp.operator.jcajce.JcePBEDataDecryptorFactoryBuilder
-import org.bouncycastle.openpgp.operator.jcajce.JcePBEKeyEncryptionMethodGenerator
-import org.bouncycastle.openpgp.operator.jcajce.JcePGPDataEncryptorBuilder
-import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
-import org.bouncycastle.openpgp.operator.jcajce.JcePGPDataEncryptorBuilder;
-import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder;
-import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyKeyEncryptionMethodGenerator;
+import org.bouncycastle.openpgp.operator.jcajce.{JcePublicKeyKeyEncryptionMethodGenerator, JcePublicKeyDataDecryptorFactoryBuilder, JcePGPDataEncryptorBuilder, JcePBEKeyEncryptionMethodGenerator, JcePBEDataDecryptorFactoryBuilder, JcaPGPDigestCalculatorProviderBuilder}
 import org.bouncycastle.util.io.Streams
 
 object FileProcessor {
