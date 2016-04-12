@@ -1,6 +1,9 @@
 #+title: chee
 
-[[https://travis-ci.org/eikek/chee.svg]] 
+#+begin_html
+<a href="https://travis-ci.org/eikek/chee"><img src="https://travis-ci.org/eikek/chee.svg"></a>
+<a href="https://www.codacy.com/app/eike-kettner/chee"><img src="https://api.codacy.com/project/badge/grade/6a1e22a0a6a34b8180d337ae9872a28e"></a>
+#+end_html
 
 Chee is a command line tool for managing photos; also called “image
 organizer”.
