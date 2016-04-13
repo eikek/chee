@@ -23,11 +23,25 @@ trait Command extends CommandTree {
 case class HubCommand(name: String, children: List[CommandTree]) extends CommandTree
 
 object Command {
+  private def commandList(tree: List[CommandTree]): List[String] = {
+    @scala.annotation.tailrec
+    def loop(stack: List[(String, CommandTree)], result: List[String] = Nil): List[String] =
+      stack match {
+        case Nil =>
+          result.reverse
+        case (name, h: HubCommand) :: cs =>
+          loop(h.children.sortBy(_.name).map(c => (s"${h.name} ${c.name}" -> c)) ::: cs, result)
+        case (name, _) :: cs =>
+          loop(cs, name :: result)
+      }
+    loop(tree.sortBy(_.name).map(t => (t.name -> t)))
+  }
+
   def find(names: Array[String], cmds: List[CommandTree]): Either[String, (Array[String], Command)] = {
     names.headOption match {
       case None =>
         Left("A command is required! "
-          + s"""Possible commands are: ${cmds.map(_.name).mkString(", ")}""")
+          + s"""Possible commands are: ${commandList(cmds).mkString(", ")}""")
       case Some(name) =>
         cmds.filter(_.name.startsWith(name)) match {
           case (cmd: Command) :: Nil =>
@@ -36,10 +50,10 @@ object Command {
             find(names.tail, subs)
           case Nil =>
             Left(s"Command not found `$name'. "
-              + s"""Possible commands are: ${cmds.map(_.name).mkString(", ")}""")
+              + s"""Possible commands are: ${commandList(cmds).mkString(", ")}""")
           case candidates =>
             Left(s"Ambiguous name `${name}'. " +
-              s"""Possible candidates are: ${candidates.map(_.name).mkString(", ")}.""")
+              s"""Possible candidates are: ${commandList(candidates).mkString(", ")}.""")
         }
     }
   }
