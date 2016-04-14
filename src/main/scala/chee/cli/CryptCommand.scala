@@ -1,10 +1,13 @@
 package chee.cli
 
+import better.files._
+import chee.CheeConf
+import chee.CheeConf.Implicits._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}
-import chee.query.Progress
 import chee.properties._
 import chee.properties.MapGet._
+import chee.query.Progress
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -64,6 +67,30 @@ trait CryptCommand { self: ScoptCommand with AbstractLs =>
     } else {
       prog.foreach(0)(MapGet.filter(props, processor), action)
     }
+  }
+
+
+  /** Get the password in order:
+    *  - from `passphrase` if non-empty
+    *  - from `cmdKey` which points to a system command in the config file
+    *  - from `fileKey' which points to a filename in the config file
+    */
+  def getPassword(cfg: Config, passphrase: Option[File], cmdKey: String, fileKey: String): Option[Array[Char]] =
+    passphrase.flatMap(CheeConf.readPasswordFromFile).orElse {
+      cfg.readPasswordFromCommand(cmdKey)
+    } orElse {
+      cfg.readPasswordFromFile(fileKey)
+    }
+
+  /** Finds the passphrase for password-based encryption */
+  def findPassphrase(cfg: Config, passPrompt: Boolean, passphrase: Option[File], prompt: String = "Passphrase: "): Array[Char] = {
+    val p = passPrompt match {
+      case true => Some(promptPassphrase(prompt))
+      case _ => getPassword(cfg, passphrase,
+        "chee.crypt.default-passphrase-command",
+        "chee.crypt.default-passphrase-file")
+    }
+    p.getOrElse(promptPassphrase(prompt))
   }
 
   def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] 

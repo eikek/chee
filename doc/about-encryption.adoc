@@ -1,28 +1,49 @@
 === Encryption
 
-Chee can encrypt (and decrypt, of course) your files. It uses the
-OpenPGP standard which means you can use other tools (like for example
-`gnupg`) to decrypt the files. There is no application-lock-in, the
-data remains accessible using other (free) tools.
+Chee can encrypt (and decrypt, of course) your files. It uses OpenPGP
+which means you can use other (free) tools like
+http://gnupg.org[gnupg] to decrypt the files.
 
 Chee supports public key encryption and password based encryption. It
-utilises the bouncycastle library, that provides a pure Java
-implementation of the OpenPGP standard.
+utilises the http://bouncycastle.org[bouncycastle] library, that
+provides a pure Java implementation of the OpenPGP standard.
 
 While usually all modifications to files are non-destructive, the
 notably exception is encrypting: When chee encrypts a file, the
 original file is deleted! And likewise when decrypting a file, the
 encrypted file is deleted.
 
-When a file is encrypted, only the path property of that file is
-updated to reflect the new encrypted file. All other remain those of
-the original file. That allows to still search encrypted files.
+When a file is encrypted, a new file is written with an extension
+appended to the original file name. Chee uses this extension to
+distinguish the encryption method. If the file is indexed only the
+path property of that file is updated to reflect the new encrypted
+file. All other remain those of the original file. That allows to
+still search encrypted files.
 
 A virtual property `encrypted` is provided so that you can easily find
 encrypted files. It simply looks at the path property and checks its
 extension.
 
-Commands that operate on files (like `find`, `thumb`, etc) always skip
+Commands that operate on files (like `view`, `thumb`, etc) always skip
 encrypted files by default. You can change that by adding options to
-decrypt those files instead. The `find` command offers a special
-option to list encrypted files without decrypting.
+decrypt them instead. Then the files are decrypted to a temporary
+directory that can be configured in the configuration file.
+
+*Note* that this temporary directory is not cleaned automatically. The
+ `clean` command can be used for this.
+
+There exists two ways to specify passwords in the config file so that
+you don't need to type them in all the time.
+
+- Put them in a plain text file and reference this file in the
+  configuration file. Only the first line is read from that file and
+  used as password.
+- Specify a system command that returns the password with its
+  output. Then you can put the password in an encrypted file and use a
+  command like `gpg -d mypassfile.gpg` to return the
+  password. Usually, you have a password caching mechanism in place on
+  your system. Also if you use the http://passwordstore.org[pass]
+  password manager, this integrates well.
+
+Please see the xref:_configuration[configuration] chapter for related
+configuration values.

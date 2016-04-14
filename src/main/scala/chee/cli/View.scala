@@ -2,6 +2,7 @@ package chee.cli
 
 import scala.sys.process.Process
 
+import chee.CheeConf.Implicits._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}
 import chee.properties._
@@ -39,7 +40,7 @@ object View extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
 
   def runViewer(cfg: Config, files: Seq[String]): Unit = {
-    val cmd = cfg.getString("chee.programs.viewer").split("\\s+").toSeq ++ files
-    Process(cmd.head, cmd.drop(1)).!
+    val cmd = cfg.getCommand("chee.programs.viewer") ++ files
+    Process(cmd.head, cmd.tail).!
   }
 }

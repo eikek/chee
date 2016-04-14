@@ -41,7 +41,7 @@ object CheeDoc {
 
 
   private def browse(cfg: Config, file: File): Try[Int] = Try {
-    val cmd = (cfg.getString("chee.programs.browser").split("\\s+").collect {
+    val cmd = (cfg.getCommand("chee.programs.browser").collect {
       case "%s" => file.path.toString
       case s => s
     }).toSeq

@@ -21,7 +21,11 @@ object Decrypt extends ScoptCommand with AbstractLs with CryptCommand {
       case CryptMethod.Password => None
       case _ =>
         val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.secret-key-file"))
-        val pass = opts.secretKeyPass.getOrElse(promptPassphrase("Passphrase for private key: "))
+        val pass = getPassword(cfg, opts.secretKeyPass,
+          "chee.crypt.secret-key-pass-command",
+          "chee.crypt.secret-key'pass-file").getOrElse {
+          promptPassphrase("Passphrase for private key: ")
+        }
         Some(Processing.DecryptSecret(keyFile, pass))
     }
     val passphrase = method match {

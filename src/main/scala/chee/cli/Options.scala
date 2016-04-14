@@ -143,7 +143,7 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
   def passPrompt(a: (C, Opts => Opts) => C = noAction) =
     opt[Unit]('W', "passprompt") action { (_, c) =>
       a(c, _.copy(passPrompt = true))
-    } textW ("Always prompt for a passphrase. Do not use the default-passphrase "+
+    } textW ("Always prompt for a passphrase. Do not use the default-passphrase-file "+
       "from in the config file. Only applicable when password-based encryption is used.")
 
   def keyFile(what: String, a: (C, Opts => Opts) => C = noAction) =
@@ -160,15 +160,15 @@ trait CryptOptions[C] extends Options { self: CheeOptionParser[C] =>
       " of the user-id or key-id and must uniquely identify a key.")
 
   def keyPass(a: (C, Opts => Opts) => C = noAction) =
-    opt[String]("secret-key-pass") action { (p, c) =>
-      a(c, _.copy(secretKeyPass = Some(p.toCharArray)))
-    } textW ("The passphrase to access the private key. If not specified, it"+
+    opt[File]("secret-key-pass") valueName("<file>") action { (p, c) =>
+      a(c, _.copy(secretKeyPass = Some(p)))
+    } textW ("The passphrase file to access the private key. If not specified, it"+
       " is prompted for.")
 
   def passphrase(a: (C, Opts => Opts) => C = noAction) =
-    opt[String]("passphrase") action { (p, c) =>
-      a(c, _.copy(passphrase = Some(p.toCharArray)))
-    } textW ("Specify a passphrase to use for password-based encryption. The"+
+    opt[File]("passphrase") valueName("<file>") action { (p, c) =>
+      a(c, _.copy(passphrase = Some(p)))
+    } textW ("Specify a passphrase file to use for password-based encryption. The"+
       " `-W' option overrides this.")
 
   def addEncryptOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nEncrypt options:")): Unit = {
@@ -200,7 +200,7 @@ object CryptOptions {
     keyFile: Option[File] = None,
     keyId: Option[String] = None,
     passPrompt: Boolean = false,
-    secretKeyPass: Option[Array[Char]] = None,
-    passphrase: Option[Array[Char]] = None
+    secretKeyPass: Option[File] = None,
+    passphrase: Option[File] = None
   )
 }

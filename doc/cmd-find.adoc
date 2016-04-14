@@ -51,4 +51,5 @@ The `query` is used to search a directory or the index. If multiple
 conditions are given, they are wrapped in a `(& …)`. Please see the
 page abount xref:_query[queries] for details.
 
-Other commands that operate on a set of files usually share these options
+Other commands that operate on a set of files usually share these
+options.

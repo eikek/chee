@@ -10,5 +10,34 @@ Encrypt files using a password or a public key.
 
 .Example
 ----------------------------------------------------------------------
-chee encrypt …
+chee encrypt date/2016-03--+1m
 ----------------------------------------------------------------------
+
+This example encrypts all photos created in march 2016 using public
+key encryption.
+
+The _Find options_ are for selecting source images to encrypt. These
+are the same as with the `find` command.
+
+The files are encrypted using http://openpgp.org[OpenPGP] and there
+are two possible ways:
+
+- using a public key, so decryption requires the corresponding private
+  key
+- using a password, where the same is used for decryption
+
+The `--method` option chooses one of the two. Its value can also be
+specified in the config file and the default value is `pubkey`.
+
+For `pubkey` encryption, a `--key-file` and `--key-id` must be
+specified. The key file must be in OpenPGP format. The key id can be
+the email address or a finger print (suffix). It must identify the
+public key in the key file.
+
+For `password` encryption, the passphrase can be typed in or read from
+a file.  A default password can be set in the configuration file which
+is used if no `--passhprase` is given, unless `-W` is specified that
+will always prompt for a passphrase.
+
+Please see the xref:_configuration[configuration] chapter for related
+configuration values and the page about xref:_encryption[encryption].

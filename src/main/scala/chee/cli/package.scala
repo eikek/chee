@@ -22,16 +22,6 @@ package object cli {
     else userError("Passphrases did not match or empty passphrase specified!")
   }
 
-  def findPassphrase(cfg: Config, passPrompt: Boolean, passphrase: Option[Array[Char]], prompt: String = "Passphrase: "): Array[Char] = {
-    val p = if (passPrompt) {
-      promptPassphrase(prompt)
-    } else passphrase.getOrElse {
-      cfg.getString("chee.crypt.default-passphrase").toCharArray
-    }
-    if (p.isEmpty) promptPassphrase(prompt)
-    else p
-  }
-
   def wrapLines(len: Int)(text: String): String = {
     def index(idx: (String, Int) => Int): String => Int = s =>
       idx(s, '\n') match { //wrap at newline if present

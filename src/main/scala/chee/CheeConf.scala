@@ -1,7 +1,10 @@
 package chee
 
+import chee.cli.RegularFile
 import chee.crypto.{ Algorithm, CryptMethod }
 import com.typesafe.config.{Config, ConfigFactory}
+import java.util.concurrent.atomic.AtomicReference
+import scala.sys.process.{ Process, ProcessLogger }
 import scala.util.Try
 import better.files._
 import chee.properties._
@@ -18,11 +21,19 @@ object CheeConf {
     System.getProperty("chee.debugConfig", "false") == "true"
   }
 
+  def readPasswordFromFile(f: File): Option[Array[Char]] = f match {
+    case RegularFile(_) => f.lines.headOption.map(_.toCharArray)
+    case _ => None
+  }
+
   object Implicits {
 
     implicit class ConfigOps(cfg: Config) {
 
       def getFile(key: String): File = File(cfg.getString(key))
+
+      def getCommand(key: String): List[String] =
+        cfg.getString(key).split("\\s+").toList
 
       def getIndexDb = getFile("chee.dbfile")
 
@@ -87,6 +98,21 @@ object CheeConf {
         Algorithm.find(v) match {
           case Some(a) => a
           case None => UserError(s"Invalid config value for `chee.crypt.algorithm': `${v}")
+        }
+      }
+
+      def readPasswordFromFile(key: String) =
+        CheeConf.readPasswordFromFile(getFile(key))
+
+      def readPasswordFromCommand(key: String): Option[Array[Char]] = {
+        cfg.getCommand(key) match {
+          case Nil => None
+          case cmd =>
+            val pw = new AtomicReference[String]()
+            Process(cmd.head, cmd.tail) !< ProcessLogger(pw.compareAndSet(null, _), Console.err.println) match {
+              case 0 => Option(pw.get).map(_.toCharArray)
+              case rc => UserError(s"Password command returned non-zero: $rc")
+            }
         }
       }
     }
