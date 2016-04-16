@@ -21,10 +21,9 @@ A config file can be in three formats:
 The HOCON format is probably the most convenient of the three for us
 humans. Here is the default config file in HOCON format:
 
-[subs="attributes,specialchars"]
 .Default Config File
 ----------------------------------------------------------------------
-{chee-configfile}
+<chee_configfile>
 ----------------------------------------------------------------------
 
 The HOCON format allows to create a hierarchical layout, where a key

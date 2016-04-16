@@ -2,10 +2,9 @@
 
 Scales images.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-scale}
+<usage_scale>
 ----------------------------------------------------------------------
 
 .Example
@@ -20,6 +19,8 @@ The images to scale are selected by a `query`. If non-image files are
 selected, they are skipped silently. Other options for querying are
 the same as with the `find` command. See xref:_find[here] for more
 details.
+
+<transparent_decrypt>
 
 The output is rendered (like with `find`) using a format pattern. It
 can be specfified with `--pattern`. When evaluating the format

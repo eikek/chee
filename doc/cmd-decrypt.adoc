@@ -2,10 +2,9 @@
 
 Dencrypt files using a password or a public key.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-decrypt}
+<usage_decrypt>
 ----------------------------------------------------------------------
 
 .Example

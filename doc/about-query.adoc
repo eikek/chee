@@ -34,13 +34,13 @@ A `not` is specified by a `!` in front of a condition. This inverts
 its subsequent condition.
 
 ----------------------------------------------------------------------
-(& ext:jpg !w<2000)
+(& ext:jpg !w\<2000)
 ----------------------------------------------------------------------
 
 Use a `|` instead of `&` to combine conditions with +or+:
 
 ----------------------------------------------------------------------
-(| ext:jpg !w<2000)
+(| ext:jpg !w\<2000)
 ----------------------------------------------------------------------
 
 
@@ -86,7 +86,7 @@ There are the following comparators.
 `=`(equal)::
     Compares strings case sensitive and converts non-string property
     values.
-`<`,`>`(lower/greater than)::
+`\<`,`>`(lower/greater than)::
     For numeric comparisons. Compares strings alphabetically. Dates/
     Timestamps are converted to a numeric value before being compared.
 
@@ -101,7 +101,7 @@ The `pixel` property is the product of `width` and `height`. Values
 can be suffixed by `m` or `mp` to mean “mega pixel”.
 
 ----------------------------------------------------------------------
-pixel>5m pixel<2mp
+pixel>5m pixel\<2mp
 ----------------------------------------------------------------------
 
 
@@ -193,7 +193,7 @@ expand to a complete date/time value. For example, the following two
 queries could yield same results (“could” because of time zone):
 
 ----------------------------------------------------------------------
-date>2015-10   <=>    date:2015-10*
+date>2015-10   \<=>    date:2015-10*
 ----------------------------------------------------------------------
 
 If the comparator is not `like`, an error is raised, if the date/time
@@ -282,7 +282,7 @@ containment. For example, to find files between 2 and 3 mega pixels
 one could write this:
 
 ----------------------------------------------------------------------
-(& pixel>2mp pixel<3mp)
+(& pixel>2mp pixel\<3mp)
 ----------------------------------------------------------------------
 
 With the `/` comparator, this can be abbreviated:
@@ -300,7 +300,7 @@ Once the value is recognized being two values, the condition is
 expanded in the standard range condition:
 
 ----------------------------------------------------------------------
-(& pixel>2mp pixel<3mp)
+(& pixel>2mp pixel\<3mp)
 ----------------------------------------------------------------------
 
 There is a special syntax for date ranges. First of all, the standard
@@ -312,7 +312,7 @@ date:2015-10-10--2015-10-20
 
 This would create two date values, as described above in
 xref:_dates[how date/times are specified]. Then it is expanded to an
-`and` condition. Since the comparators `>` and `<` are used, dates are
+`and` condition. Since the comparators `>` and `\<` are used, dates are
 compared numerically and local dates are considered in the default
 (system) time zone.
 

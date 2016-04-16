@@ -3,10 +3,9 @@
 The help command provides access to specific manual pages or the
 complete manual.
 
-[subs="attributes,specialchars"]
-.usage
+.Usage
 ----------------------------------------------------------------------
-{usage-help}
+<usage_help>
 ----------------------------------------------------------------------
 
 Some manual pages describe the basic concepts of chee. They can be
@@ -38,13 +37,4 @@ Choose from the following concept pages:
 
 And here is a list of commands:
 
-- help
-- find
-- view
-- location
-- collection
-- mktree
-- scale
-- thumb
-- encrypt
-- config
+<command_list>

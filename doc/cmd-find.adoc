@@ -3,10 +3,9 @@
 The `find` command executes a query against all locations or a
 directory.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-find}
+<usage_find>
 ----------------------------------------------------------------------
 
 .Example

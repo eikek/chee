@@ -2,10 +2,9 @@
 
 Create thumbnails.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-thumb}
+<usage_thumb>
 ----------------------------------------------------------------------
 
 .Example
@@ -26,6 +25,8 @@ The images to scale are selected by a `query`. If non-image files are
 selected, they are skipped silently. Other options for querying are
 the same as with the `find` command. See xref:_find[here] for more
 details.
+
+<transparent_decrypt>
 
 The output is rendered (like with `find`) using a format pattern. It
 can be specfified with `--pattern`. When evaluating the format
@@ -48,5 +49,5 @@ With `--concurrent` the processing is done in parallel. Note, that the
 order of the result differs from the input list.
 
 The `--size` option gives the size of the thumbnails to generate. It
-may be a string like `<width>x<height>` (e.g. `200x150`) or just one
+may be a string like `\<width>x\<height>` (e.g. `200x150`) or just one
 number, for example `200` which is the same as `200x200`.

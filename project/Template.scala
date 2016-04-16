@@ -2,6 +2,7 @@ package chee.sbt
 
 import org.stringtemplate.v4._
 import org.stringtemplate.v4.misc._
+import scala.util.{ Try, Success, Failure }
 
 /** Helper for stringtemplate */
 trait Template {
@@ -13,13 +14,13 @@ trait Template {
 
 object Template {
 
-  def apply(template: String): Template =
-    new Impl(template)
+  def apply(template: String, filename: Option[String] = None): Template =
+    new Impl(template, filename)
 
   def apply(f: sbt.File): Template =
-    apply(sbt.IO.read(f))
+    apply(sbt.IO.read(f), Some(f.getName))
 
-  class Impl(template: String) extends Template {
+  class Impl(template: String, filename: Option[String] = None) extends Template {
 
     private val errorListener = new STErrorListener {
       def compileTimeError(msg: STMessage): Unit = sys.error(msg.toString)
@@ -35,10 +36,16 @@ object Template {
       }
     }
 
+    private def run[T](body: => T): T =
+      Try(body) match {
+        case Success(t) => t
+        case Failure(ex) => throw new Exception(s"Error in file $filename", ex)
+      }
+
     def render(context: Context): String =
-      makeST(context).render
+      run(makeST(context).render)
 
     def write(file: sbt.File, context: Context): Int =
-      makeST(context).write(file, errorListener, "UTF-8")
+      run(makeST(context).write(file, errorListener, "UTF-8"))
   }
 }

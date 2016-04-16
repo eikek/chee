@@ -2,10 +2,9 @@
 
 The `config` command shows the current configuration.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-config}
+<usage_config>
 ----------------------------------------------------------------------
 
 The `--origin` option renders comments on each config value that

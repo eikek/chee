@@ -92,22 +92,22 @@ started is marked with an ellipsis `…` character.
 For example:
 
 ----------------------------------------------------------------------
->~20l~#filename<
+>~20l~#filename\<
 ----------------------------------------------------------------------
 
 would print for the value “test.jpg”
 
 ----------------------------------------------------------------------
->            test.jpg<
+>            test.jpg\<
 ----------------------------------------------------------------------
 
 and for a value “/home/pictures/2014/winter/test.jpg”
 
 ----------------------------------------------------------------------
->/home/pi…er/test.jpg<
+>/home/pi…er/test.jpg\<
 ----------------------------------------------------------------------
 
-The `>` and `<` are not part of the directive; it is normal literal
+The `>` and `\<` are not part of the directive; it is normal literal
 text.
 
 
@@ -152,7 +152,7 @@ exists for a property and a different thing in case it does not
 exist. The directive looks like this:
 
 ----------------------------------------------------------------------
-~[<condition>~;<ifTrue>~;<ifFalse>~]
+~[\<condition>~;\<ifTrue>~;\<ifFalse>~]
 ----------------------------------------------------------------------
 
 There are three directives inside `~[` and `~]` that are separated by

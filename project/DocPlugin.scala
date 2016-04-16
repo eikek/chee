@@ -6,6 +6,7 @@ import scala.sys.process.Process
 import scala.util.{Try, Success, Failure}
 import java.time.Instant
 import java.util.{Map => JMap, HashMap => JHashMap}
+import NameFilter._
 
 import org.asciidoctor.Asciidoctor
 import org.asciidoctor.SafeMode
@@ -55,7 +56,8 @@ object DocPlugin extends AutoPlugin {
       "icons" -> "font",
       "data-uri" -> "true",
       "stylesheet" -> (stylesheet in CheeDoc).value,
-      "source-highlighter" -> "prettify"
+      "source-highlighter" -> "prettify",
+      "command_list" -> commandList((docSources in CheeDoc).value).mkString("- ", "\n- ", "")
     ),
     options in CheeDoc := Map(
       "attributes" -> (attributes in CheeDoc).value,
@@ -78,7 +80,7 @@ object DocPlugin extends AutoPlugin {
       {
         val opts = (options in CheeDoc).value
         val cfgFile = readConfigFile((sourceDirectory in Compile).value)
-        opts + withAttr(opts)((genUsageInfo in CheeDoc).value ++ Map("chee-configfile" -> cfgFile))
+        opts + withAttr(opts)((genUsageInfo in CheeDoc).value ++ Map("chee_configfile" -> cfgFile))
       }
     ),
     genDocResources in CheeDoc <<= (genDocResources in CheeDoc) dependsOn (compile in Compile),
@@ -111,23 +113,21 @@ object DocPlugin extends AutoPlugin {
   }
 
   def generateDocInfo(log: Logger, dir: File, docDir: File, attr: Attr): Seq[File] = {
-    import NameFilter._
     log.info("Generate CheeDocInfo file ...")
     val code = s"""package chee.doc
       |object CheeDocInfo {
-      |  val version = "{version}"
-      |  val buildTime = "{buildtime}"
-      |  val commit = "{commit}"
-      |  val projectName = "{projectName}"
+      |  val version = "<version>"
+      |  val buildTime = "<buildtime>"
+      |  val commit = "<commit>"
+      |  val projectName = "<projectName>"
       |  val docFiles = List(${docDir.listFiles.map(f => f.getName).mkString("\"", "\",\"", "\"")})
       |}""".stripMargin
     val target = dir / "chee" / "doc" / "CheeDocInfo.scala"
-    IO.write(target, replaceAttr(code, attr))
+    Template(code).write(target, attr)
     Seq(target)
   }
 
   def findDocResources(in: File, out: File): Seq[File] = {
-    import NameFilter._
     val files: Seq[Seq[File]] = for (file <- IO.listFiles(in, (n: String) => n.matches("^[^_].*?.adoc$"))) yield {
       val outAdoc = out / "adoc" / file.getName
       val outHtml = out / "html" / (IO.split(file.getName)._1 + ".html")
@@ -138,23 +138,50 @@ object DocPlugin extends AutoPlugin {
 
   def generateDocResources(log: Logger, in: File, out: File, options: Attr): Seq[File] = {
     log.info(s"Generate documentation from files in $in ...")
-    import NameFilter._
+    val docFilter: NameFilter = (n: String) => n.matches("^[^_].*?.adoc$")
+    val incFilter: NameFilter = (n: String) => n.matches("_.*?.adoc$")
+
+    //put all _*.adoc files into the attribute map
+    val incOpts: Attr = IO.listFiles(in, incFilter).foldLeft(Map.empty[String, AnyRef]) { (m, f) =>
+      val content = Template(f).render(options("attributes").asInstanceOf[Attr])
+      m + (IO.split(f.getName)._1.substring(1) -> content)
+    }
 
     IO.createDirectories(Seq(out / "adoc", out / "html"))
-    val files: Seq[Seq[File]] = for (file <- IO.listFiles(in, (n: String) => n.matches("^[^_].*?.adoc$"))) yield {
-      val outAdoc = out / "adoc" / file.getName
-      val outHtml = out / "html" / (IO.split(file.getName)._1 + ".html")
-      val content = replaceAttr(IO.read(file).replaceAll("""\[subs="[a-zA-Z,]+"\]\n""", ""), options("attributes").asInstanceOf[Attr])
-      IO.write(outAdoc, content)
-
-      val opts = options + ("to_file" -> outHtml.toString) + withAttr(options) {
-        if (file.getName == "manual.adoc") Map("toc" -> "true", "toc-placement" -> "top")
-        else Map.empty[String, AnyRef]
-      }
-      engine.convertFile(file, asMutable(opts))
-      Seq(outAdoc, outHtml)
+    for (file <- IO.listFiles(in, -(docFilter || incFilter))) {
+      if (file.isFile) IO.copyFile(file, out / "adoc" / file.getName)
+      else IO.copyDirectory(file, out / "adoc" / file.getName)
     }
-    files.flatten
+
+    val opts = options + withAttr(options)(incOpts)
+    val adocs = IO.listFiles(in, docFilter || incFilter) map exportAdoc(log, out, opts)
+    val htmls = adocs.filter(docFilter accept _.getName) map exportHtml(log, out, opts)
+
+    adocs ++ htmls
+  }
+
+  def commandList(in: File): List[String] =
+    IO.listFiles(in, (n: String) => n matches "^cmd-.*?.adoc$")
+      .map(n => IO.split(n.getName)._1.substring(4))
+      .toList.sorted
+
+  def exportAdoc(log: Logger, out: File, options: Attr)(doc: File): File = {
+    log.info(s"Export adoc: ${doc.getName}")
+    val attributes = options("attributes").asInstanceOf[Attr]
+    val outAdoc = out / "adoc" / doc.getName
+    Template(doc).write(outAdoc, attributes)
+    outAdoc
+  }
+
+  def exportHtml(log: Logger, out: File, options: Attr)(doc: File): File = {
+    log.info(s"Export html: ${doc.getName}")
+    val outHtml = out / "html" / (IO.split(doc.getName)._1 + ".html")
+    val opts = options + ("to_file" -> outHtml.toString) + withAttr(options) {
+      if (doc.getName == "manual.adoc") Map("toc" -> "true", "toc-placement" -> "top")
+      else Map.empty[String, AnyRef]
+    }
+    engine.convertFile(doc, asMutable(opts))
+    outHtml
   }
 
   def generateUsageInfo(log: Logger, cheeOpts: Seq[String], javaBin: String, cp: Classpath): Map[String, String] = {
@@ -181,20 +208,13 @@ object DocPlugin extends AutoPlugin {
     val usage = for (cmd <- commands) yield {
       log.info(s"""Get usage information for command `${cmd.mkString(" ")}'""")
       val opts = Seq("-cp", Attributed.data(cp).mkString(":")) ++ cheeOpts ++ Seq("chee.cli.Main") ++ cmd ++ Seq("--usage")
-      s"""usage-${cmd.mkString("-")}""" -> (Process(javaBin, opts).!!).trim
+      s"""usage_${cmd.mkString("_")}""" -> (Process(javaBin, opts).!!).trim
     }
     usage.toMap
   }
 
   def readConfigFile(src: File): String =
     IO.read(src / "resources" / "application.conf")
-
-  //TODO would be nice if there is a adoc->adoc backend?
-  def replaceAttr(content: String, attr: Attr): String = {
-    attr.foldLeft(content) { case (str, (k, v)) =>
-        str.replace(s"{$k}", v.toString)
-    }
-  }
 
   def currentCommitViaGit: Try[String] = Try {
     val hash = (Process("git", Seq("rev-parse", "HEAD")).!!).substring(0, 9)

@@ -5,10 +5,9 @@ View the images with an external image viewer.
 The view command is just like `find`, but instead of listing it runs
 an external program to view the resulting files.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-view}
+<usage_view>
 ----------------------------------------------------------------------
 
 .Example
@@ -24,3 +23,5 @@ The image viewer program is defined in the config file under the key
 options. The files are appended to the arguments arguments. By default
 the http://feh.finalrewind.org/[feh] image viewer is used and started
 with `feh -.` to enable auto resizing.
+
+<transparent_decrypt>

@@ -2,10 +2,9 @@
 
 Encrypt files using a password or a public key.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-encrypt}
+<usage_encrypt>
 ----------------------------------------------------------------------
 
 .Example

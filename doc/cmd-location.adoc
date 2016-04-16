@@ -31,10 +31,9 @@ $ chee location info
 Registers a directory as a location and adds its contents to the
 index.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-add}
+<usage_location_add>
 ----------------------------------------------------------------------
 
 The options are self explaining: without any options, chee searches
@@ -58,10 +57,9 @@ This condition is always used when querying directories.
 This command is like `add` for registered locations. It checks for new
 files and adds it to the index.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-update}
+<usage_location_update>
 ----------------------------------------------------------------------
 
 The directories are searched with the same options as originally given
@@ -78,20 +76,19 @@ directories must be given.
 
 Imports files from any folder into a location.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-import}
+<usage_location_import>
 ----------------------------------------------------------------------
 
-Searches `<sourcedir>` directory and copies matching files into the
+Searches `\<sourcedir>` directory and copies matching files into the
 given location directory, adding them to the index. If a file is
 already present in the index (no matter which location), it is not
 copied unless `--duplicates` is specified. Files are never
 overwritten, new filenames are generated (appending a number until a
 non-existent file is found) if the a target file already exists.
 
-The directory structure in `<sourcedir>` is preserved in `<location>`
+The directory structure in `\<sourcedir>` is preserved in `\<location>`
 directory.
 
 .Example
@@ -110,10 +107,9 @@ Searches recursively through `/media/sdcard/DCIM` and copies files to
 
 Removes all files of a location from the indexs.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-delete}
+<usage_location_delete>
 ----------------------------------------------------------------------
 
 This command simply clears the index from all files in the given
@@ -121,14 +117,13 @@ locations. It will also unregister the given directories from the
 location set, but it does not touch any files on the file system.
 
 
-==== mv (move)
+==== mv
 
 Moves a location to another directory.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-mv}
+<usage_location_mv>
 ----------------------------------------------------------------------
 
 If a location is moved, the index must be updated accordingly. This
@@ -140,10 +135,9 @@ exists and `--index` is not specified.
 
 Synchronise the index with a location.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-location-sync}
+<usage_location_sync>
 ----------------------------------------------------------------------
 
 There are two ways to synchronise:

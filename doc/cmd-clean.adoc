@@ -2,10 +2,9 @@
 
 The `clean` command removes temporary data.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-clean}
+<usage_clean>
 ----------------------------------------------------------------------
 
 Chee stores data in different places. When scaling images or creating

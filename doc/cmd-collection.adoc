@@ -12,10 +12,9 @@ collection [edit|show]
 
 Edits a collection or creates a new one.
 
-[subs="attributes,specialchars"]
 .Usage
 ----------------------------------------------------------------------
-{usage-collection-edit}
+<usage_collection_edit>
 ----------------------------------------------------------------------
 
 The argument is mandatory and names the collection to edit. If the
@@ -39,13 +38,13 @@ is reported.
 
 ==== show
 
-[subs="attributes,specialchars"]
+Shows details about collections.
+
 .Usage
 ----------------------------------------------------------------------
-{usage-collection-show}
+<usage_collection_show>
 ----------------------------------------------------------------------
 
-Shows details about collections.
 
 By default it lists all collections with name and title, one per line.
 
@@ -60,5 +59,5 @@ properties to use in the format pattern are: `name`, `title`, `query`
 and `description`.
 
 The argument is a portion of a name to restrict the output to only
-those collection that start with `<name>`. If not given, all
+those collection that start with `\<name>`. If not given, all
 collections are listed.

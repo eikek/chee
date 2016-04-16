@@ -1,7 +1,7 @@
 chee
 ====
 Eike Kettner
-v{version} (build {commit} at {buildtime})
+v<version> (build <commit> at <buildtime>)
 
 Chee is a command line tool for managing photos and photo
 collections.
