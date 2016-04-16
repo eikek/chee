@@ -2,7 +2,6 @@ package chee.sbt
 
 import sbt._
 import sbt.Keys._
-import sbtassembly.AssemblyPlugin.autoImport._
 import scala.sys.process.Process
 import scala.util.{Try, Success, Failure}
 import java.time.Instant

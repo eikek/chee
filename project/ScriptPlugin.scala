@@ -2,7 +2,6 @@ package chee.sbt
 
 import sbt._
 import sbt.Keys._
-import sbtassembly.AssemblyPlugin.autoImport._
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission._
 import java.util.EnumSet
@@ -31,13 +30,15 @@ object ScriptPlugin extends AutoPlugin {
     `gen-zip` in Compile := genZipImpl.value
   )
 
-  def makeScript(sourceDir: File, jar: String, shebang: String, java: String, javaOpts: String): String = {
-    val template = sourceDir / "shell" / "chee"
-    IO.read(template)
-      .replace("$assembly-jar$", jar)
-      .replace("$shebang$", shebang)
-      .replace("$java-bin$", java)
-      .replace("$options$", javaOpts)
+  def makeScript(sourceDir: File, classpath: String, shebang: String, java: String, javaOpts: String, cdtohere: Boolean = false): String = {
+    val template = Template(sourceDir / "shell" / "chee")
+    template.render(Map(
+      "cdtohere" -> cdtohere,
+      "shebang" -> shebang,
+      "options" -> javaOpts,
+      "javabin" -> java,
+      "classpath" -> classpath
+    ))
   }
 
   def setExecutable(f: File): File = {
@@ -54,7 +55,7 @@ object ScriptPlugin extends AutoPlugin {
     val out = target.value / "bin" / "chee"
     val body = makeScript(
       sourceDirectory.value,
-      assembly.value.toString,
+      Attributed.data((fullClasspath in Runtime).value).mkString(java.io.File.pathSeparator),
       (shebang in script).value,
       (javaBin in script).value,
       (javaOptions in script).value.mkString(" "))
@@ -67,17 +68,23 @@ object ScriptPlugin extends AutoPlugin {
     streams.value.log.info("Creating zip file.")
     val zipDir = target.value / (name.value + "-" + version.value)
     val zipFile = target.value / (name.value +"-"+ version.value +".zip")
-    val assDir = (assemblyDir in script).value
+    val libs = for {
+      lib <- (Attributed.data((fullClasspath in Runtime).value) :+ (packageBin in Compile).value)
+      if lib.isFile
+    } yield {
+      IO.copyFile(lib, zipDir / "lib" / lib.getName)
+      "lib" + java.io.File.separator + lib.getName
+    }
     val body = makeScript(
       sourceDirectory.value,
-      s"$$(dirname $$0)/${assDir}/${assembly.value.getName}",
+      libs.mkString(java.io.File.pathSeparator),
       (shebang in script).value,
       (javaBin in script).value,
-      (javaOptions in script).value.mkString(" "))
+      (javaOptions in script).value.mkString(" "),
+      true)
 
     IO.write(zipDir / "chee", body)
     setExecutable(zipDir / "chee")
-    IO.copyFile(assembly.value, zipDir / assDir / assembly.value.getName)
     IO.zip(zipDir.listFiles.map(f => f -> f.getName), zipFile)
     zipFile
   }

@@ -1,3 +1,5 @@
-#!$shebang$
+#!<shebang>
 
-exec $java-bin$ -Xbootclasspath/a:$assembly-jar$ $options$ $CHEE_OPTS chee.cli.Main "$@"
+<if(cdtohere)>cd $(dirname $(readlink -e $0))<endif>
+
+<javabin> -cp <classpath> <options> $CHEE_OPTS chee.cli.Main "$@"

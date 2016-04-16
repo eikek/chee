@@ -9,7 +9,7 @@ let
   sbtVersion = last (splitString "=" (builtins.readFile ./project/build.properties));
   sbt = fetchurl {
     url = "http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/${sbtVersion}/sbt-launch.jar";
-    sha256 = "04k411gcrq35ayd2xj79bcshczslyqkicwvhkf07hkyr4j3blxda";
+    sha256 = "1h8b23v891dqzb36pgzs7h44bc3rrr9j6z6w7f70vam7lwsxwfn6";
   };
   cask = stdenv.mkDerivation rec {
     version = "0.7.4";
@@ -67,9 +67,8 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/{bin,program}
-    cp -R target/${name}/* $out/ #*/
-    sed -i "s,\$(dirname \$0),$out,g" $out/chee
-    mv $out/chee $out/bin/chee
+    cp -r target/${name}/* $out/program #*/
+    ln -s $out/program/chee $out/bin/chee
 
     mkdir -p $out/share/emacs/site-lisp
     cp -R emacs/{*.el,*.elc} $out/share/emacs/site-lisp/
