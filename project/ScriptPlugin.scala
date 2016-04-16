@@ -85,8 +85,26 @@ object ScriptPlugin extends AutoPlugin {
 
     IO.write(zipDir / "chee", body)
     setExecutable(zipDir / "chee")
-    IO.zip(zipDir.listFiles.map(f => f -> f.getName), zipFile)
+    IO.zip(zipEntries(zipDir), zipFile)
     zipFile
+  }
+
+  def zipEntries(dir: File): Seq[(File, String)] = {
+    @scala.annotation.tailrec
+    def loop(dirs: List[File], result: List[(File, String)] = Nil): List[(File, String)] =
+      dirs match {
+        case Nil => result
+        case f :: ds if f.isFile =>
+          IO.relativize(dir, f) match {
+            case Some(name) => loop(ds, (f -> name) :: result)
+            case _ => sys.error(s"$f is not parent of $dir")
+          }
+        case d :: ds if d.isDirectory =>
+          loop(ds ::: IO.listFiles(d).toList, result)
+        case x :: _ =>
+          sys.error(s"Cannot add zip entry for $x")
+      }
+    loop(IO.listFiles(dir).toList)
   }
 
   override lazy val projectSettings = inConfig(Compile)(scriptSettings)

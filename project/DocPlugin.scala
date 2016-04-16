@@ -123,6 +123,7 @@ object DocPlugin extends AutoPlugin {
       |  val docFiles = List(${docDir.listFiles.map(f => f.getName).mkString("\"", "\",\"", "\"")})
       |}""".stripMargin
     val target = dir / "chee" / "doc" / "CheeDocInfo.scala"
+    IO.createDirectories(Seq(target.getParentFile))
     Template(code).write(target, attr)
     Seq(target)
   }
