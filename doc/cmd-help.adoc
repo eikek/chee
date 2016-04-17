@@ -1,7 +1,6 @@
 === help
 
-The help command provides access to specific manual pages or the
-complete manual.
+Provides access to specific help pages and the complete manual.
 
 .Usage
 ----------------------------------------------------------------------

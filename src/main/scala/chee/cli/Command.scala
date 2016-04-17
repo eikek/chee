@@ -5,6 +5,18 @@ import com.typesafe.scalalogging.LazyLogging
 
 sealed trait CommandTree {
   def name: String
+
+  def toPath: List[CommandTree.Path] = this match {
+    case cmd: Command => List(List(cmd.name))
+    case HubCommand(name, children) => children.map(c => List(name, c.name))
+  }
+}
+
+object CommandTree {
+  type Path = List[String]
+
+  def toPaths(trees: List[CommandTree]): List[Path] =
+    trees.flatMap(_.toPath)
 }
 
 trait Command extends CommandTree {
@@ -23,39 +35,39 @@ trait Command extends CommandTree {
 case class HubCommand(name: String, children: List[CommandTree]) extends CommandTree
 
 object Command {
-  private def commandList(tree: List[CommandTree]): List[String] = {
-    @scala.annotation.tailrec
-    def loop(stack: List[(String, CommandTree)], result: List[String] = Nil): List[String] =
-      stack match {
-        case Nil =>
-          result.reverse
-        case (name, h: HubCommand) :: cs =>
-          loop(h.children.sortBy(_.name).map(c => (s"${h.name} ${c.name}" -> c)) ::: cs, result)
-        case (name, _) :: cs =>
-          loop(cs, name :: result)
-      }
-    loop(tree.sortBy(_.name).map(t => (t.name -> t)))
+  private def commandList(tree: List[CommandTree], cmd: Option[String]): String = {
+    val paths = CommandTree.toPaths(tree)
+    cmd match {
+      case None =>
+        chee.CheeDoc.formatCommandSummary(paths)
+      case Some(name) =>
+        chee.CheeDoc.formatCommandSummary(paths.map(p => name :: p))
+    }
   }
 
   def find(names: Array[String], cmds: List[CommandTree]): Either[String, (Array[String], Command)] = {
-    names.headOption match {
-      case None =>
-        Left("A command is required! "
-          + s"""Possible commands are: ${commandList(cmds).mkString(", ")}""")
-      case Some(name) =>
-        cmds.filter(_.name.startsWith(name)) match {
-          case (cmd: Command) :: Nil =>
-            Right((names.tail, cmd))
-          case HubCommand(_, subs) :: Nil =>
-            find(names.tail, subs)
-          case Nil =>
-            Left(s"Command not found `$name'. "
-              + s"""Possible commands are: ${commandList(cmds).mkString(", ")}""")
-          case candidates =>
-            Left(s"Ambiguous name `${name}'. " +
-              s"""Possible candidates are: ${commandList(candidates).mkString(", ")}.""")
-        }
-    }
+    @scala.annotation.tailrec
+    def loop(path: Array[String], cmds: List[CommandTree], cmd: Option[String] = None): Either[String, (Array[String], Command)] =
+      path.headOption match {
+        case None =>
+          Left("A command is required! "
+            + s"""Possible commands are:\n\n${commandList(cmds, cmd)}""")
+        case Some(name) =>
+          cmds.filter(_.name.startsWith(name)) match {
+            case (cmd: Command) :: Nil =>
+              Right((path.tail, cmd))
+            case HubCommand(name, subs) :: Nil =>
+              loop(path.tail, subs, Some(name))
+            case Nil =>
+              Left(s"Command not found `$name'. "
+                + s"""Possible commands are:\n\n${commandList(cmds, cmd)}""")
+            case candidates =>
+              Left(s"Ambiguous name `${name}'. " +
+                s"""Possible candidates are:\n\n${commandList(candidates, cmd)}.""")
+          }
+      }
+
+    loop(names, cmds)
   }
 }
 

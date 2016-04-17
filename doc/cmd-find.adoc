@@ -1,7 +1,6 @@
 === find
 
-The `find` command executes a query against all locations or a
-directory.
+Executes a query against all locations or a directory.
 
 .Usage
 ----------------------------------------------------------------------

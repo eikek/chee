@@ -16,8 +16,7 @@ chee location [info|add|update|import|delete|mv|sync] […]
 
 ==== info
 
-Lists all registered locations, one per line and print the number of
-images it contains.
+Lists all registered locations and the number of files it contains.
 
 ----------------------------------------------------------------------
 $ chee location info
@@ -54,8 +53,7 @@ This condition is always used when querying directories.
 
 ==== update
 
-This command is like `add` for registered locations. It checks for new
-files and adds it to the index.
+Add new files in registered locations to the index.
 
 .Usage
 ----------------------------------------------------------------------
@@ -74,7 +72,7 @@ directories must be given.
 
 ==== import
 
-Imports files from any folder into a location.
+Imports files from a folder into a location.
 
 .Usage
 ----------------------------------------------------------------------
@@ -105,7 +103,7 @@ Searches recursively through `/media/sdcard/DCIM` and copies files to
 
 ==== delete
 
-Removes all files of a location from the indexs.
+Removes all files of a location from the index.
 
 .Usage
 ----------------------------------------------------------------------

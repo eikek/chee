@@ -1,6 +1,6 @@
 === clean
 
-The `clean` command removes temporary data.
+Removes temporary data.
 
 .Usage
 ----------------------------------------------------------------------

@@ -1,7 +1,6 @@
 === mktree
 
-The `mktree` command copies or symlinks a set of files into another
-directory.
+Copies or symlinks a set of files into another directory.
 
 .Usage
 ----------------------------------------------------------------------

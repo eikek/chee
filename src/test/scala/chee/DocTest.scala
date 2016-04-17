@@ -8,6 +8,32 @@ class DocTest extends FlatSpec with Matchers {
 
   val testFolder = file"target"/"testfiles"
 
+  "firstParagraph" should "return text between first two empty lines" in {
+    val text = """== headline
+        |
+        | this is
+        | the text.
+        |
+        | and this is not.""".stripMargin
+
+    CheeDoc.firstParagraph(text.split("\n").toIterator) should be ("this is the text.")
+  }
+
+  "commandSummaryLine" should "find subcommands" in {
+    CheeDoc.commandSummaryLine("location", Some("import")) should be (
+      Some("Imports files from any folder into a location."))
+
+    CheeDoc.commandSummaryLine("location") should be (
+      Some("This command manages locations."))
+  }
+
+  it should "return None for non existing commands" in {
+    CheeDoc.commandSummaryLine("abc") should be (None)
+    CheeDoc.commandSummaryLine("location", Some("abc")) should be (None)
+
+    println(CheeDoc.formatCommandSummary(cli.CommandTree.toPaths(cli.Main.chee)))
+  }
+
   "doc util" should "find existing pages" in {
     val Some(s) = CheeDoc.findPage("cmd-help", "adoc")
     val Some(_) = CheeDoc.findCommandPage("help", "html")

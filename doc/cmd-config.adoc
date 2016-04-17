@@ -1,6 +1,6 @@
 === config
 
-The `config` command shows the current configuration.
+Shows the current configuration.
 
 .Usage
 ----------------------------------------------------------------------
