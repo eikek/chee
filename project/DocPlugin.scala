@@ -2,7 +2,7 @@ package chee.sbt
 
 import sbt._
 import sbt.Keys._
-import scala.sys.process.Process
+import scala.sys.process.{ Process, ProcessLogger }
 import scala.util.{Try, Success, Failure}
 import java.time.Instant
 import java.util.{Map => JMap, HashMap => JHashMap}
@@ -57,7 +57,7 @@ object DocPlugin extends AutoPlugin {
       "data-uri" -> "true",
       "stylesheet" -> (stylesheet in CheeDoc).value,
       "source-highlighter" -> "prettify",
-      "command_list" -> commandList((docSources in CheeDoc).value).mkString("- ", "\n- ", "")
+      "command_list" -> helpCommandList((docSources in CheeDoc).value).mkString("- ", "\n- ", "")
     ),
     options in CheeDoc := Map(
       "attributes" -> (attributes in CheeDoc).value,
@@ -161,7 +161,7 @@ object DocPlugin extends AutoPlugin {
     adocs ++ htmls
   }
 
-  def commandList(in: File): List[String] =
+  def helpCommandList(in: File): List[String] =
     IO.listFiles(in, (n: String) => n matches "^cmd-.*?.adoc$")
       .map(n => IO.split(n.getName)._1.substring(4))
       .toList.sorted
@@ -185,31 +185,27 @@ object DocPlugin extends AutoPlugin {
     outHtml
   }
 
+  def runChee(javaBin: String, cp: Classpath, cheeOpts: Seq[String], cmd: Seq[String], error: Boolean = false): String = {
+    val opts = Seq("-cp", Attributed.data(cp).mkString(java.io.File.pathSeparator)) ++ cheeOpts ++ Seq("chee.cli.Main") ++ cmd
+    if (!error) (Process(javaBin, opts).!!).trim
+    else {
+      val out = new StringBuilder
+      Process(javaBin, opts) ! (ProcessLogger(_ => (), out append _ append "\n"))
+      out.toString.trim
+    }
+  }
+
+  def allCommandList(javaBin: String, cp: Classpath, opts: Seq[String]): List[List[String]] = {
+    val out = runChee(javaBin, cp, opts, Seq.empty, error = true)
+    for (line <- out.split("\n").toList if line contains ("-"))
+    yield line.substring(0, line.indexOf('-')).trim.split(" ").toList
+  }
+
   def generateUsageInfo(log: Logger, cheeOpts: Seq[String], javaBin: String, cp: Classpath): Map[String, String] = {
-    val commands = List(
-      Seq("help"),
-      Seq("find"),
-      Seq("view"),
-      Seq("mktree"),
-      Seq("config"),
-      Seq("thumb"),
-      Seq("scale"),
-      Seq("encrypt"),
-      Seq("decrypt"),
-      Seq("clean"),
-      Seq("collection", "edit"),
-      Seq("collection", "show"),
-      Seq("location", "info"),
-      Seq("location", "add"),
-      Seq("location", "update"),
-      Seq("location", "delete"),
-      Seq("location", "mv"),
-      Seq("location", "import"),
-      Seq("location", "sync"))
+    val commands = allCommandList(javaBin, cp, cheeOpts)
     val usage = for (cmd <- commands) yield {
       log.info(s"""Get usage information for command `${cmd.mkString(" ")}'""")
-      val opts = Seq("-cp", Attributed.data(cp).mkString(":")) ++ cheeOpts ++ Seq("chee.cli.Main") ++ cmd ++ Seq("--usage")
-      s"""usage_${cmd.mkString("_")}""" -> (Process(javaBin, opts).!!).trim
+      s"""usage_${cmd.mkString("_")}""" -> runChee(javaBin, cp, cheeOpts, cmd ++ Seq("--usage"))
     }
     usage.toMap
   }

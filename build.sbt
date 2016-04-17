@@ -39,7 +39,7 @@ object TestInfo {
 
 addCommandAlias("make-chee", ";genDocResources;gen-chee")
 
-addCommandAlias("make-zip", ";genDocResources;gen-zip")
+addCommandAlias("make-zip", ";genDocResources;test;gen-zip")
 
 libraryDependencies ++= Seq(
   "org.scalatest"              %% "scalatest"                % "2.2.4"    % "test",
