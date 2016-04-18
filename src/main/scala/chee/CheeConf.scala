@@ -21,6 +21,8 @@ object CheeConf {
     System.getProperty("chee.debugConfig", "false") == "true"
   }
 
+  private val cheeRepoRoot = "chee.repo.root"
+
   def readPasswordFromFile(f: File): Option[Array[Char]] = f match {
     case RegularFile(_) => f.lines.headOption.map(_.toCharArray)
     case _ => None
@@ -115,6 +117,9 @@ object CheeConf {
             }
         }
       }
+
+      def getRepoRoot: Option[File] =
+        Option(cfg.getString(cheeRepoRoot)).map(File(_))
     }
   }
 
@@ -152,6 +157,25 @@ object CheeConf {
     }
   }
 
+  private def findDotChee(dir: File): Option[File] = {
+    def loop(d: File): Option[File] = d / ".chee" match {
+      case f if f.isDirectory => Some(f)
+      case _ => Option(d.parent) match {
+        case Some(f) => loop(f)
+        case _ => None
+      }
+    }
+    loop(dir) map { dotchee =>
+      System.out.println("Using repository at " + dotchee.parent.path)
+      System.setProperty("chee.workingdir", (dotchee / "work").path.toString)
+      System.setProperty("chee.configdir", dotchee.path.toString)
+      System.setProperty(cheeRepoRoot,  dotchee.parent.path.toString)
+      val config = dotchee / "chee.conf"
+      if (!config.exists) config.createIfNotExists(false)
+      config
+    }
+  }
+
   private def findConfigFile: Option[File] = {
     //system-property overrides, even if non existent
     val sys = Option(System.getProperty("chee.config")).map(File(_))
@@ -162,11 +186,14 @@ object CheeConf {
       }
       sys.filter(_.exists)
     } else {
+      // check for .chee
+      val f0 = findDotChee(file".")
+
       // then chee.conf in home dir
       val f1 = userHome / ".chee.conf"
       // then standard location
       val f2 = userHome / ".config" / "chee" / "chee.conf"
-      Option(f1).filter(_.exists) orElse {
+      f0 orElse Option(f1).filter(_.exists) orElse {
         Option(f2).filter(_.exists)
       }
     }

@@ -68,6 +68,25 @@ information. For instance, the index database is stored at
 
 Any value in the config file can be overriden by a system property.
 
+
+==== Repository Mode
+
+On start chee looks for a directory of name `.chee` in the current
+working directory or above. If it exists it marks the directory as a
+repository.
+
+The repository is isolated from the global chee data. Chee will set
+`chee.configdir` and `chee.workingdir` to the location containing the
+`.chee` directory. The configuration file is read from
+`.chee/chee.conf` and the working directory is `.chee/work/`. If a
+config file doesn't exists, an empty one is created. All commands
+executed are local to the repository directory.
+
+By default only directories inside the repository can be added as
+locations. But this check can be removed by setting
+`chee.repo.restrict-to-root` to `false`.
+
+
 ==== Logging
 
 Logging is configured via another configuration file that is by
@@ -110,3 +129,11 @@ which file chee is really reading, set a system property
 ----------------------------------------------------------------------
 CHEE_OPTS=-Dchee.debugConfig=true chee config
 ----------------------------------------------------------------------
+
+
+==== Custom config file
+
+You can skip chee config file lookup by specifying a config file using
+the system property `chee.config`. If you specify a non-existing file,
+an empty configuration is used. This will always override any other
+config file, be it a `.chee` or the global one.

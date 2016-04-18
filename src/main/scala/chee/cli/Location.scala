@@ -49,6 +49,16 @@ object Location {
   /** Check if all `dirs` are not known locations. */
   def checkNotRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
     checkFileLocation(conf, "is a known location", _.nonEmpty, dirs)
+
+  def checkRepoRoot(conf: Config, dirs: Seq[File]): Unit =
+    conf.getRepoRoot match {
+      case Some(root) if conf.getBoolean("chee.repo.restrict-to-root") =>
+        val errors = dirs.filterNot(f => root.isParentOf(f))
+        if (errors.nonEmpty) {
+          userError(s"""Directories outside of repository root: ${errors.mkString(", ")}""")
+        }
+      case _ =>
+    }
 }
 
 object LocationInfo extends Command {

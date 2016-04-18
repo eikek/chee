@@ -92,6 +92,7 @@ object LocationAdd extends ScoptCommand with LockSupport {
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
     Location.checkNotRegisteredLocations(cfg.getLocationConf, opts.dirs)
+    Location.checkRepoRoot(cfg, opts.dirs)
     val sqlite = new SqliteBackend(cfg.getIndexDb)
     indexDirs(cfg, opts, sqlite)
   }
