@@ -66,25 +66,23 @@ information. For instance, the index database is stored at
 `workingdir`, because it can be derived from the image files. And
 `configdir` contains user data that cannot be deleted safely.
 
-Any value in the config file can be overriden by a system property.
+Any value in the config file can be overridden by a system property.
 
 
 ==== Repository Mode
 
-On start chee looks for a directory of name `.chee` in the current
-working directory or above. If it exists it marks the directory as a
-repository.
-
-The repository is isolated from the global chee data. Chee will set
-`chee.configdir` and `chee.workingdir` to the location containing the
-`.chee` directory. The configuration file is read from
-`.chee/chee.conf` and the working directory is `.chee/work/`. If a
-config file doesn't exists, an empty one is created. All commands
-executed are local to the repository directory.
+You can restrict chee to work only on a specific folder, the
+repository, by creating a folder `.chee`. On start chee looks for a
+directory of name `.chee` in the current working directory and
+above. If it exists it marks the directory as a repository and
+`chee.configdir` and `chee.workingdir` are set accordingly: The
+configuration file is read from `.chee/chee.conf` and the working
+directory is `.chee/work/`. If a config file doesn't exists, an empty
+one is used. The repository is isolated from the global chee data.
 
 By default only directories inside the repository can be added as
 locations. But this check can be removed by setting
-`chee.repo.restrict-to-root` to `false`.
+`chee.repo.restrict-to-root` to `false` (in `.chee/chee.conf`).
 
 
 ==== Logging
@@ -94,7 +92,7 @@ default at `${chee.configdir}/logback.xml`. If this file does not
 exist, chee simply logs into a logfile. Only very few logging is done
 by default.
 
-Two things can be controled via the configuration file: where the log
+Two things can be controlled via the configuration file: where the log
 file should be (key `chee.logFile`) and the log level (key
 `chee.logLevel`). The log file is by default in chee's `workingdir`
 and the default log level is `INFO`. This logs only very little. If
@@ -103,14 +101,14 @@ you encounter strange behaviour, try setting the `chee.logLevel` to
 `OFF`, no logging is done.
 
 You can also specify a custom logging configuration by providing a
-`logback.xml` file. How logging can be configured is beyound the scope
+`logback.xml` file. How logging can be configured is beyond the scope
 of this manual. You can read it up
 http://logback.qos.ch/manual/configuration.html[here].
 
 
 ==== System Properties
 
-System properties can be specfied by using the environment variable
+System properties can be specified by using the environment variable
 `CHEE_OPTS`. This is added to the java command that starts chee. It
 can be used to override config values for the next run of chee.
 

@@ -8,8 +8,8 @@ Chee supports public key encryption and password based encryption. It
 utilises the http://bouncycastle.org[bouncycastle] library, that
 provides a pure Java implementation of the OpenPGP standard.
 
-While usually all modifications to files are non-destructive, the
-notably exception is encrypting: When chee encrypts a file, the
+CAUTION: While usually all modifications to files are non-destructive,
+the notably exception is encrypting: When chee encrypts a file, the
 original file is deleted! And likewise when decrypting a file, the
 encrypted file is deleted.
 
@@ -40,10 +40,25 @@ you don't need to type them in all the time.
   used as password.
 - Specify a system command that returns the password with its
   output. Then you can put the password in an encrypted file and use a
-  command like `gpg -d mypassfile.gpg` to return the
-  password. Usually, you have a password caching mechanism in place on
-  your system. Also if you use the http://passwordstore.org[pass]
-  password manager, this integrates well.
+  command like `gpg -d mypassfile.gpg` to return the password. This
+  works well with the http://passwordstore.org[pass] password manager,
+  if you use this.
 
 Please see the xref:_configuration[configuration] chapter for related
 configuration values.
+
+The keys for `pubkey` encryption are retrieved from files. These files
+are by default `~/.gnupg/chee-pubring.gpg` and
+`~/.gnupg/chee-secring.gpg`. They are expected to be in OpenPGP format
+(either ascii-armored or binary). When using gnupg, you can create
+them via the `--export` command:
+
+.Export Keys
+----------------------------------------------------------------------
+gpg2 --export [keyid] > ~/.gnupg/chee-pubring.gpg
+gpg2 --export-secret-keys [keyid] > ~/.gnupg/chee-secring.gpg
+----------------------------------------------------------------------
+
+The secret key will still be password protected and a password must be
+given when decrypting files using the private key. The location of the
+files can be changed in the config file.

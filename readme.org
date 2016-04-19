@@ -103,3 +103,21 @@ chee help manual
 opens a browser showing the complete manual.
 
 Click [[https://eknet.org/main/projects/chee/manual-0.2.0.html][here]] to read the manual now.
+
+* License
+
+Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]].
+
+* Changes
+** 0.2.0 (development)
+
+- Encrypt and decrypt files using OpenPGP.
+- New ~clean~ command to cleanup temporary data.
+- Repository mode: if a directory ~.chee~ is found it is used as
+  config- and working directory.
+  - Please rename your current ~$HOME/.chee~ to ~$HOME/.chee-work~
+    before using 0.2.0.
+
+** 0.1.0
+
+- initial version

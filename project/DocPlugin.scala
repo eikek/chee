@@ -213,12 +213,24 @@ object DocPlugin extends AutoPlugin {
   def readConfigFile(src: File): String =
     IO.read(src / "resources" / "application.conf")
 
-  def currentCommitViaGit: Try[String] = Try {
-    val hash = (Process("git", Seq("rev-parse", "HEAD")).!!).substring(0, 9)
-    Process("git", Seq("name-rev", "HEAD")).!!.split("\\s+", 2).toList match {
-      case _ :: name :: Nil => s"${name.trim}/$hash"
-      case _ => hash
+  def runGit(cmd: Seq[String], col: Int = 0): Try[String] = Try {
+    val out = Process("git", cmd).!!.trim
+    if (col > 0) out.split("\\s+", col).toList.last
+    else out
+  }
+
+  def currentCommitViaGit: Try[String] = {
+    lazy val dirty = runGit(Seq("status", "--porcelain", "--untracked-files=no")).map {
+      case "" => ""
+      case _ => "dirty workingdir @ "
     }
+    lazy val tag = runGit(Seq("name-rev", "--tags", "HEAD"), 2)
+    lazy val branch = runGit(Seq("name-rev", "HEAD"), 2)
+    for {
+      d <- dirty
+      n <- tag.filter(_ != "undefined").orElse(branch)
+      h <- runGit(Seq("rev-parse", "--short=9", "HEAD"))
+    } yield d + List(n, h).mkString("/")
   }
 
   def currentCommitViaFiles(basedir: File): Try[String] = Try {
