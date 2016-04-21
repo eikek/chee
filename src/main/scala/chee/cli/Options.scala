@@ -40,6 +40,11 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
     } textW ("When used with `-f', ignore the default query, otherwise " +
       "select non-existing files.")
 
+  def skip(a: (C, Opts => Opts) => C = noAction) =
+    opt[Int]("skip") valueName ("<n>") action { (n, c) =>
+      a(c, _.copy(skip = Some(n)))
+    } textW ("Drop the first n items. This is applied before `first'.")
+
   def first(a: (C, Opts => Opts) => C = noAction) =
     opt[Int]("first") valueName("<n>") optional() action { (n, c) =>
       a(c, _.copy(first = Some(n)))
@@ -58,6 +63,7 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
     recursive(a)
     indexed(a)
     all(a)
+    skip(a)
     first(a)
   }
 
@@ -72,6 +78,7 @@ object LsOptions {
     directory: Option[File] = None,
     recursive: Boolean = false,
     all: Boolean = false,
+    skip: Option[Int] = None,
     first: Option[Int] = None,
     indexed: Option[Boolean] = None,
     query: String = "") {

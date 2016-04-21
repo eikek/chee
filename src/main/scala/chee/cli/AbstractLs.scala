@@ -4,52 +4,57 @@ import com.typesafe.config.Config
 import chee.properties._
 import chee.query._
 import chee.CheeConf.Implicits._
+import chee.cli.LsOptions.{ Opts => LsOpts }
+import AbstractLs._
 
 trait AbstractLs {
-  import AbstractLs._
 
-  def find(cfg: Config, opts: LsOptions.Opts): Stream[LazyMap] = {
-    val props = getQueryCondition(cfg, opts) match {
+  private def isIndexed(cfg: Config)(flag: Boolean): MapGet[Boolean] = {
+    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    sqlite.idExists.map(_.get == flag)
+  }
+
+  private def directoryFind(cond: Condition, cfg: Config, opts: LsOpts): Option[Stream[LazyMap]] = {
+    val props = opts.directory map {
+      case Directory(d) =>
+        FileBackend.find(cond, d, opts.recursive)
+      case RegularFile(f) =>
+        Stream(LazyMap.fromFile(f).add(Ident.location -> f.parent.pathAsString))
+      case _ =>
+        Stream.empty[LazyMap]
+    }
+    props.map { p =>
+      opts.indexed.map(isIndexed(cfg))
+        .map(MapGet.filter(p, _))
+        .getOrElse(p)
+    }
+  }
+
+  private def indexFind(cond: Condition, cfg: Config, opts: LsOpts): Stream[LazyMap] = {
+    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val filter = if (opts.all) MapGet.unit(true) else Predicates.fileExists
+    MapGet.filter(sqlite.find(cond).get, filter)
+  }
+
+  private def lift(f: (Stream[LazyMap], Int) => Stream[LazyMap]): Option[Int] => Stream[LazyMap] => Stream[LazyMap] =
+    n => s => n.map(f(s, _)).getOrElse(s)
+
+  def find(cfg: Config, opts: LsOpts): Stream[LazyMap] =
+    getQueryCondition(cfg, opts) match {
       case Right(cond) =>
-        opts.directory match {
-          case Some(dir) =>
-            val r = dir match {
-              case Directory(d) =>
-                FileBackend.find(cond, d, opts.recursive)
-              case RegularFile(f) =>
-                Stream(LazyMap.fromFile(f).add(Ident.location -> f.parent.pathAsString))
-              case _ =>
-                Stream.empty[LazyMap]
-            }
-            opts.indexed match {
-              case Some(b) =>
-                val sqlite = new SqliteBackend(cfg.getIndexDb)
-                MapGet.filter(r, sqlite.idExists.map(_.get == b))
-              case _ =>
-                r
-            }
-          case _ =>
-            val sqlite = new SqliteBackend(cfg.getIndexDb)
-            val r = sqlite.find(cond).get
-            val filter = if (opts.all) MapGet.unit(true) else Predicates.fileExists
-            MapGet.filter(r, filter)
-        }
+        val stream = directoryFind(cond, cfg, opts) getOrElse indexFind(cond, cfg, opts)
+        val x: Int => Stream[LazyMap] = stream.drop _
+        val optSlice = lift(_ drop _)(opts.skip) andThen lift(_ take _)(opts.first)
+        optSlice(stream)
       case Left(msg) =>
-        chee.UserError(msg)
+        userError(msg)
     }
-    opts.first match {
-      case Some(n) => props.take(n)
-      case _ => props
-    }
-  }
 
-  def getQueryCondition(cfg: Config, opts: LsOptions.Opts): Either[String, Condition] = {
-    val query = cfg.makeQuery
+  def getQueryCondition(cfg: Config, opts: LsOpts): Either[String, Condition] =
     opts.directory match {
-      case Some(_) => getFileCondition(query, opts.query, cfg, opts.all)
-      case _ => getIndexCondition(query, opts.query)
+      case Some(_) => getFileCondition(cfg.makeQuery, opts.query, cfg, opts.all)
+      case _ => getIndexCondition(cfg.makeQuery, opts.query)
     }
-  }
 }
 
 object AbstractLs {

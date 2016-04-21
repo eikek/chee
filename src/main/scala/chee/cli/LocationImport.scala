@@ -31,6 +31,7 @@ object LocationImport extends ScoptCommand with AbstractLs with LockSupport {
       noteW("\nFind options:")
       recursive(lsAction)
       all(lsAction)
+      skip(lsAction)
       first(lsAction)
       opt[String]('q', "query") action { (q, c) =>
         lsAction(c, _.copy(query = q))
