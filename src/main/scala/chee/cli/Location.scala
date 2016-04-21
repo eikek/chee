@@ -55,7 +55,7 @@ object Location {
       case Some(root) if conf.getBoolean("chee.repo.restrict-to-root") =>
         val errors = dirs.filterNot(f => root.isParentOf(f))
         if (errors.nonEmpty) {
-          userError(s"""Directories outside of repository root: ${errors.mkString(", ")}""")
+          userError(s"""Directories ${errors.mkString(", ")} outside of repository root ${root.path}!""")
         }
       case _ =>
     }

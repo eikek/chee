@@ -119,7 +119,9 @@ object CheeConf {
       }
 
       def getRepoRoot: Option[File] =
-        Option(cfg.getString(cheeRepoRoot)).map(File(_))
+        Option(cfg.getString(cheeRepoRoot))
+          .filter(_.nonEmpty)
+          .map(File(_))
     }
   }
 
