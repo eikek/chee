@@ -7,16 +7,13 @@ import chee.properties._
 import chee.properties.MapGet._
 import chee.query._
 import chee.CheeConf.Implicits._
+import chee.cli.LsOptions.{ Opts => LsOpts }
 
-object LocationImport extends ScoptCommand with LockSupport {
+object LocationImport extends ScoptCommand with AbstractLs with LockSupport {
 
   case class Opts(
-    recursive: Boolean = false,
-    all: Boolean = false,
-    first: Option[Int] = None,
+    lsOpts: LsOpts = LsOpts(),
     duplicates: Boolean = false,
-    query: String = "",
-    source: File = file".",
     location: File = file"."
   )
 
@@ -26,29 +23,30 @@ object LocationImport extends ScoptCommand with LockSupport {
 
   val name = "import"
 
-  val parser = new Parser {
-    opt[Unit]('r', "recursive") optional() action { (_, c) =>
-      c.copy(recursive = true)
-    } text ("Find files recursively.")
+  val parser = new Parser with LsOptions[Opts] {
+    private val lsAction: (Opts, LsOpts => LsOpts) => Opts =
+      (c, f) => c.copy(lsOpts = f(c.lsOpts))
 
-    opt[Unit]('a', "all") optional() action { (_, c) =>
-      c.copy(all = true)
-    } text ("Ignore the default query.")
+    def addSourceOptions(): Unit = {
+      noteW("\nFind options:")
+      recursive(lsAction)
+      all(lsAction)
+      first(lsAction)
+      opt[String]('q', "query") action { (q, c) =>
+        lsAction(c, _.copy(query = q))
+      } text ("The query to apply to the source directory.")
+    }
 
-    opt[Int]("first") valueName("<n>") optional() action { (n, c) =>
-      c.copy(first = Some(n))
-    } text ("Limit results to the first n items.")
+    addSourceOptions()
 
-    opt[String]('q', "query") action { (q, c) =>
-      c.copy(query = q)
-    } text ("The query to apply to the source directory.")
+    noteW("\nImport options:")
 
     opt[Unit]("duplicates") action { (_, c) =>
       c.copy(duplicates = true)
-    } text ("Import files that already exists (in any location).")
+    } text ("Import files that already exists in some location.")
 
     arg[File]("<sourcedir>") required() action { (f, c) =>
-      c.copy(source = f)
+      lsAction(c, _.copy(directory = Some(f)))
     } text("The directory to import.")
 
     arg[File]("<location>") required() action { (f, c) =>
@@ -72,13 +70,19 @@ object LocationImport extends ScoptCommand with LockSupport {
       .add(Ident.filename -> path.name)
   }
 
+  def getSource(opts: Opts): File =
+    opts.lsOpts.directory.getOrElse(sys.error("source dir is required"))
+
   def makeTarget(src: File, opts: Opts): File = {
     @annotation.tailrec
-    def asNonExistent(f: File, n: Int = 1, max: Int = 500): File =
-      if (n >= max) chee.UserError(s"Cannot find non-existing target to copy `${src.path}'. Tried to rename $max times.")
-      else if (f.exists) asNonExistent(f.mapBaseName(_ +"-"+ n), n+1)
-      else f
-    val sub = opts.source relativize src
+    def asNonExistent(f: File, n: Int = 1, max: Int = 500): File = f match {
+      case _ if n >= max =>
+        userError(s"Cannot find non-existing target to copy `${src.path}'. Tried to rename $max times.")
+      case _ if f.exists =>
+        asNonExistent(f.mapBaseName(_ +"-"+ n), n+1)
+      case _ => f
+    }
+    val sub = getSource(opts) relativize src
     asNonExistent(opts.location / sub.toString)
   }
 
@@ -115,7 +119,7 @@ object LocationImport extends ScoptCommand with LockSupport {
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
     Location.checkRegisteredLocations(cfg.getLocationConf, Seq(opts.location))
-    Location.checkNotRegisteredLocations(cfg.getLocationConf, Seq(opts.source))
+    Location.checkNotRegisteredLocations(cfg.getLocationConf, Seq(getSource(opts)))
     val sqlite = new SqliteBackend(cfg.getIndexDb)
 
     val action = exists(sqlite).flatMap { ex =>
@@ -123,15 +127,9 @@ object LocationImport extends ScoptCommand with LockSupport {
       else copy(opts, sqlite)
     }
 
-    val query = cfg.makeQuery
-    AbstractLs.getFileCondition(query, opts.query, cfg, opts.all) match {
-      case Right(cond) =>
-        val added = Extraction.added(DateTime.now)
-        val files = FileBackend.find(cond, opts.source, opts.recursive)
-          .map(_ +  added + (Ident.location -> opts.location.path.toString))
-        progress.foreach(0)(files, action)
-      case Left(msg) => chee.UserError(msg)
-    }
+    val added = Extraction.added(DateTime.now)
+    val location: Property = (Ident.location -> opts.location.path.toString)
+    val files = find(cfg, opts.lsOpts).map(_ + added + location)
+    progress.foreach(0)(files, action)
   }
-
 }
