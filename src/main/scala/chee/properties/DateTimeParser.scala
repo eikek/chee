@@ -59,7 +59,7 @@ class DateTimeParser(now: LocalDateTime = LocalDateTime.now) extends RegexParser
     case year => LocalDateTime.eastersun(year, atEnd) + 49.days
   }
 
-  def timeAmount: Parser[TimeAmount] = digits ~ opt("y"|"m"|"d"|"h"|"min"|"s") ^^ {
+  def timeAmount: Parser[TimeAmount] = digits ~ opt("y"|"min"|"d"|"h"|"m"|"s") ^^ {
     case num ~ Some(unit) => (num, unit.toLowerCase) match {
       case (n, "y") => Years(n.toInt)
       case (n, "m") => Months(n)
