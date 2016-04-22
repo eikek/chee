@@ -52,20 +52,20 @@ chee version
 You can build chee with the [[http://nixos.org/nix][nix package manager]].
 
 #+begin_src shell :exports both
-nix-build https://github.com/eikek/chee/archive/release/0.1.0.tar.gz
+nix-build https://github.com/eikek/chee/archive/release/0.1.1.tar.gz
 #+end_src
 
 or install it with
 
 #+begin_src shell :exports code
-nix-env -if https://github.com/eikek/chee/archive/release/0.1.0.tar.gz
+nix-env -if https://github.com/eikek/chee/archive/release/0.1.1.tar.gz
 #+end_src
 
 ** Download
 
 Prebuild zip files are usually available for download here:
 
-- [[https://eknet.org/main/projects/chee/chee-0.1.0.zip][current]]
+- [[https://eknet.org/main/projects/chee/chee-0.1.1.zip][current]]
 
 Download and unzip the file. Then add the resulting directory to your
 ~$PATH~. You need Java 8 for running it. Test it via
@@ -91,4 +91,4 @@ chee help manual
 
 opens a browser showing the complete manual.
 
-Click [[https://eknet.org/main/projects/chee/manual-0.1.0.html][here]] to read the manual now.
+Click [[https://eknet.org/main/projects/chee/manual-0.1.1.html][here]] to read the manual now.

@@ -2,7 +2,7 @@
 
 ;; Copyright © 2016- Eike Kettner
 
-;; Version: 0.1.0
+;; Version: 0.1.1
 
 ;; Package-Requires: ((dash "2.12.1") (s "1.10.0"))
 
