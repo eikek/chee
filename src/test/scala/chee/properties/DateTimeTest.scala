@@ -84,6 +84,24 @@ class DateTimeTest extends FlatSpec with Matchers {
     parser.parseDate("3", true) should be (Right(LocalDateTime.atEnd(2015, Some(10), Some(3))))
   }
 
+  it should "parse time amounts" in {
+    val now = LocalDateTime(2015,10,15,14,32,10)
+    val parser = new DateTimeParser(now)
+    val tests = List(
+      ("3h", Hours(3)),
+      ("8min", Minutes(8)),
+      ("4m", Months(4)),
+      ("7d", Days(7)),
+      ("2y", Years(2)))
+    for ((str, amount) <- tests) {
+      parser.parseAll(parser.timeAmount, str) match {
+        case parser.Success(a, _) =>
+          a should be (amount)
+        case f => sys.error(f.toString)
+      }
+    }
+  }
+
   it should "calculate from now" in {
     val now = LocalDateTime(2015,10,15,14,32,10)
     val parser = new DateTimeParser(now)
@@ -92,6 +110,7 @@ class DateTimeTest extends FlatSpec with Matchers {
     parser.parseDate("-4y", true) should be (Right(LocalDateTime(2011,10,15,0,0,0)))
     parser.parseDate("-4d", true) should be (Right(LocalDateTime(2015,10,11,0,0,0)))
     parser.parseDate("-4h", true) should be (Right(LocalDateTime(2015,10,15,10,0,0)))
+    parser.parseDate("-4min", true) should be (Right(LocalDateTime(2015,10,15,14,28,0)))
   }
 
   it should "recognize eastersun keyword" in {
