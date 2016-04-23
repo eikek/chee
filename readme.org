@@ -117,6 +117,8 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
   config- and working directory.
   - Please rename your current ~$HOME/.chee~ to ~$HOME/.chee-work~
     before using 0.2.0.
+- add a ~--skip~ option to the ~find~ command and related to allow
+  skipping first ~n~ results
 
 ** 0.1.0
 

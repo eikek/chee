@@ -19,4 +19,9 @@ class ConfigTest extends FlatSpec with Matchers {
     cfg.getFile("chee.tmpdir") should be (TestInfo.targetDir / "tmp")
     System.getProperty("java.io.tmpdir") should not be (cfg.getString("chee.tmpdir"))
   }
+
+  "getCommand" should "return Nil if empty string" in {
+    val cfg = CheeConf.defaultConfig
+    cfg.getCommand("chee.crypt.default-passphrase-command") should be (Nil)
+  }
 }

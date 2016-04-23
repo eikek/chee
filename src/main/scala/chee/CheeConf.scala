@@ -35,7 +35,7 @@ object CheeConf {
       def getFile(key: String): File = File(cfg.getString(key))
 
       def getCommand(key: String): List[String] =
-        cfg.getString(key).split("\\s+").toList
+        cfg.getString(key).split("\\s+").filter(_.nonEmpty).toList
 
       def getIndexDb = getFile("chee.dbfile")
 
