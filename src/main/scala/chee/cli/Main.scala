@@ -1,14 +1,15 @@
 package chee.cli
 
 import java.time.Duration
+import better.files._
 import org.slf4j.{Logger, LoggerFactory}
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
-import chee.{CheeConf, UserError}
-import chee.CheeConf.Implicits._
+import chee.UserError
+import chee.conf._
 import chee.Timing
 
 /** The main entry point to chee.
@@ -18,19 +19,19 @@ import chee.Timing
 object Main extends LazyLogging {
 
   val chee: List[CommandTree] = List(
-    Help,
-    Version,
-    Find,
+    new Help,
+    new Version,
+    new Find,
     Location.root,
-    HubCommand("collection", List(CollectionEdit, CollectionShow)),
+    HubCommand("collection", List(new CollectionEdit, new CollectionShow)),
     View,
     MkTree,
     Thumb,
     Scale,
-    ConfigCmd,
+    new ConfigCmd,
     Encrypt,
     Decrypt,
-    Clean
+    new Clean
   )
 
   def setupLogging(cfg: Config): Unit = {
@@ -47,8 +48,18 @@ object Main extends LazyLogging {
     }
   }
 
+  private def setTempDir(cfg: Config): Unit = {
+    val tmpdir = cfg.getString("chee.tmpdir")
+    if (tmpdir.nonEmpty) {
+      val tmp = File(tmpdir)
+      System.setProperty("java.io.tmpdir", tmp.path.toString)
+      tmp.createIfNotExists(asDirectory = true)
+    }
+  }
+
   def main(args: Array[String]): Unit = {
-    val config = CheeConf.config
+    val config = CheeConf.defaultConfig
+    setTempDir(config)
     setupLogging(config)
     Command.find(args, chee) match {
       case Left(msg) =>

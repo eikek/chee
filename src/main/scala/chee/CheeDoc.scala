@@ -9,7 +9,7 @@ import scala.sys.process.Process
 import scala.util.Try
 
 import better.files._
-import chee.CheeConf.Implicits._
+import chee.conf._
 
 object CheeDoc {
 

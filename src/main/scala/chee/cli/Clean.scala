@@ -1,15 +1,10 @@
 package chee.cli
 
-import chee.CheeConf.Implicits._
+import chee.conf._
 import com.typesafe.config.Config
+import Clean._
 
-object Clean extends ScoptCommand {
-
-  case class Opts(
-    tempDir: Option[String] = None,
-    decryptDir: Option[String] = None,
-    scaleDir: Option[String] = None
-  )
+class Clean extends ScoptCommand {
 
   type T = Opts
 
@@ -61,4 +56,11 @@ object Clean extends ScoptCommand {
       removeDir(cfg, opts.decryptDir.get)
     }
   }
+}
+
+object Clean {
+  case class Opts(
+    tempDir: Option[String] = None,
+    decryptDir: Option[String] = None,
+    scaleDir: Option[String] = None)
 }

@@ -3,7 +3,7 @@ package chee.cli
 import com.typesafe.config.Config
 import chee.doc.CheeDocInfo
 
-object Version extends Command {
+class Version extends Command {
 
   val name = "version"
 

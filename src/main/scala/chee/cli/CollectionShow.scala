@@ -1,18 +1,14 @@
 package chee.cli
 
 import com.typesafe.config.Config
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.Collection
 import chee.properties.Patterns._
+import CollectionShow.Opts
 
-object CollectionShow extends ScoptCommand {
+class CollectionShow extends ScoptCommand {
 
   val name = "show"
-
-  case class Opts(
-    pattern: String = "oneline",
-    name: String = ""
-  )
 
   type T = Opts
 
@@ -58,4 +54,10 @@ object CollectionShow extends ScoptCommand {
       out(pattern.right(userError).result(coll))
     }
   }
+}
+
+object CollectionShow {
+  case class Opts(
+    pattern: String = "oneline",
+    name: String = "")
 }

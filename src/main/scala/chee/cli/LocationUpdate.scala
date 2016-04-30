@@ -1,20 +1,17 @@
 package chee.cli
 
 import com.typesafe.config.Config
-import chee.CheeConf.Implicits._
+import chee.conf._
 import better.files._
 import chee.query._
+import LocationUpdate._
 
-object LocationUpdate extends ScoptCommand with LockSupport {
+class LocationUpdate extends ScoptCommand with LockSupport {
 
   type T = Opts
 
   val name = "update"
   val defaults = Opts()
-
-  case class Opts(
-    all: Boolean = false,
-    dirs: Seq[File] = Seq.empty)
 
   val parser = new Parser {
     opt[Unit]("all") optional() action { (_, c) =>
@@ -50,11 +47,17 @@ object LocationUpdate extends ScoptCommand with LockSupport {
         recursive = locEntry.recursive,
         all = locEntry.all,
         query = locEntry.query)
-      LocationAdd.indexDirs(cfg, addOpts, sqlite)
+      new LocationAdd().indexDirs(cfg, addOpts, sqlite)
     }
   }
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
     update(cfg, opts)
   }
+}
+
+object LocationUpdate {
+  case class Opts(
+    all: Boolean = false,
+    dirs: Seq[File] = Seq.empty)
 }

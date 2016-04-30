@@ -6,16 +6,11 @@ import better.files._
 import chee.properties._
 import chee.properties.MapGet._
 import chee.query._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.cli.LsOptions.{ Opts => LsOpts }
+import LocationImport.Opts
 
-object LocationImport extends ScoptCommand with AbstractLs with LockSupport {
-
-  case class Opts(
-    lsOpts: LsOpts = LsOpts(),
-    duplicates: Boolean = false,
-    location: File = file"."
-  )
+class LocationImport extends ScoptCommand with AbstractLs with LockSupport {
 
   type T = Opts
 
@@ -133,4 +128,11 @@ object LocationImport extends ScoptCommand with AbstractLs with LockSupport {
     val files = find(cfg, opts.lsOpts).map(_ + added + location)
     progress.foreach(0)(files, action)
   }
+}
+
+object LocationImport {
+  case class Opts(
+    lsOpts: LsOpts = LsOpts(),
+    duplicates: Boolean = false,
+    location: File = file".")
 }

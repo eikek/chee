@@ -1,10 +1,9 @@
 package chee.cli
 
 import better.files._
-import chee.CheeConf
-import chee.CheeConf.Implicits._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}
+import chee.conf._
 import chee.properties._
 import chee.properties.MapGet._
 import chee.query.Progress
@@ -76,7 +75,7 @@ trait CryptCommand { self: ScoptCommand with AbstractLs =>
     *  - from `fileKey' which points to a filename in the config file
     */
   def getPassword(cfg: Config, passphrase: Option[File], cmdKey: String, fileKey: String): Option[Array[Char]] =
-    passphrase.flatMap(CheeConf.readPasswordFromFile).orElse {
+    passphrase.flatMap(_.readPassword).orElse {
       cfg.readPasswordFromCommand(cmdKey)
     } orElse {
       cfg.readPasswordFromFile(fileKey)

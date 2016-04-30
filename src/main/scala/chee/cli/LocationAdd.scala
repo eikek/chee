@@ -1,28 +1,24 @@
 package chee.cli
 
-import com.typesafe.config.Config
+import java.time.Duration
+
+import LocationAdd._
 import better.files._
+import chee.conf._
+import chee.LocationConf.Entry
+import chee.Timing
+import chee.Timing.timed
 import chee.properties._
 import chee.query._
-import chee.CheeConf.Implicits._
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-object LocationAdd extends ScoptCommand with LockSupport {
-  import java.time.Duration
-  import chee.LocationConf.Entry
-  import chee.Timing
-  import chee.Timing.timed
+class LocationAdd extends ScoptCommand with LockSupport {
 
   type T = Opts
 
   val name = "add"
   val defaults = Opts()
-
-  case class Opts(
-    recursive: Boolean = false,
-    all: Boolean = false,
-    query: String = "",
-    dirs: Seq[File] = Seq.empty)
 
   val parser = new Parser {
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
@@ -96,4 +92,13 @@ object LocationAdd extends ScoptCommand with LockSupport {
     val sqlite = new SqliteBackend(cfg.getIndexDb)
     indexDirs(cfg, opts, sqlite)
   }
+}
+
+object LocationAdd {
+  case class Opts(
+    recursive: Boolean = false,
+    all: Boolean = false,
+    query: String = "",
+    dirs: Seq[File] = Seq.empty)
+
 }

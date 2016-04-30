@@ -1,11 +1,11 @@
 package chee.cli
 
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.cli.LsOptions.{Opts => LsOpts}
 import chee.properties.Patterns._
 import com.typesafe.config.Config
 
-object Find extends ScoptCommand with AbstractLs {
+class Find extends ScoptCommand with AbstractLs {
 
   type T = Opts
 

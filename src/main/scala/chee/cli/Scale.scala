@@ -1,6 +1,6 @@
 package chee.cli
 
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.Processing
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}

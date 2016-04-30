@@ -147,5 +147,11 @@ package object cli {
       }
       mapPath(rename)
     }
+
+    def readPassword: Option[Array[Char]] = f match {
+      case RegularFile(_) => f.lines.headOption.map(_.toCharArray)
+      case _ => None
+    }
+
   }
 }

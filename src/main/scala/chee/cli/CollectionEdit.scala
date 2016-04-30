@@ -1,21 +1,14 @@
 package chee.cli
 
 import com.typesafe.config.Config
-//import scala.sys.process._
 import better.files._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.{Collection, CollectionConf}
+import CollectionEdit.Opts
 
-object CollectionEdit extends ScoptCommand {
+class CollectionEdit extends ScoptCommand {
 
   val name = "edit"
-
-  case class Opts(
-    name: String = "",
-    newName: Option[String] = None,
-    newQuery: Option[String] = None,
-    newDescription: Option[String] = None
-  )
 
   type T = Opts
 
@@ -193,4 +186,12 @@ object CollectionEdit extends ScoptCommand {
     val comments: String => Boolean =
       s => s.startsWith("#")
   }
+}
+
+object CollectionEdit {
+  case class Opts(
+    name: String = "",
+    newName: Option[String] = None,
+    newQuery: Option[String] = None,
+    newDescription: Option[String] = None)
 }

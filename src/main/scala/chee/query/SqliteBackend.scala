@@ -12,6 +12,8 @@ import java.nio.file.Path
 class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
   import SqliteBackend._
 
+  dbfile.parent.createDirectories()
+  
   final def find(cond: Condition): Try[Stream[LazyMap]] = {
     val sql = (s"""SELECT ${SqlBackend.idents.map(_.name).mkString(",")},coalesce(created,lastmodified) as sorting"""
       + s""" FROM chee_index WHERE ${SqlBackend.whereClause(cond)}"""

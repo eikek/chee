@@ -1,11 +1,10 @@
 package chee.cli
 
 import com.typesafe.config.Config
+import better.files._
+import chee.conf._
 
 trait LockSupport  {
-
-  import better.files._
-  import chee.CheeConf.Implicits._
 
   private def dolock(cfg: Config, name: String): File = {
     val f = cfg.getFile("chee.tmpdir") / name

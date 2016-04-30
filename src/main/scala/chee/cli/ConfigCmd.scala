@@ -2,7 +2,7 @@ package chee.cli
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 
-object ConfigCmd extends ScoptCommand {
+class ConfigCmd extends ScoptCommand {
 
   case class Opts(
     render: ConfigRenderOptions = ConfigRenderOptions.defaults().setOriginComments(false).setJson(false),

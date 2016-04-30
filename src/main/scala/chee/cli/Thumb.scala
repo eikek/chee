@@ -1,7 +1,7 @@
 package chee.cli
 
 import chee.{Processing, Size}
-import chee.CheeConf.Implicits._
+import chee.conf._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}
 import chee.cli.ProcessingOptions.{Opts => ProcOpts}

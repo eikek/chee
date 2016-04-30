@@ -1,13 +1,12 @@
 package chee.cli
 
-import chee.crypto.{ Algorithm, CheeCrypt, CryptMethod, KeyFind }
-import chee.query.{ Progress, SqliteBackend }
-import com.typesafe.config.Config
-import chee.CheeConf.Implicits._
-import chee.Size
+import chee.Processing
+import chee.crypto.{CheeCrypt, CryptMethod, KeyFind}
+import chee.conf._
 import chee.properties._
 import chee.properties.MapGet._
-import chee.Processing
+import chee.query.SqliteBackend
+import com.typesafe.config.Config
 import org.bouncycastle.openpgp.PGPPublicKey
 
 object Encrypt extends ScoptCommand with AbstractLs with CryptCommand {

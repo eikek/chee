@@ -4,4 +4,4 @@ scala:
 jdk:
   - oraclejdk8
 script:
-  - sbt ";genDocResources;test"
+  - sbt ";genDocResources;test;it:test"

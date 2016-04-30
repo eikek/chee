@@ -4,18 +4,18 @@ import com.typesafe.config.Config
 import better.files._
 import chee.properties._
 import chee.query._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import com.typesafe.scalalogging.LazyLogging
 
 object Location {
   val root = HubCommand("location", List(
-    LocationAdd,
-    LocationUpdate,
-    LocationDelete,
-    LocationImport,
-    LocationInfo,
-    LocationSync,
-    LocationMove))
+    new LocationAdd,
+    new LocationUpdate,
+    new LocationDelete,
+    new LocationImport,
+    new LocationInfo,
+    new LocationSync,
+    new LocationMove))
 
   /** Test whether `f` is inside a location given by `locations`.
     *
@@ -61,7 +61,7 @@ object Location {
     }
 }
 
-object LocationInfo extends Command {
+class LocationInfo extends Command {
   val name = "info"
 
   def exec(cfg: Config, args: Array[String]): Unit = {
@@ -76,15 +76,11 @@ object LocationInfo extends Command {
   }
 }
 
-object LocationDelete extends ScoptCommand with LockSupport {
-  type T = Opts
+class LocationDelete extends ScoptCommand with LockSupport {
+  type T = LocationDelete.Opts
 
-  val name = "delete"
-  val defaults = Opts()
-
-  case class Opts(
-    all: Boolean = false,
-    dirs: Seq[File] = Seq.empty)
+  val name = LocationDelete.name
+  val defaults = LocationDelete.Opts()
 
   val parser = new Parser {
     opt[Unit]("all") optional() action { (_, c) =>
@@ -96,7 +92,7 @@ object LocationDelete extends ScoptCommand with LockSupport {
     } textW ("One or many directories that are deleted from the index and location set.")
   }
 
-  def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
+  def exec(cfg: Config, opts: LocationDelete.Opts): Unit = withLock(cfg) {
     Location.checkRegisteredLocations(cfg.getLocationConf, opts.dirs)
     val file = cfg.getLocationConf
     val sqlite = new SqliteBackend(cfg.getIndexDb)
@@ -117,4 +113,10 @@ object LocationDelete extends ScoptCommand with LockSupport {
       }
     }
   }
+}
+object LocationDelete {
+  val name = "delete"
+  case class Opts(
+    all: Boolean = false,
+    dirs: Seq[File] = Seq.empty)
 }

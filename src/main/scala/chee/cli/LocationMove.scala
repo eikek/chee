@@ -3,10 +3,11 @@ package chee.cli
 import com.typesafe.config.Config
 import better.files._
 import chee.query._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import com.typesafe.scalalogging.LazyLogging
+import LocationMove.Opts
 
-object LocationMove extends ScoptCommand with LockSupport {
+class LocationMove extends ScoptCommand with LockSupport {
   import java.time.Duration
   import chee.LocationConf
   import chee.LocationConf.Entry
@@ -15,11 +16,6 @@ object LocationMove extends ScoptCommand with LockSupport {
 
   val name = "mv"
   val defaults = Opts()
-
-  case class Opts(
-    indexOnly: Boolean = false,
-    src: File = file"",
-    target: File = file"")
 
   val parser = new Parser {
     opt[Unit]("index") optional() action { (_, c) =>
@@ -50,4 +46,11 @@ object LocationMove extends ScoptCommand with LockSupport {
     val n = sqlite.changeLocation(opts.src.path, opts.target.path).get
     outln(s"changed $n entries")
   }
+}
+
+object LocationMove {
+  case class Opts(
+    indexOnly: Boolean = false,
+    src: File = file"",
+    target: File = file"")
 }

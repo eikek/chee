@@ -2,7 +2,7 @@ package chee.cli
 
 import chee.crypto.CheeCrypt
 import chee.properties._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import com.typesafe.config.Config
 
 /** Enable transparent decryption.

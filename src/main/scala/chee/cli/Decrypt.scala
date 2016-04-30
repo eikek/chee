@@ -1,15 +1,13 @@
 package chee.cli
 
 import better.files._
-import chee.crypto.{ Algorithm, CheeCrypt, CryptMethod, KeyFind }
-import chee.query.{ Progress, SqliteBackend }
-import com.typesafe.config.Config
-import chee.CheeConf.Implicits._
-import chee.Size
+import chee.Processing
+import chee.crypto.CryptMethod
+import chee.conf._
 import chee.properties._
 import chee.properties.MapGet._
-import chee.Processing
-import org.bouncycastle.openpgp.PGPPublicKey
+import chee.query.SqliteBackend
+import com.typesafe.config.Config
 
 object Decrypt extends ScoptCommand with AbstractLs with CryptCommand {
 

@@ -4,10 +4,11 @@ import com.typesafe.config.Config
 import better.files._
 import chee.properties._
 import chee.query._
-import chee.CheeConf.Implicits._
+import chee.conf._
 import com.typesafe.scalalogging.LazyLogging
+import LocationSync.Opts
 
-object LocationSync extends ScoptCommand with LockSupport {
+class LocationSync extends ScoptCommand with LockSupport {
   import java.time.Duration
   import chee.LocationConf
   import chee.LocationConf.Entry
@@ -18,11 +19,6 @@ object LocationSync extends ScoptCommand with LockSupport {
 
   val name = "sync"
   val defaults = Opts()
-
-  case class Opts(
-    reindex: Boolean = false,
-    all: Boolean = false,
-    dirs: Seq[File] = Seq.empty)
 
   val parser = new Parser {
     opt[Unit]("reindex") optional() action { (_, c) =>
@@ -69,7 +65,7 @@ object LocationSync extends ScoptCommand with LockSupport {
       recursive = locEntry.recursive,
       all = locEntry.all,
       query = locEntry.query)
-    LocationAdd.indexDirs(cfg, addOpts, sqlite)
+    new LocationAdd().indexDirs(cfg, addOpts, sqlite)
   }
 
   sealed trait Result
@@ -188,4 +184,11 @@ object LocationSync extends ScoptCommand with LockSupport {
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
     sync(cfg, opts)
   }
+}
+
+object LocationSync {
+  case class Opts(
+    reindex: Boolean = false,
+    all: Boolean = false,
+    dirs: Seq[File] = Seq.empty)
 }

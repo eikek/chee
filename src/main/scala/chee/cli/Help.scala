@@ -5,19 +5,14 @@ import scala.io.Source
 
 import chee.CheeDoc
 import chee.doc.CheeDocInfo
+import Help.Opts
 
-object Help extends ScoptCommand {
+class Help extends ScoptCommand {
 
   type T = Opts
 
   val name = "help"
-  val defaults = Opts()
-
-  case class Opts(
-    prefix: String = "cmd",
-    format: String = "adoc",
-    name: String = Help.name
-  )
+  val defaults = Opts(name = name)
 
   val commands = CheeDocInfo.docFiles.filter(_.startsWith("cmd-"))
     .map(_.replaceAll("\\.adoc", ""))
@@ -71,4 +66,11 @@ object Help extends ScoptCommand {
       val cand = if (prefix == "cmd") commands else topics
       CheeDoc.openPage(cfg)(prefixFind(prefix+"-"+name, cand)).get
   }
+}
+
+object Help {
+    case class Opts(
+    prefix: String = "cmd",
+    format: String = "adoc",
+    name: String)
 }
