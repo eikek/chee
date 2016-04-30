@@ -4,7 +4,7 @@ import scala.util._
 import org.scalatest._
 import better.files._
 import chee.TestInfo
-import chee.cli.FileExt
+import chee.util.files._
 
 class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   val idMapping = (id: Ident) => id.in("old")
@@ -129,7 +129,6 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   "extension" should "find chars after last dot" in {
-    import chee.cli.FileExt
     def extension(f: File) = f.getExtension
     extension(file"test.jpg") should be (Some("jpg"))
     extension(file"test.x.jpg") should be (Some("jpg"))

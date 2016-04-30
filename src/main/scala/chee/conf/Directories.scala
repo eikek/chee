@@ -2,6 +2,7 @@ package chee.conf
 
 import better.files._
 import com.typesafe.config.{ Config, ConfigFactory }
+import chee.util.files._
 
 case class Directories(
   initial: Config = ConfigFactory.empty(),
@@ -63,10 +64,4 @@ object Directories {
       .map(atRepoRoot)
       .getOrElse(global)
 
-  private implicit class FileOps(file: File) {
-    def ||(other: File): Option[File] =
-      existing orElse other.existing
-
-   def existing: Option[File] = if (file.exists) Some(file) else None
-  }
 }

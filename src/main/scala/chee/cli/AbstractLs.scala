@@ -4,6 +4,7 @@ import com.typesafe.config.Config
 import chee.properties._
 import chee.query._
 import chee.conf._
+import chee.util.files._
 import chee.cli.LsOptions.{ Opts => LsOpts }
 import AbstractLs._
 

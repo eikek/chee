@@ -1,6 +1,7 @@
 package chee.cli
 
 import chee.conf._
+import chee.util.files._
 import com.typesafe.config.Config
 import Clean._
 

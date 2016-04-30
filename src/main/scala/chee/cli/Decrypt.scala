@@ -4,6 +4,7 @@ import better.files._
 import chee.Processing
 import chee.crypto.CryptMethod
 import chee.conf._
+import chee.util.files._
 import chee.properties._
 import chee.properties.MapGet._
 import chee.query.SqliteBackend

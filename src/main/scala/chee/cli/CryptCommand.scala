@@ -4,6 +4,7 @@ import better.files._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
 import chee.cli.LsOptions.{Opts => LsOpts}
 import chee.conf._
+import chee.util.files._
 import chee.properties._
 import chee.properties.MapGet._
 import chee.query.Progress

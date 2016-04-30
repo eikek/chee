@@ -24,7 +24,7 @@ object Extraction {
 final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction {
   import scala.util.Try
   import PropertyMap._
-  import chee.cli.FileExt
+  import chee.util.files._
 
   val idents = Set(Ident.path, Ident.filename, Ident.length,
     Ident.lastModified, Ident.mimetype, Ident.extension).map(mapping)

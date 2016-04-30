@@ -10,7 +10,7 @@ import chee.crypto._
 import chee.properties._
 import chee.properties.Patterns._
 import chee.query._
-import chee.cli.FileExt
+import chee.util.files._
 import com.sksamuel.scrimage.ScaleMethod
 import com.typesafe.config.Config
 

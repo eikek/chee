@@ -7,6 +7,7 @@ import chee.properties._
 import chee.properties.MapGet._
 import chee.query._
 import chee.conf._
+import chee.util.files._
 import chee.cli.LsOptions.{ Opts => LsOpts }
 import LocationImport.Opts
 
