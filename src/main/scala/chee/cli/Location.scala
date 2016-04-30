@@ -1,10 +1,11 @@
 package chee.cli
 
-import com.typesafe.config.Config
 import better.files._
+import chee.conf._
 import chee.properties._
 import chee.query._
-import chee.conf._
+import chee.util.files._
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
 object Location {
@@ -14,15 +15,14 @@ object Location {
     new LocationDelete,
     new LocationImport,
     new LocationInfo,
-    new LocationSync,
-    new LocationMove))
+    new LocationSync))
 
   /** Test whether `f` is inside a location given by `locations`.
     *
     * Return the location that `f` is a child of, or `None`.
     */
   private def findFileLocation(locations: Set[File])(f: File): Option[File] =
-    locations.find(l => f.path.startsWith(l.path))
+    locations.find(_ parentOf f)
 
   /** Filter a list of directories by whether they are childs of known
     * locations.

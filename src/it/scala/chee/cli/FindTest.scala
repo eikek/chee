@@ -9,7 +9,7 @@ class FindTest extends FlatSpec with Matchers with CommandSetup {
 
   "find" should "return --first 2 files" in globalCheeWithImages { setup =>
     val (stdout, Nil) = find.run(setup, "--first", "2")
-    stdout should have length (3)
+    stdout should have length (2)
   }
 
   it should "--skip 2 files" in globalCheeWithImages { setup =>

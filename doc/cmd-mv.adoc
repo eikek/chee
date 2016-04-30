@@ -1,0 +1,60 @@
+=== mv
+
+Moves files and directories.
+
+.Usage
+----------------------------------------------------------------------
+<usage_mv>
+----------------------------------------------------------------------
+
+The `mv` moves (or renames) files and synchronises the index
+accordingly. It works only for files that are known to chee (in a
+location). Files and directories can only be moved between
+locations. But location root directories can be moved to unknown
+directories, then chee removes the old location and adds the new one
+with the same parameters (recursive scanning) as the old one.
+
+Multiple source files can be specified. The last file is the
+target. The target must be an existing directory if multiple source
+files are specified.
+
+Here are some examples:
+
+.Move files inside a location
+----------------------------------------------------------------------
+chee mv DSC_7600.JPG dsc_7600_1.jpg
+----------------------------------------------------------------------
+
+This renames the file to lowercase. The same is used to rename
+directories.
+
+
+.Move directory from one location to another
+----------------------------------------------------------------------
+chee mv loc1/sdcard0 loc2/
+----------------------------------------------------------------------
+
+This moves the directory `sdcard0` to another location `loc2`. Since
+`loc2` exists, the directory `loc2/sdcard0` is created.
+
+
+.Move multiple files in a directory
+----------------------------------------------------------------------
+chee mv loc1/*.jpg loc1/old
+----------------------------------------------------------------------
+
+The target `loc1/old` must be an existing directory. The `loc1/*.jpg`
+uses shell expansion to get all files with a `jpg` extension to move
+them in the folder `old`.
+
+
+.Move a location
+----------------------------------------------------------------------
+chee mv loc1/ newloc/
+----------------------------------------------------------------------
+
+This moves the location root `loc1` to a new one `newloc`. The
+location `loc1` is removed from the config file and `newloc` is added
+with options from `loc1`.
+
+

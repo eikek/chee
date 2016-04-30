@@ -1,7 +1,9 @@
 package chee.query
 
+import better.files._
 import chee.crypto.CheeCrypt
 import chee.properties._
+import chee.util.files._
 
 // todo: despite its name SqlBackend, some queries  are sqlite specific
 object SqlBackend {
@@ -27,7 +29,7 @@ object SqlBackend {
         includeEmpty = false),
       raw(")")).right
 
-  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path)): MapGet[String] =
+  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path)): MapGet[String] =
     seq(
       raw("UPDATE "), raw(table), raw(" SET "),
       loop(
@@ -36,7 +38,9 @@ object SqlBackend {
         columns.map(_.filterNot(_ == Ident.added).intersect(idents)),
         includeEmpty = true),
       raw(" WHERE "),
-      raw(where._1.name), raw(" = "), quote(''', lookup(where._2))).right
+      raw(columnSql(where.id1, where.comp)),
+      raw(" "+ operatorSql(where.comp) +" "),
+      sqlValue(where)).right
 
   def createTable(name: String): String = {
     val cols = idents.foldLeft(List[String]()){ (sql, id) =>
@@ -67,6 +71,20 @@ object SqlBackend {
   def count(table: String, c: Condition): String =
     s"SELECT COUNT(*) FROM $table WHERE ${whereClause(c)}"
 
+  def move(source: File, target: File, newLocation: Option[File]): String = {
+    val len = source.toString.length + 1
+    val updates = newLocation.map(nl => s"location = '${nl.path}'").toList ++ (source match {
+      case RegularFile(_) => List(
+        s"path = '${target.path}'",
+        s"filename = '${target.name}'",
+        s"""extension = ${target.getExtension.map("'" +_+ "'").getOrElse("null")}""")
+      case _ =>
+        List(s"path = '${target.path}' || substr(path, $len)")
+    })
+    s"""UPDATE chee_index SET ${updates.mkString(", ")} WHERE path like '${source.path}%'"""
+  }
+
+
   private val pbc = CheeCrypt.passwordEncryptExtension
   private val pkc = CheeCrypt.publicKeyEncryptExtension
   private val encryptedExpr =
@@ -88,6 +106,12 @@ object SqlBackend {
       case c => c.name
     }
 
+  private def sqlValue(prop: IdentProp): Pattern =
+    lookup(prop.id2).rmap { value =>
+      Prop(prop.comp, prop.id1 -> value).sqlValue
+    }
+
+
   private implicit class PropSql(p: Prop) {
 
     def parse(v: Value[_], s: String, comp: Comp, id: Ident): String = v.parse(s) match {
@@ -101,7 +125,7 @@ object SqlBackend {
         case Left(m) => chee.UserError(s"Cannot create a date/time value from `$s': $m")
       }
 
-    private def sqlValue = {
+    def sqlValue = {
       def quote(s: String) = s"'$s'"
 
       if (p.comp == Comp.Like) quote(p.prop.value.replace("*", "%"))

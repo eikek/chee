@@ -1,7 +1,7 @@
-package chee.cli
+package chee.it
 
+import chee.cli.LocationInfo
 import org.scalatest._
-import chee.it._
 import chee.conf._
 
 class SetupTest extends FlatSpec with Matchers with CommandSetup {
@@ -22,5 +22,15 @@ class SetupTest extends FlatSpec with Matchers with CommandSetup {
   "repoRoot" should "add repo.root property" in repoRoot { setup =>
     setup.cfg.getRepoRoot should be (Some(setup.userDir))
     (setup.userDir / ".chee").exists should be (true)
+  }
+
+  "LineBuffer" should "append lines" in {
+    LineBuffer().putln("a").putln("b").putln("c").lines should be (Vector("a", "b", "c"))
+    LineBuffer().put("a").putln("b").put("c").lines should be (Vector("ab", "c"))
+    LineBuffer().put("a\nb\n").put("c").putln("de").lines should be (
+      Vector("a", "b", "cde"))
+    LineBuffer().put("a\nb\n\n").lines should be (Vector("a", "b", ""))
+    LineBuffer().put("\n\n\n\n").lines should be (Vector("", ""))
+    LineBuffer().put("\n").put("\n").put("\n").lines should be (Vector(""))
   }
 }

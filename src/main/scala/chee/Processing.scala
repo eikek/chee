@@ -171,7 +171,7 @@ object Processing {
       case ((newFile, oldFile), indexed) if newFile.exists =>
         if (indexed) {
           modify { m =>
-            val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), Ident.path -> originPath).get
+            val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), IdentProp(Comp.Eq, Ident.path, originPath)).get
             if (success && oldFile.exists) oldFile.delete()
             next.add(originPath -> oldFile.pathAsString)
           } map (_ => true)

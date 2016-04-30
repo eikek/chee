@@ -1,13 +1,15 @@
 package chee.query
 
-import java.sql._
-import chee.properties._
-import better.files._
-import scala.util.{Try, Success, Failure}
-import com.typesafe.scalalogging.LazyLogging
-import chee.Timing
-import java.time.Duration
 import java.nio.file.Path
+import java.sql._
+import java.time.Duration
+
+import scala.util.{Failure, Success, Try}
+
+import better.files._
+import chee.Timing
+import chee.properties._
+import com.typesafe.scalalogging.LazyLogging
 
 class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
   import SqliteBackend._
@@ -56,22 +58,21 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
     n.map(_ == 1)
   }
 
-  final def update(maps: Iterable[LazyMap], columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path), p: Progress[Boolean, Int] = Progress.empty): Try[Unit] = {
+  final def update(maps: Iterable[LazyMap], columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path), p: Progress[Boolean, Int] = Progress.empty): Try[Unit] = {
     withConn(dbfile) { conn =>
       val (count, dur) = p.foreach(0)(maps, updateProperties(columns, where)(conn))
       logger.trace(s"Updated $count properties in ${Timing.format(dur)}")
     }
   }
 
-  final def updateOne(lm: LazyMap, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: (Ident, Ident) = (Ident.path, Ident.path)): Try[(LazyMap, Boolean)] =
+  final def updateOne(lm: LazyMap, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path)): Try[(LazyMap, Boolean)] =
     withConn(dbfile) { conn =>
       updateProperties(columns, where)(conn).run(lm)
     }
 
-  final def changeLocation(old: Path, next: Path): Try[Int] =
+  final def move(source: File, target: File, newLocation: Option[File]): Try[Int] =
     withConn(dbfile) { implicit conn =>
-      val len = old.toString.length + 1
-      sqlUpdate(s"UPDATE chee_index SET location = '$next', path = '$next' || substr(path, $len) WHERE location = '$old'")
+      sqlUpdate(SqlBackend.move(source, target, newLocation))
     }
 
   final def delete(cond: Condition): Try[Int] =
@@ -94,7 +95,6 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
 }
 
 object SqliteBackend extends LazyLogging {
-  import scala.language.implicitConversions
   logger.trace("Loading jdbc driver class")
   Class.forName("org.sqlite.JDBC")
 
@@ -158,7 +158,7 @@ object SqliteBackend extends LazyLogging {
       else SqlBackend.insertStatement("chee_index").map(sql => { sqlUpdate(sql); true})
     }
 
-  def updateProperties(columns: MapGet[Seq[Ident]], where: (Ident, Ident))(implicit conn: Connection): MapGet[Boolean] = {
+  def updateProperties(columns: MapGet[Seq[Ident]], where: IdentProp)(implicit conn: Connection): MapGet[Boolean] = {
     SqlBackend.updateRowStatement("chee_index", columns, where).map { sql =>
       sqlUpdate(sql) != 0
     }

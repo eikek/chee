@@ -115,20 +115,6 @@ locations. It will also unregister the given directories from the
 location set, but it does not touch any files on the file system.
 
 
-==== mv
-
-Moves a location to another directory.
-
-.Usage
-----------------------------------------------------------------------
-<usage_location_mv>
-----------------------------------------------------------------------
-
-If a location is moved, the index must be updated accordingly. This
-command can be used to do this. It also moves the directory if it
-exists and `--index` is not specified.
-
-
 ==== sync
 
 Synchronise the index with a location.

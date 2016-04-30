@@ -1,14 +1,18 @@
 package chee.it
 
-import better.files._
-import chee.conf._
-import chee.cli.{ Command, LocationAdd }
-import chee.query.SqliteBackend
-import com.typesafe.config.{ Config, ConfigFactory, ConfigValueFactory }
+import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
-import scala.util.{ Try, Success, Failure }
-import chee.TestInfo
+
+import scala.util.{Failure, Try}
+
 import CommandSetup._
+import better.files._
+import chee.TestInfo
+import chee.cli.{Command, LocationAdd}
+import chee.conf._
+import chee.query.SqliteBackend
+import chee.util.files._
+import com.typesafe.config.Config
 
 trait CommandSetup {
 
@@ -28,19 +32,22 @@ trait CommandSetup {
     dirs
   }
 
-  private val addImages: Setup => Setup = { setupVals =>
-    val pics = setupVals.files
+  private val addImages: Setup => Setup = { setup =>
+    addLocation(setup.files, setup)
+    setup
+  }
+
+  private def teardown(setupVals: Setup) = {
+    setupVals.userDir.delete()
+  }
+
+  def addLocation(pics: File, setupVals: Setup): Unit = {
     pics.createIfNotExists(asDirectory = true)
     TestInfo.images.foreach(f => f.copyTo(pics / f.name))
     val addCmd = new LocationAdd with BufferOut
     val addOpts = LocationAdd.Opts(dirs = Seq(pics), recursive = true)
     val sqlite = new SqliteBackend(setupVals.cfg.getIndexDb)
     addCmd.indexDirs(setupVals.cfg, addOpts, sqlite)
-    setupVals
-  }
-
-  private def teardown(setupVals: Setup) = {
-    setupVals.userDir.delete()
   }
 
   def cheeSetup(before: File => Setup)(code: Setup => Any): Unit = {
@@ -68,8 +75,9 @@ trait CommandSetup {
   def repoRootWithImages(code: Setup => Any): Unit =
     cheeSetup(repoSetup andThen Setup.apply andThen addImages)(code)
 
-  implicit class CommandBufferRun(cmd: Command with BufferOut) {
+  implicit class CommandBufferRun(cmd: Command with BufferOut) extends LazyLogging {
     def run(setup: Setup, args: String*): (List[String], List[String]) = {
+      logger.info(s"Running command ${cmd.name} with args $args")
       cmd.exec(setup.cfg, args.toArray)
       (cmd.stdoutLines, cmd.stderrLines)
     }

@@ -11,8 +11,10 @@ abstract class CheeOptionParser[T](name: String) extends scopt.OptionParser[T](n
   private def prefixLines(text: String, prefix: String): String =
     text.replace("\n", s"\n$prefix")
 
+  val cheeTryHelp = "Try `chee help' for detailed help topics or `--usage' for usage information."
+
   override def showTryHelp(): Unit = {
-    Console.err.println("Try `chee help' for detailed help topics or `--usage' for usage information.")
+    Console.err.println(cheeTryHelp)
   }
 
   implicit class OptionDefOps[A: scopt.Read, C](odef: scopt.OptionDef[A, C]) {

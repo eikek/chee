@@ -96,5 +96,8 @@ object files {
 
     def existing: Option[File] = if (f.exists) Some(f) else None
 
+    /** Like {{isParentOf}} but works for non-existing files (filenames) */
+    def parentOf(c: File): Boolean =
+      f.isParentOf(c) || (f.notExists && (c.path startsWith f.path))
   }
 }

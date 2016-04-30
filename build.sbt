@@ -13,7 +13,7 @@ lazy val dependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.1.0",
   "com.github.scopt"           %% "scopt"                    % "3.4.0",
   "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.0",
-  "ch.qos.logback"              % "logback-classic"          % "1.1.3",
+  "ch.qos.logback"              % "logback-classic"          % "1.1.7",
   "org.xerial"                  % "sqlite-jdbc"              % "3.8.11.2",
   "com.typesafe"                % "config"                   % "1.3.0",
   "org.bouncycastle"            % "bcpg-jdk15on"             % "1.54"
@@ -47,9 +47,8 @@ lazy val testSettings = Defaults.itSettings ++ Seq(
     s"-Duser.dir=${(target in Test).value}/test",
     "-Dchee.logLevel=OFF"
   ),
-  javaOptions in IntegrationTest ++= Seq(
-    "-Duser.timezone=Europe/Berlin",
-    "-Dchee.logLevel=OFF"
+  javaOptions in IntegrationTest := Seq(
+    "-Duser.timezone=Europe/Berlin"
   ),
   sourceGenerators in Test += writeTestInfo.taskValue,
   sourceGenerators in IntegrationTest += writeTestInfo.taskValue

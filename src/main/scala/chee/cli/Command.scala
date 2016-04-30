@@ -79,7 +79,19 @@ trait ScoptCommand extends Command with LazyLogging {
   def defaults: T
   def exec(cfg: Config, opts: T): Unit
 
-  abstract class Parser extends CheeOptionParser[T](name)
+  abstract class Parser extends CheeOptionParser[T](name) {
+    override def showTryHelp(): Unit = {
+      errln(cheeTryHelp)
+    }
+
+    override def reportWarning(msg: String): Unit = {
+      errln(s"Warning: $msg")
+    }
+
+    override def reportError(msg: String): Unit = {
+      errln(s"Error: $msg")
+    }
+  }
 
   final def exec(cfg: Config, args: Array[String]): Unit =
     parser.parse(args, defaults) match {
@@ -87,6 +99,6 @@ trait ScoptCommand extends Command with LazyLogging {
         logger.trace(s"Executing command $name with options $t")
         exec(cfg, t)
       case _ =>
-        System.exit(105)
+        userError("Invalid options")
     }
 }
