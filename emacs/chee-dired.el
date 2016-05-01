@@ -34,7 +34,7 @@
   "Return the switches to use with ls."
   (or chee-dired-ls-switches dired-listing-switches))
 
-(defun chee--thumb-command (query &optional concurrent dir rec first decrypt method)
+(defun chee--thumb-command (query &optional concurrent dir rec pagenum decrypt method)
   "Create a list to use with `chee-proc-async-sexp'. The command
 assembles chee's `thumb' subcommand."
   (append
@@ -47,8 +47,9 @@ assembles chee's `thumb' subcommand."
        (list "--file" dir))
    (if rec
        (list "--recursive"))
-   (if (numberp first)
-       (list "--first" (format "%s" first)))
+   (let* ((page (or (and (numberp pagenum) (> pagenum 0) pagenum) 1))
+          (skip (* chee-page-size (1- page))))
+     (list "--first" (format "%s" chee-page-size) "--skip" (format "%s" skip)))
    (if decrypt
        (list "-d"))
    (cond ((string= "default" method) nil)
@@ -59,12 +60,33 @@ assembles chee's `thumb' subcommand."
 (defun chee-dired-get-buffer ()
   (get-buffer-create chee-dired-buffer-name))
 
-(defun chee-dired (query &optional concurrent dir rec first decrypt method repodir)
+(defun chee--dired-bind-paging-keys ()
+  "Sets up a key map for navigating pages. Must be evaluated
+inside `chee-dired' function."
+  (let ((lmap (make-sparse-keymap)))
+    (set (make-local-variable 'chee--dired-next-page-fn)
+         `(lambda () (chee-dired ,query ,concurrent ,dir ,rec ,(1+ (or page 1)) ,decrypt ,method ,repodir)))
+    (set (make-local-variable 'chee--dired-prev-page-fn)
+         `(lambda () (chee-dired ,query ,concurrent ,dir ,rec ,(1- (or page 2)) ,decrypt ,method ,repodir)))
+
+    (set-keymap-parent lmap (current-local-map))
+    (define-key lmap (kbd "M-n") (lambda ()
+                                   (interactive)
+                                   (funcall chee--dired-next-page-fn)))
+    (define-key lmap (kbd "M-p") (lambda ()
+                                   (interactive)
+                                   (funcall chee--dired-prev-page-fn)))
+
+    (use-local-map lmap)))
+
+(defun chee-dired (query &optional concurrent dir rec page decrypt method repodir)
+  (message "Showing page %s" (or page 1))
   (with-current-buffer (chee-dired-get-buffer)
     (let ((inhibit-read-only t))
       (widen)
       (erase-buffer)
       (with-current-buffer (image-dired-create-thumbnail-buffer)
+        (chee--dired-bind-paging-keys)
         (erase-buffer)))
     (kill-all-local-variables)
     (setq default-directory (or dir "/"))
@@ -72,14 +94,15 @@ assembles chee's `thumb' subcommand."
     (set (make-local-variable 'dired-sort-inhibit) t)
     (set (make-local-variable 'revert-buffer-function)
          `(lambda (ignore-auto noconfirm)
-            (chee-dired ,query ,concurrent ,dir ,rec ,first ,decrypt ,method ,repodir)))
+            (chee-dired ,query ,concurrent ,dir ,rec ,page ,decrypt ,method ,repodir)))
     (set (make-local-variable 'dired-subdir-alist)
          (list (cons (or dir "/") (point-min-marker))))
     (let* ((pos (point))
            (inhibit-read-only t)
            (ls-switches (chee-dired-get-ls-switches))
-           (cmd (chee--thumb-command query concurrent dir rec first decrypt method)))
+           (cmd (chee--thumb-command query concurrent dir rec page decrypt method)))
       (dired-mode (or dir "/") ls-switches)
+      (chee--dired-bind-paging-keys)
       (insert "  " (or dir "/") ":\n")
       (insert "  chee " (mapconcat 'identity cmd " ") "\n")
       (dired-insert-set-properties pos (point))

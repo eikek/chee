@@ -92,7 +92,7 @@ completion. CANDIDATES is a list of possible candidates."
   (setq font-lock-defaults '((chee-query-font-lock-keywords)))
   (setq-local comment-start "# ")
   (setq-local comment-end "")
-  (chee-query-set-args "" t nil nil nil nil "default" nil)
+  (chee-query-set-args "" t nil nil 1 nil "default" nil)
   (goto-char (point-max)))
 
 (defun chee-query-get-buffer (&optional buffer-or-name)
@@ -105,11 +105,10 @@ specified, otherwise `chee-query-buffer-name' is used."
         (chee-query-mode)))
     buf))
 
-(defun chee-query-set-args (query concurrent dir recursive first decrypt encmethod repodir &optional buffer-or-name)
-  "Render QUERY, CONCURRENT, DIR, RECURSIVE and FIRST into the
-query buffer. The buffer BUFFER-OR-NAME is used if
-specified. Point is restored if it is still valid after the new
-values have been inserted."
+(defun chee-query-set-args (query concurrent dir recursive page decrypt encmethod repodir &optional buffer-or-name)
+  "Render the given values into the query buffer. The buffer
+BUFFER-OR-NAME is used if specified. Point is restored if it is
+still valid after the new values have been inserted."
   (with-current-buffer (chee-query-get-buffer buffer-or-name)
     (let ((inhibit-read-only t)
           (pos (point))
@@ -126,19 +125,19 @@ values have been inserted."
       (insert "# ")
       (insert (funcall makeflag concurrent "--concurrent"))
       (insert " (" (chee-describe-key 'chee-query-toggle-concurrent) ")")
-      (insert "   ")
+      (insert "  ")
       (insert (funcall makeflag recursive "--recursive"))
       (insert " (" (chee-describe-key 'chee-query-toggle-recursive) ")")
       (insert "   ")
-      (insert "[" (if (numberp first) (format "%3d" first) "   ") "]")
-      (insert " --first")
-      (insert " (" (chee-describe-key 'chee-query-increment-limit) ")")
+      (insert "   [" (if (numberp page) (format "%3d" page) "   ") "]")
+      (insert " page")
+      (insert " (" (chee-describe-key 'chee-query-increment-limit) ", " (chee-describe-key 'chee-query-decrement-limit) ")")
       (insert "\n# ")
       ;; 4. line
       (insert (funcall makeflag decrypt "--decrypt"))
       (insert " (" (chee-describe-key 'chee-query-toggle-decrypt) ")")
       (insert "   ")
-      (insert "[" (format "%8s" encmethod) "]")
+      (insert "  [" (format "%8s" encmethod) "]")
       (insert " --method")
       (insert " (" (chee-describe-key 'chee-query-toggle-encmethod) ")")
       (put-text-property (point-min) (point) 'front-sticky t)
@@ -152,7 +151,7 @@ values have been inserted."
 (defun chee-query-get-args (&optional buffer)
   "Return the values in the query buffer as a list '(list query
 concurrent dir recursive first)."
-  (let (query dir concurrent recursive first decrypt encmethod repodir)
+  (let (query dir concurrent recursive page decrypt encmethod repodir)
     (with-current-buffer (chee-query-get-buffer buffer)
       (save-excursion
         (goto-char (point-min))
@@ -177,7 +176,7 @@ concurrent dir recursive first)."
         (search-forward-regexp "\\[\\([0-9 ]+\\)\\]")
         (let ((num (s-trim (match-string-no-properties 1))))
           (unless (s-blank? num)
-            (setq first (string-to-number num))))
+            (setq page (string-to-number num))))
         (search-forward "\n")
         ;; 4. line
         (search-forward-regexp "\\[\\(X\\| \\)\\]")
@@ -187,7 +186,7 @@ concurrent dir recursive first)."
           (setq encmethod (if (s-blank? method) "default" method)))
         (search-forward "\n")
         (setq query (buffer-substring-no-properties (point) (point-max)))
-        (list query concurrent dir recursive first decrypt encmethod repodir)))))
+        (list query concurrent dir recursive page decrypt encmethod repodir)))))
 
 (defun chee--query-set-arg (f &rest ns)
   (when (eq major-mode 'chee-query-mode)
@@ -248,15 +247,26 @@ directory is specififed."
   (interactive)
   (chee--query-set-arg (lambda (e i) (not e)) 3))
 
-(defun chee-query-increment-limit (arg)
-  "Incremen the limit parameter. It is incremented by 10. With
-prefix argument, it is decremented by `(* arg 10)'."
-  (interactive "p")
-  (let* ((step (if (> arg 1) (* arg -10) 10))
-         (mapf (lambda (limit i)
-                 (let ((next (+ (or limit 0) step)))
-                   (if (> next 0) next nil)))))
+(defun chee-query-set-page (num-or-fun)
+  "Set the page using either a number or a function that is
+  applied to the current page number."
+  (let ((mapf (lambda (limit i)
+                (cond ((numberp num-or-fun) num-or-fun)
+                      ((functionp num-or-fun)
+                       (let ((n (funcall num-or-fun (or limit 1))))
+                         (or (and (numberp n) (> n 0) n) 1)))
+                      (t 1)))))
     (chee--query-set-arg mapf 4)))
+
+(defun chee-query-increment-limit ()
+  "Incremen the page parameter by 1."
+  (interactive)
+  (chee-query-set-page '1+))
+
+(defun chee-query-decrement-limit ()
+  "Incremen the page parameter by 1."
+  (interactive)
+  (chee-query-set-page '1-))
 
 (defun chee-query-set-file ()
   "Set the directory to search."
@@ -319,7 +329,9 @@ the current buffer, prompting the user for a name."
 (define-key chee-query-mode-map
   (kbd "C-c C-r") 'chee-query-toggle-recursive)
 (define-key chee-query-mode-map
-  (kbd "C-c C-l") 'chee-query-increment-limit)
+  (kbd "M-n") 'chee-query-increment-limit)
+(define-key chee-query-mode-map
+  (kbd "M-p") 'chee-query-decrement-limit)
 (define-key chee-query-mode-map
   (kbd "C-c C-f") 'chee-query-toggle-file)
 (define-key chee-query-mode-map

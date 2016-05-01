@@ -39,7 +39,8 @@ under key ~C-c C-s~ in the ~global-map~.
 Run ~chee-query-open~ and write a query. Run the query using ~C-c
 C-c~. Additional options can be toggled or set via the printed key
 strokes. Results are added to a dired buffer and an image-dired
-buffer. Use the great image-dired from there.
+buffer. Paging is enabled in those buffers using ~M-n~ and ~M-p~,
+respectively. Use the great image-dired from there.
 
 Setting a ~File~ makes chee search this directory instead of the
 index. This can be unset with a prefix argument. Setting a

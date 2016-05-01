@@ -43,8 +43,8 @@
 (ert-deftest chee-query-set-args-test ()
   (let ((expected (concat "# File: <index> (C-c C-f)\n"
                           "# Repository: <global> (C-c C-n)\n"
-                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
-                          "# [ ] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
+                          "# [X] --concurrent (C-c C-j)  [ ] --recursive (C-c C-r)      [100] page (M-n, M-p)\n"
+                          "# [ ] --decrypt (C-c C-d)     [ default] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
       (chee-query-set-args "ext:jpg" t nil nil 100 nil "default" nil)
@@ -54,8 +54,8 @@
                 (buffer-substring-no-properties (point-min) (point-max)))))))
   (let ((expected (concat "# File: /a/b (C-c C-f)\n"
                           "# Repository: <global> (C-c C-n)\n"
-                          "# [ ] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [ 10] --first (C-c C-l)\n"
-                          "# [ ] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
+                          "# [ ] --concurrent (C-c C-j)  [ ] --recursive (C-c C-r)      [ 10] page (M-n, M-p)\n"
+                          "# [ ] --decrypt (C-c C-d)     [ default] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
       (chee-query-set-args "ext:jpg" nil "/a/b" nil 10 nil "default" nil)
@@ -65,8 +65,8 @@
                 (buffer-substring-no-properties (point-min) (point-max)))))))
   (let ((expected (concat "# File: <index> (C-c C-f)\n"
                           "# Repository: <global> (C-c C-n)\n"
-                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
-                          "# [X] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
+                          "# [X] --concurrent (C-c C-j)  [ ] --recursive (C-c C-r)      [100] page (M-n, M-p)\n"
+                          "# [X] --decrypt (C-c C-d)     [ default] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
      (chee-query-set-args "ext:jpg" t nil nil 100 t "default" nil)
@@ -76,8 +76,8 @@
                (buffer-substring-no-properties (point-min) (point-max)))))))
   (let ((expected (concat "# File: <index> (C-c C-f)\n"
                           "# Repository: <global> (C-c C-n)\n"
-                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
-                          "# [X] --decrypt (C-c C-d)   [password] --method (C-c C-t)\n"
+                          "# [X] --concurrent (C-c C-j)  [ ] --recursive (C-c C-r)      [100] page (M-n, M-p)\n"
+                          "# [X] --decrypt (C-c C-d)     [password] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
      (chee-query-set-args "ext:jpg" t nil nil 100 t "password" nil)
@@ -87,8 +87,8 @@
                (buffer-substring-no-properties (point-min) (point-max)))))))
   (let ((expected (concat "# File: <index> (C-c C-f)\n"
                           "# Repository: /a/b/c (C-c C-n)\n"
-                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
-                          "# [ ] --decrypt (C-c C-d)   [password] --method (C-c C-t)\n"
+                          "# [X] --concurrent (C-c C-j)  [ ] --recursive (C-c C-r)      [100] page (M-n, M-p)\n"
+                          "# [ ] --decrypt (C-c C-d)     [password] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
      (chee-query-set-args "ext:jpg" t nil nil 100 nil "password" "/a/b/c")

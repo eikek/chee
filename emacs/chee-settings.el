@@ -123,6 +123,12 @@ The default is the first option."
   :options '(chee-run-query-dwim chee-run-query-dired chee-run-query-thumbnail)
   :group 'chee)
 
+(defcustom chee-page-size
+  100
+  "The number of images to display at once in a buffer. More
+  results can be viewed by navigating to the next page."
+  :type 'integer
+  :group 'chee)
 
 (provide 'chee-settings)
 ;;; chee-settings.el ends here
