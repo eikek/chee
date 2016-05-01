@@ -23,6 +23,7 @@
 
 ;;; Code:
 (require 's)
+(require 'f)
 (require 'chee-settings)
 
 (defvar chee-proc-buffer-name " *chee-proc*")
@@ -30,7 +31,7 @@
 (defvar chee-callback)
 (defvar chee--proc-error-result)
 
-(defun chee-proc-async-sexp (cmd callback &optional buffer-name)
+(defun chee-proc-async-sexp (cmd callback &optional cwd buffer-name)
   "Start a process using CMD, which is a list containing the
 arguments to the chee executable. The output is collected and
 expected to be s-expressions. The sexps are read and CALLBACK is
@@ -57,6 +58,7 @@ property."
            (map (make-sparse-keymap)))
       (with-current-buffer buf
         (setq buffer-read-only t)
+        (setq default-directory (or (and (stringp cwd) cwd) (f-root)))
         (widen)
         (kill-all-local-variables)
         (let ((inhibit-read-only t))
@@ -128,21 +130,23 @@ property."
              (delete-process proc)
            (error nil)))))
 
-(defun chee-proc-sync-sexp (cmd)
+(defun chee-proc-sync-sexp (cmd &optional cwd)
   "Synchronously execute CMD which is a list of arguments to the
 chee executable. Read the output into a list of sexps and return
 it."
   (with-temp-buffer
+    (setq default-directory (or (and (stringp cwd) cwd) (f-root)))
     (insert "(")
     (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
       (insert ")")
       (car (read-from-string (buffer-substring-no-properties (point-min) (point-max)))))))
 
-(defun chee-proc-sync-lines (cmd)
+(defun chee-proc-sync-lines (cmd &optional cwd)
   "Synchronously execute CMD which is a list of arguments to the
 chee executable. The output is split around line separators and
 returned as list of strings."
   (with-temp-buffer
+    (setq default-directory (or (and (stringp cwd) cwd) (f-root)))
     (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
       (split-string (buffer-string) "\r?\n" t))))
 

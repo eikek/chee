@@ -23,6 +23,7 @@
 
 ;;; Code:
 (require 's)
+(require 'f)
 (require 'chee-settings)
 (require 'chee-utils)
 (require 'chee-proc)
@@ -35,7 +36,7 @@
     "extension" "length" "lastmodified" "added"
     "mimetype" "created" "make" "model" "width"
     "height" "orientation" "iso" "date" "id"
-    "pixel" "collection")
+    "pixel" "collection" "encrypted")
   "Property identifiers used for syntax highlighting and
   completion.")
 
@@ -91,7 +92,7 @@ completion. CANDIDATES is a list of possible candidates."
   (setq font-lock-defaults '((chee-query-font-lock-keywords)))
   (setq-local comment-start "# ")
   (setq-local comment-end "")
-  (chee-query-set-args "" t nil nil nil)
+  (chee-query-set-args "" t nil nil nil nil "default" nil)
   (goto-char (point-max)))
 
 (defun chee-query-get-buffer (&optional buffer-or-name)
@@ -104,7 +105,7 @@ specified, otherwise `chee-query-buffer-name' is used."
         (chee-query-mode)))
     buf))
 
-(defun chee-query-set-args (query concurrent dir recursive first &optional buffer-or-name)
+(defun chee-query-set-args (query concurrent dir recursive first decrypt encmethod repodir &optional buffer-or-name)
   "Render QUERY, CONCURRENT, DIR, RECURSIVE and FIRST into the
 query buffer. The buffer BUFFER-OR-NAME is used if
 specified. Point is restored if it is still valid after the new
@@ -115,8 +116,13 @@ values have been inserted."
           (makeflag (lambda (flag name)
                       (concat (if flag "[X]" "[ ]") " " name))))
       (erase-buffer)
+      ;; 1. line
       (insert "# File: " (or dir "<index>"))
       (insert " (" (chee-describe-key 'chee-query-toggle-file) ")\n")
+      ;; 2. line
+      (insert "# Repository: " (or repodir "<global>"))
+      (insert " (" (chee-describe-key 'chee-query-toggle-repodir) ")\n")
+      ;; 3. line
       (insert "# ")
       (insert (funcall makeflag concurrent "--concurrent"))
       (insert " (" (chee-describe-key 'chee-query-toggle-concurrent) ")")
@@ -127,6 +133,14 @@ values have been inserted."
       (insert "[" (if (numberp first) (format "%3d" first) "   ") "]")
       (insert " --first")
       (insert " (" (chee-describe-key 'chee-query-increment-limit) ")")
+      (insert "\n# ")
+      ;; 4. line
+      (insert (funcall makeflag decrypt "--decrypt"))
+      (insert " (" (chee-describe-key 'chee-query-toggle-decrypt) ")")
+      (insert "   ")
+      (insert "[" (format "%8s" encmethod) "]")
+      (insert " --method")
+      (insert " (" (chee-describe-key 'chee-query-toggle-encmethod) ")")
       (put-text-property (point-min) (point) 'front-sticky t)
       (put-text-property (point-min) (point) 'read-only t)
       (insert "\n")
@@ -134,18 +148,28 @@ values have been inserted."
       (when (< pos (point-max))
         (goto-char pos)))))
 
+
 (defun chee-query-get-args (&optional buffer)
   "Return the values in the query buffer as a list '(list query
 concurrent dir recursive first)."
-  (let (query dir concurrent recursive first)
+  (let (query dir concurrent recursive first decrypt encmethod repodir)
     (with-current-buffer (chee-query-get-buffer buffer)
       (save-excursion
         (goto-char (point-min))
+        ;; 1. line
         (search-forward "File: ")
         (unless (looking-at-p "<index>")
           (setq dir (s-trim (buffer-substring-no-properties
                              (point)
                              (- (line-end-position) (+ 2 (length (chee-describe-key 'chee-query-toggle-file))))))))
+        ;; 2. line
+        (search-forward "Repository: ")
+        (unless (looking-at-p "<global>")
+          (setq repodir
+                (s-trim (buffer-substring-no-properties
+                         (point)
+                         (- (line-end-position) (+ 2 (length (chee-describe-key 'chee-query-toggle-repodir))))))))
+        ;; 3. line
         (search-forward-regexp "\\[\\(X\\| \\)\\]")
         (setq concurrent (string= (match-string-no-properties 1) "X"))
         (search-forward-regexp "\\[\\(X\\| \\)\\]")
@@ -155,14 +179,63 @@ concurrent dir recursive first)."
           (unless (s-blank? num)
             (setq first (string-to-number num))))
         (search-forward "\n")
+        ;; 4. line
+        (search-forward-regexp "\\[\\(X\\| \\)\\]")
+        (setq decrypt (string= (match-string-no-properties 1) "X"))
+        (search-forward-regexp "\\[\\(    none\\| default\\|password\\|  pubkey\\)\\]")
+        (let ((method (s-trim (match-string-no-properties 1))))
+          (setq encmethod (if (s-blank? method) "default" method)))
+        (search-forward "\n")
         (setq query (buffer-substring-no-properties (point) (point-max)))
-        (list query concurrent dir recursive first)))))
+        (list query concurrent dir recursive first decrypt encmethod repodir)))))
 
 (defun chee--query-set-arg (f &rest ns)
   (when (eq major-mode 'chee-query-mode)
     (let ((args (chee-query-get-args)))
       (apply 'chee-query-set-args
              (apply 'chee-map-index args f ns)))))
+
+(defun chee--query-find-repodir (dir)
+  (f-traverse-upwards
+   (lambda (p)
+     (f-exists? (f-join p ".chee")))
+   (expand-file-name dir)))
+
+(defun chee-query-set-repodir ()
+  (interactive)
+  (chee--query-set-arg
+   (lambda (el i)
+     (let ((dir (chee--query-find-repodir
+                 (expand-file-name
+                  (read-directory-name "Repository: " nil nil t (or el default-directory))))))
+       (unless dir
+         (user-error "This is not a repository. Cannot find .chee."))
+       (setq default-directory (f-slash dir))
+       dir))
+   7))
+
+(defun chee-query-unset-repodir ()
+  (interactive)
+  (chee--query-set-arg (lambda (e i) nil) 7)
+  (setq default-directory (expand-file-name "~/")))
+
+(defun chee-query-toggle-repodir (arg)
+  (interactive "P")
+  (if arg (chee-query-unset-repodir)
+    (chee-query-set-repodir)))
+
+(defun chee-query-toggle-decrypt ()
+  (interactive)
+  (chee--query-set-arg (lambda (e i) (not e)) 5))
+
+(defun chee-query-toggle-encmethod ()
+  (interactive)
+  (let ((mapf (lambda (method i)
+                (cond
+                 ((string= method "default") "pubkey")
+                 ((string= method "pubkey") "password")
+                 (t "default")))))
+    (chee--query-set-arg mapf 6)))
 
 (defun chee-query-toggle-concurrent ()
   "Toggle the concurrent flag."
@@ -219,7 +292,7 @@ window (below). With prefix argument switch to query buffer."
         (select-window query-win)
       (if arg
           (switch-to-buffer query-buf)
-        (let ((win (split-window-below -9)))
+        (let ((win (split-window-below -10)))
           (set-window-buffer win query-buf)
           (select-window win))))))
 
@@ -227,7 +300,9 @@ window (below). With prefix argument switch to query buffer."
   "Insert a collection condition of form `collection:<name>' in
 the current buffer, prompting the user for a name."
   (interactive)
-  (let* ((candidates (chee-proc-sync-lines (list "collection" "show" "--pattern" "~:name~%")))
+  (let* ((candidates (chee-proc-sync-lines
+                      (list "collection" "show" "--pattern" "~:name~%")
+                      default-directory))
          (coll (completing-read "Collection: " candidates nil t)))
     (insert "collection:'" coll "'")))
 
@@ -247,7 +322,12 @@ the current buffer, prompting the user for a name."
   (kbd "C-c C-l") 'chee-query-increment-limit)
 (define-key chee-query-mode-map
   (kbd "C-c C-f") 'chee-query-toggle-file)
-
+(define-key chee-query-mode-map
+  (kbd "C-c C-d") 'chee-query-toggle-decrypt)
+(define-key chee-query-mode-map
+  (kbd "C-c C-t") 'chee-query-toggle-encmethod)
+(define-key chee-query-mode-map
+  (kbd "C-c C-n") 'chee-query-toggle-repodir)
 
 (provide 'chee-query)
 ;;; chee-query.el ends here

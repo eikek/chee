@@ -42,40 +42,78 @@
 
 (ert-deftest chee-query-set-args-test ()
   (let ((expected (concat "# File: <index> (C-c C-f)\n"
+                          "# Repository: <global> (C-c C-n)\n"
                           "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
+                          "# [ ] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
-      (chee-query-set-args "ext:jpg" t nil nil 100)
+      (chee-query-set-args "ext:jpg" t nil nil 100 nil "default" nil)
       (should
        (equal expected
               (with-current-buffer (chee-query-get-buffer)
                 (buffer-substring-no-properties (point-min) (point-max)))))))
   (let ((expected (concat "# File: /a/b (C-c C-f)\n"
+                          "# Repository: <global> (C-c C-n)\n"
                           "# [ ] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [ 10] --first (C-c C-l)\n"
+                          "# [ ] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
                           "ext:jpg")))
     (new-query-buffer
-      (chee-query-set-args "ext:jpg" nil "/a/b" nil 10)
+      (chee-query-set-args "ext:jpg" nil "/a/b" nil 10 nil "default" nil)
       (should
        (equal expected
               (with-current-buffer (chee-query-get-buffer)
-                (buffer-substring-no-properties (point-min) (point-max))))))))
+                (buffer-substring-no-properties (point-min) (point-max)))))))
+  (let ((expected (concat "# File: <index> (C-c C-f)\n"
+                          "# Repository: <global> (C-c C-n)\n"
+                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
+                          "# [X] --decrypt (C-c C-d)   [ default] --method (C-c C-t)\n"
+                          "ext:jpg")))
+    (new-query-buffer
+     (chee-query-set-args "ext:jpg" t nil nil 100 t "default" nil)
+     (should
+      (equal expected
+             (with-current-buffer (chee-query-get-buffer)
+               (buffer-substring-no-properties (point-min) (point-max)))))))
+  (let ((expected (concat "# File: <index> (C-c C-f)\n"
+                          "# Repository: <global> (C-c C-n)\n"
+                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
+                          "# [X] --decrypt (C-c C-d)   [password] --method (C-c C-t)\n"
+                          "ext:jpg")))
+    (new-query-buffer
+     (chee-query-set-args "ext:jpg" t nil nil 100 t "password" nil)
+     (should
+      (equal expected
+             (with-current-buffer (chee-query-get-buffer)
+               (buffer-substring-no-properties (point-min) (point-max)))))))
+  (let ((expected (concat "# File: <index> (C-c C-f)\n"
+                          "# Repository: /a/b/c (C-c C-n)\n"
+                          "# [X] --concurrent (C-c C-j)   [ ] --recursive (C-c C-r)   [100] --first (C-c C-l)\n"
+                          "# [ ] --decrypt (C-c C-d)   [password] --method (C-c C-t)\n"
+                          "ext:jpg")))
+    (new-query-buffer
+     (chee-query-set-args "ext:jpg" t nil nil 100 nil "password" "/a/b/c")
+     (should
+      (equal expected
+             (with-current-buffer (chee-query-get-buffer)
+               (buffer-substring-no-properties (point-min) (point-max))))))))
+
 
 (ert-deftest chee-query-set-args-restore-point-test ()
   (new-query-buffer
-    (chee-query-set-args "ext:jpg" nil "/a/b" nil 10)
+    (chee-query-set-args "ext:jpg" nil "/a/b" nil 10 nil "default" nil)
     (let ((pos (with-current-buffer (chee-query-get-buffer)
                  (backward-char 2)
                  (point))))
-      (chee-query-set-args "ext:jpg" nil "/a/b" nil 40)
+      (chee-query-set-args "ext:jpg" nil "/a/b" nil 40 nil "default" nil)
       (should
        (equal pos (with-current-buffer (chee-query-get-buffer) (point)))))))
 
 (ert-deftest chee-query-get-args-test ()
   (new-query-buffer
-    (let ((args '(("coll:mine ext:jpg" nil "/a/b" nil 10)
-                  ("" nil nil t nil)
-                  ("" nil nil nil nil)
-                  ("ext:jpg" t nil nil 100))))
+    (let ((args '(("coll:mine ext:jpg" nil "/a/b" nil 10 nil "default" nil)
+                  ("" nil nil t nil nil "default" nil)
+                  ("" nil nil nil nil nil "default" nil)
+                  ("ext:jpg" t nil nil 100 nil "default" nil))))
       (--each args
         (apply 'chee-query-set-args it)
         (should (equal it (chee-query-get-args)))))))

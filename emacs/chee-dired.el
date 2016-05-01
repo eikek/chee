@@ -34,7 +34,7 @@
   "Return the switches to use with ls."
   (or chee-dired-ls-switches dired-listing-switches))
 
-(defun chee--thumb-command (query &optional concurrent dir rec first)
+(defun chee--thumb-command (query &optional concurrent dir rec first decrypt method)
   "Create a list to use with `chee-proc-async-sexp'. The command
 assembles chee's `thumb' subcommand."
   (append
@@ -49,12 +49,17 @@ assembles chee's `thumb' subcommand."
        (list "--recursive"))
    (if (numberp first)
        (list "--first" (format "%s" first)))
+   (if decrypt
+       (list "-d"))
+   (cond ((string= "default" method) nil)
+         ((stringp method) (list "--method" method))
+         (t nil))
    (list query)))
 
 (defun chee-dired-get-buffer ()
   (get-buffer-create chee-dired-buffer-name))
 
-(defun chee-dired (query &optional concurrent dir rec first)
+(defun chee-dired (query &optional concurrent dir rec first decrypt method repodir)
   (with-current-buffer (chee-dired-get-buffer)
     (let ((inhibit-read-only t))
       (widen)
@@ -67,18 +72,18 @@ assembles chee's `thumb' subcommand."
     (set (make-local-variable 'dired-sort-inhibit) t)
     (set (make-local-variable 'revert-buffer-function)
          `(lambda (ignore-auto noconfirm)
-            (chee-dired ,query ,concurrent ,dir ,rec ,first)))
+            (chee-dired ,query ,concurrent ,dir ,rec ,first ,decrypt ,method ,repodir)))
     (set (make-local-variable 'dired-subdir-alist)
          (list (cons (or dir "/") (point-min-marker))))
     (let* ((pos (point))
            (inhibit-read-only t)
            (ls-switches (chee-dired-get-ls-switches))
-           (cmd (chee--thumb-command query concurrent dir rec first)))
+           (cmd (chee--thumb-command query concurrent dir rec first decrypt method)))
       (dired-mode (or dir "/") ls-switches)
       (insert "  " (or dir "/") ":\n")
       (insert "  chee " (mapconcat 'identity cmd " ") "\n")
       (dired-insert-set-properties pos (point))
-      (let ((proc (chee-proc-async-sexp cmd (function chee--dired-callback))))
+      (let ((proc (chee-proc-async-sexp cmd (function chee--dired-callback) repodir)))
         (chee--setup-kill-key proc (current-buffer))
         (chee--setup-kill-key proc (image-dired-create-thumbnail-buffer))))))
 

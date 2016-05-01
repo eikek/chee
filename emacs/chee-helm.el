@@ -52,12 +52,13 @@
                            :test 'file-directory-p)))
    2))
 
-(defvar chee-query-helm-source-collection
+(defun chee-query-helm-source-collection ()
+  "Helm source for searching collections."
   (helm-build-sync-source "Find a collection"
     :candidates
     (lambda ()
       (chee-proc-sync-sexp
-       '("collection" "show" "--pattern" "(:name ~\"~:name :title ~\"~:title :description ~\"~:description)")))
+       '("collection" "show" "--pattern" "(:name ~\"~:name :title ~\"~:title :description ~\"~:description)") default-directory))
     :candidate-transformer
     (lambda (candidates)
       (-map (lambda (cand)
@@ -66,7 +67,6 @@
                             (plist-get cand :title))
                     cand))
             candidates))
-    :delayed t
     :persistent-action
     (lambda (cand)
       (with-current-buffer (get-buffer-create " *chee-collection-help*")
@@ -75,19 +75,36 @@
         (insert (plist-get cand :description) "\n")))
     :action '(("Insert condition" .
                (lambda (cand)
-                 (insert "collection:'" (plist-get cand :name) "' ")))))
-  "Helm source for searching collections.")
+                 (insert "collection:'" (plist-get cand :name) "' "))))))
 
 (defun chee-query-helm-insert-collection-condition ()
   "Insert a collection to the current query prompting the user."
   (interactive)
-  (helm :sources 'chee-query-helm-source-collection
-        :buffer "*helm collection*"))
+  (let ((source (chee-query-helm-source-collection)))
+    (helm :sources source
+          :buffer "*helm collection*")))
 
+
+(defun chee-query-helm-set-repodir ()
+  "Set repository parameter using helm."
+  (interactive)
+  (chee--query-set-arg
+   (lambda (el i)
+     (let ((dir (chee--query-find-repodir
+                 (expand-file-name
+                  (helm-read-file-name "Repository: "
+                                       :initial-input (or el default-directory)
+                                       :must-match t
+                                       :nomark t
+                                       :test 'file-directory-p)))))
+       (unless dir
+         (user-error "The directory is not a repository. Cannot find .chee."))
+       (when dir
+         (setq default-directory (f-slash dir)))))
+   7))
 
 (define-key chee-query-mode-map (kbd "<tab>") 'chee-query-helm-complete-ident)
 (define-key chee-query-mode-map (kbd "C-c i") 'chee-query-helm-insert-collection-condition)
-
 
 (provide 'chee-helm)
 ;;; chee-helm.el ends here

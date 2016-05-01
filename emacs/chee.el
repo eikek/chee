@@ -3,8 +3,8 @@
 ;; Copyright © 2016- Eike Kettner
 
 ;; Version: 0.2.0
-
-;; Package-Requires: ((dash "2.12.1") (s "1.10.0"))
+;; URL: https://github.com/eikek/chee/tree/master/emacs
+;; Package-Requires: ((dash "2.12.1") (s "1.10.0") (f "0.18.2"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -52,10 +52,10 @@ results in a dired buffer and thumbnails in
 buffer."
   (interactive)
   (let ((buf (current-buffer)))
+    (apply 'chee-dired (chee-query-get-args buf))
     (when (and (cdr (window-list))
                (window-live-p (get-buffer-window buf)))
       (delete-window (get-buffer-window buf)))
-    (apply 'chee-dired (chee-query-get-args buf))
     (switch-to-buffer (chee-dired-get-buffer))))
 
 ;;;###autoload
