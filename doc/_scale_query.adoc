@@ -1,0 +1,5 @@
+The images to scale are selected by a `query`. If non-image files are
+selected, they are skipped. This is done by appending a query
+`mimetype:images/*` (which can be be changed in the configuration
+file). Other options for querying are the same as with the `find`
+command. See xref:_find[here] for more details.

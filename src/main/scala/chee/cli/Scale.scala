@@ -54,7 +54,8 @@ object Scale extends ScoptCommand with AbstractLs with TransparentDecrypt with P
   }
 
   def exec(cfg: Config, opts: Opts): Unit = {
-    exec(cfg, opts, findDecrypt(cfg, opts.lsOpts, opts.cryptOpts))
+    val lsOpts = opts.lsOpts.appendQuery(cfg.getString("chee.queries.scale-default"))
+    exec(cfg, opts, findDecrypt(cfg, lsOpts, opts.cryptOpts))
   }
 
   def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =

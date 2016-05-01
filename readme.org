@@ -119,6 +119,9 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
     before using 0.2.0.
 - add a ~--skip~ option to the ~find~ command and related to allow
   skipping first ~n~ results
+- add ~mv~ and ~rm~ commands that work more closely as the
+  corresponding file system commands. Drop ~location delete~ and
+  ~location mv~.
 
 ** 0.1.0
 

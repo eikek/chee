@@ -40,6 +40,7 @@ object Thumb extends ScoptCommand with AbstractLs with TransparentDecrypt with P
   }
 
   def exec(cfg: Config, opts: Opts): Unit = {
+    val lsOpts = opts.lsOpts.appendQuery(cfg.getString("chee.queries.thumb-default"))
     exec(cfg, opts, findDecrypt(cfg, opts.lsOpts, opts.cryptOpts))
   }
 

@@ -15,13 +15,8 @@ chee scale --maxlen 1200 -o ./scaledir 'date:201410*'
 This command resizes images. As with `thumb` images are not changed,
 but new files are written.
 
-The images to scale are selected by a `query`. If non-image files are
-selected, they are skipped silently. Other options for querying are
-the same as with the `find` command. See xref:_find[here] for more
-details.
-
+<scale_query>
 <transparent_decrypt>
-
 The output is rendered (like with `find`) using a format pattern. It
 can be specfified with `--pattern`. When evaluating the format
 pattern, standard properties are retrieved from the scaled image but
