@@ -61,7 +61,7 @@ lazy val buildSettings = Seq(
 )
 
 addCommandAlias("make-chee", ";genDocResources;gen-chee")
-addCommandAlias("make-zip", ";genDocResources;test;gen-zip")
+addCommandAlias("make-zip", ";genDocResources;test;it:test;gen-zip")
 
 lazy val chee = (project in file("."))
   .configs(IntegrationTest, CheeDoc, script)

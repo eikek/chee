@@ -26,6 +26,7 @@ object Main extends LazyLogging {
     HubCommand("collection", List(new CollectionEdit, new CollectionShow)),
     View,
     new Move,
+    new Remove,
     MkTree,
     Thumb,
     Scale,

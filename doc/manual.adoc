@@ -67,6 +67,8 @@ include::cmd-location.adoc[]
 
 include::cmd-mv.adoc[]
 
+include::cmd-rm.adoc[]
+
 include::cmd-collection.adoc[]
 
 include::cmd-mktree.adoc[]

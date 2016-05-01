@@ -1,19 +1,20 @@
 package chee.cli
 
-import com.typesafe.config.Config
+import java.time.Duration
+
+import LocationSync.Opts
 import better.files._
+import chee.LocationConf
+import chee.LocationConf.Entry
 import chee.properties._
+import chee.properties.MapGet._
+import chee.properties.Predicates._
 import chee.query._
 import chee.conf._
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
-import LocationSync.Opts
 
 class LocationSync extends ScoptCommand with LockSupport {
-  import java.time.Duration
-  import chee.LocationConf
-  import chee.LocationConf.Entry
-  import MapGet._
-  import Predicates._
 
   type T = Opts
 
@@ -49,7 +50,7 @@ class LocationSync extends ScoptCommand with LockSupport {
 
     Location.checkRegisteredLocations(locConf, dirsToSync)
     dirsToSync.find(!_.exists) foreach { e =>
-      chee.UserError(s"Location `${e.path}' does not exist.\nUse the `${LocationDelete.name}' " +
+      chee.UserError(s"Location `${e.path}' does not exist.\nUse the `${Remove.name}' " +
         "command to remove a location.")
     }
 

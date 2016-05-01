@@ -12,7 +12,6 @@ object Location {
   val root = HubCommand("location", List(
     new LocationAdd,
     new LocationUpdate,
-    new LocationDelete,
     new LocationImport,
     new LocationInfo,
     new LocationSync))
@@ -74,49 +73,4 @@ class LocationInfo extends Command {
     }
     outln(s"All: ${sqlite.count(TrueCondition).get}")
   }
-}
-
-class LocationDelete extends ScoptCommand with LockSupport {
-  type T = LocationDelete.Opts
-
-  val name = LocationDelete.name
-  val defaults = LocationDelete.Opts()
-
-  val parser = new Parser {
-    opt[Unit]("all") optional() action { (_, c) =>
-      c.copy(all = true)
-    } text("Remove all locations.")
-
-    arg[Seq[File]]("<directories>") optional() unbounded() action { (x, c) =>
-      c.copy(dirs = c.dirs ++ x)
-    } textW ("One or many directories that are deleted from the index and location set.")
-  }
-
-  def exec(cfg: Config, opts: LocationDelete.Opts): Unit = withLock(cfg) {
-    Location.checkRegisteredLocations(cfg.getLocationConf, opts.dirs)
-    val file = cfg.getLocationConf
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
-    if (opts.all) {
-      val count = sqlite.delete(TrueCondition).get
-      file.deleteAll.get
-      outln(s"$count files deleted from index")
-    } else {
-      val locs = file.list.get
-      opts.dirs.find(f => !locs.map(_.dir).contains(f)) match {
-        case Some(f) => chee.UserError(s"`$f' is not a known location")
-        case _ =>
-      }
-      for (dir <- opts.dirs) {
-        val count = sqlite.delete(Prop(Comp.Eq, Ident.location -> dir.path.toString)).get
-        file.remove(dir)
-        outln(s"${dir.path}: $count files deleted from index")
-      }
-    }
-  }
-}
-object LocationDelete {
-  val name = "delete"
-  case class Opts(
-    all: Boolean = false,
-    dirs: Seq[File] = Seq.empty)
 }

@@ -10,7 +10,7 @@ The location command expects itself subcommands.
 
 .Usage
 ----------------------------------------------------------------------
-chee location [info|add|update|import|delete|mv|sync] […]
+chee location [info|add|update|import|sync] […]
 ----------------------------------------------------------------------
 
 
@@ -99,20 +99,6 @@ Searches recursively through `/media/sdcard/DCIM` and copies files to
 `/media/sdcard/DCIM`. So the file
 `/media/sdcard/DCIM/102ND200/DSC0645.JPG` is copied to
 `/disk/fotos/camera2/102ND200/DSC0645.JPG`.
-
-
-==== delete
-
-Removes all files of a location from the index.
-
-.Usage
-----------------------------------------------------------------------
-<usage_location_delete>
-----------------------------------------------------------------------
-
-This command simply clears the index from all files in the given
-locations. It will also unregister the given directories from the
-location set, but it does not touch any files on the file system.
 
 
 ==== sync

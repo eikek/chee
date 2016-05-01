@@ -1,0 +1,12 @@
+=== rm
+
+Remove files and update the index.
+
+.Usage
+----------------------------------------------------------------------
+<usage_rm>
+----------------------------------------------------------------------
+
+Remove files from disk and synchronise the index. With `--index` files
+are not deleted from disk but index is updated only. Directories are
+deleted recursively.
