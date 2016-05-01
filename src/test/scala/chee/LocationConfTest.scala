@@ -8,8 +8,8 @@ import scala.util.{Try, Success, Failure}
 class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
 
   "remove(dir)" should "replace file with filtered list" in withNewFile { f =>
-    val es = List(LE(file"/mnt/fotos/1", "", true, false), LE(file"/mnt/fotos/2", "", false, true))
-    val conf = new LocationConf(ConfigFile(f))
+    val es = List(LE("/mnt/fotos/1", "", true, false), LE("/mnt/fotos/2", "", false, true))
+    val conf = new LocationConf(ConfigFile(f), None)
     conf.addAll(es).get
     conf.list.get should be (es)
     conf.remove(es.head.dir).get should be (es.tail)
@@ -17,19 +17,19 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   "add" should "not add entries twice" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
+    val conf = new LocationConf(ConfigFile(f), None)
 
-    val entry = LE(file"/mnt/fotos/1", "", true, false)
+    val entry = LE("/mnt/fotos/1", "", true, false)
     conf.add(entry).get
     conf.add(entry).get
     conf.list.get should be (List(entry))
   }
 
   it should "replace with new entries" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
-    val entry3 = LE(file"/mnt/fotos/3", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
+    val entry3 = LE("/mnt/fotos/3", "", true, false)
 
     conf.addAll(Seq(entry1, entry2, entry3))
     conf.list.get should be (List(entry1, entry2, entry3))
@@ -38,9 +38,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "append new entries" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
 
     conf.add(entry1)
     conf.list.get should be (List(entry1))
@@ -49,9 +49,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   "checkRegisteredLocations" should "throw for non-location dirs" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
     val check: Seq[File] => Unit =
       s => cli.Location.checkRegisteredLocations(conf, s)
@@ -65,9 +65,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "include every failed dir" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
     val check: Seq[File] => Unit =
       s => cli.Location.checkRegisteredLocations(conf, s)
@@ -78,9 +78,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "be successful for location and subdirs" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
 
     cli.Location.checkRegisteredLocations(conf, Seq(
@@ -91,9 +91,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
     "checkNotRegisteredLocations" should "throw for location dirs" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
     val check: Seq[File] => Unit =
       s => cli.Location.checkNotRegisteredLocations(conf, s)
@@ -107,9 +107,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "include every failed dir" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
     val check: Seq[File] => Unit =
       s => cli.Location.checkNotRegisteredLocations(conf, s)
@@ -120,9 +120,9 @@ class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "be successful for non-locations" in withNewFile { f =>
-    val conf = new LocationConf(ConfigFile(f))
-    val entry1 = LE(file"/mnt/fotos/1", "", true, false)
-    val entry2 = LE(file"/mnt/fotos/2", "", true, false)
+    val conf = new LocationConf(ConfigFile(f), None)
+    val entry1 = LE("/mnt/fotos/1", "", true, false)
+    val entry2 = LE("/mnt/fotos/2", "", true, false)
     conf.addAll(Seq(entry1, entry2))
 
     cli.Location.checkNotRegisteredLocations(conf, Seq(

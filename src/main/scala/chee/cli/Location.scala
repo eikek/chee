@@ -52,7 +52,7 @@ object Location {
   def checkRepoRoot(conf: Config, dirs: Seq[File]): Unit =
     conf.getRepoRoot match {
       case Some(root) if conf.getBoolean("chee.repo.restrict-to-root") =>
-        val errors = dirs.filterNot(f => root.isParentOf(f))
+        val errors = dirs.filterNot(_ childOf root)
         if (errors.nonEmpty) {
           userError(s"""Directories ${errors.mkString(", ")} outside of repository root ${root.path}!""")
         }
@@ -64,11 +64,11 @@ class LocationInfo extends Command {
   val name = "info"
 
   def exec(cfg: Config, args: Array[String]): Unit = {
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg.getIndexDb, cfg.getRepoRoot)
     val file = cfg.getLocationConf
 
     for (loc <- file.list.get) {
-      val count = sqlite.count(Prop(Comp.Eq, Ident.location -> loc.dir.path.toString)).get
+      val count = sqlite.count(Prop(Comp.Eq, Ident.location -> loc.dirname)).get
       outln(s"${loc.dir}: $count")
     }
     outln(s"All: ${sqlite.count(TrueCondition).get}")

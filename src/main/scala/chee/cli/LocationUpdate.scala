@@ -40,7 +40,7 @@ class LocationUpdate extends ScoptCommand with LockSupport {
       case l if opts.all => l
       case l => l.filter(e => opts.dirs.contains(e.dir))
     }
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     for (locEntry <- locs) {
       val addOpts = LocationAdd.Opts().copy(
         dirs = Seq(locEntry.dir),

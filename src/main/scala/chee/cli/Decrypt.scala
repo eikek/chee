@@ -36,7 +36,7 @@ object Decrypt extends ScoptCommand with AbstractLs with CryptCommand {
 
   def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] = {
     import Processing._
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     val out = path.map(_.mapFileName(n => n.substring(0, n.length -4)))
     this.decryptFile(cfg, opts, out).flatMap {
       case true => cryptInplacePostProcess(sqlite)

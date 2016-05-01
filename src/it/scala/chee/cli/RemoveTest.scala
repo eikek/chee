@@ -11,14 +11,14 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
   def remove = new Remove with BufferOut
   def linfo = new LocationInfo with BufferOut
 
-  "Remove" should "error if source dir is not a location" in globalCheeWithImages { setup =>
+  "Remove" should "error if source dir is not a location" in bothChee(addImages) { setup =>
     val nonExistingDir = setup.userDir / "does-not-exist"
     intercept[UserError] {
       remove.run(setup, nonExistingDir.pathAsString)
     }
   }
 
-  it should "remove existing files" in globalCheeWithImages { setup =>
+  it should "remove existing files" in bothChee(addImages) { setup =>
     val (before, Nil) = findLisp(setup)
     val (beforeLoc, Nil) = linfo.run(setup)
 
@@ -31,7 +31,7 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     beforeLoc.map(_.replace(": 4", ": 2")) should be (afterLoc)
   }
 
-  it should "remove directories recursively" in globalCheeWithImages { setup =>
+  it should "remove directories recursively" in bothChee(addImages) { setup =>
     val subdir = setup.files / "dir1"
     subdir.createDirectories()
     // first move files in a subdir
@@ -50,7 +50,7 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     beforeLoc.map(_.replace(": 4", ": 2")) should be (afterLoc)
   }
 
-  it should "remove a location root" in globalCheeWithImages { setup =>
+  it should "remove a location root" in bothChee(addImages) { setup =>
     val (before, Nil) = findLisp(setup)
     val (beforeLoc, Nil) = linfo.run(setup)
     before.size should be > (1)
@@ -63,5 +63,22 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     after should be ('empty)
     afterLoc should have size (1)
     afterLoc(0) should be ("All: 0")
+    setup.files.exists should be (false)
+  }
+
+  it should "not delete files with --index" in bothChee(addImages) { setup =>
+    val (before, Nil) = findLisp(setup)
+    val (beforeLoc, Nil) = linfo.run(setup)
+    before.size should be > (1)
+    beforeLoc.size should be > 1
+
+    val (_, Nil) = remove.run(setup, "--index", setup.files.pathAsString)
+
+    val (after, Nil) = findLisp(setup)
+    val (afterLoc, Nil) = linfo.run(setup)
+    after should be ('empty)
+    afterLoc should have size (1)
+    afterLoc(0) should be ("All: 0")
+    setup.files.exists should be (true)
   }
 }

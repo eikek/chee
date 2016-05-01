@@ -98,6 +98,10 @@ object files {
 
     /** Like {{isParentOf}} but works for non-existing files (filenames) */
     def parentOf(c: File): Boolean =
-      f.isParentOf(c) || (f.notExists && (c.path startsWith f.path))
+      c.path startsWith f.path
+
+    /** Like {{isChildOf}} but works for non-existing files (filenames) */
+    def childOf(p: File): Boolean =
+      p.parentOf(f)
   }
 }

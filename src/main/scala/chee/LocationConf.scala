@@ -3,22 +3,31 @@ package chee
 import better.files._
 import scala.util.{Try, Success, Failure}
 import com.typesafe.scalalogging.LazyLogging
+import LocationConf.Entry
+import chee.util.paths
 
-final class LocationConf(config: => ConfigFile) extends LazyLogging {
-  import LocationConf.Entry
+final class LocationConf(config: => ConfigFile, root: Option[File]) extends LazyLogging {
+
+  private def readFile: Try[Seq[Entry]] = Try {
+    config.getOpt[Seq[Entry]]("chee.locations") getOrElse Seq.empty[Entry]
+  }
 
   def list: Try[Seq[Entry]] = Try {
-    config.getOpt[Seq[Entry]]("chee.locations") getOrElse Seq.empty[Entry]
+    val entries = readFile.get
+    root match {
+      case Some(dir) => entries.map(_.resolveTo(root))
+      case _ => entries
+    }
   }
 
   def add(e: Entry): Try[Unit] = addAll(Seq(e))
 
   def addAll(es: Seq[Entry]): Try[Unit] = Try {
     logger.trace(s"""Add locations $es to location config""")
-    val existing = list.get
-    val existsDir = existing.map(_.dir).toSet
-    val toadd = es.foldLeft(existing) { (list, e) =>
-      if (existsDir(e.dir)) list.map(x => if (x.dir == e.dir) e else x)
+    val existing = readFile.get
+    val existsDir = existing.map(_.dirname).toSet
+    val toadd = es.map(_.relativeTo(root)).foldLeft(existing) { (list, e) =>
+      if (existsDir(e.dirname)) list.map(x => if (x.dir == e.dir) e else x)
       else list :+ e
     }
     setNewContents(toadd)
@@ -26,7 +35,7 @@ final class LocationConf(config: => ConfigFile) extends LazyLogging {
 
   def remove(dir: File) = Try {
     logger.trace(s"""Remove ${dir.path} from location config""")
-    val entries = list.get.filter(_.dir != dir)
+    val entries = list.get.filter(_.dir != dir).map(_.relativeTo(root))
     setNewContents(entries)
     entries
   }
@@ -46,14 +55,36 @@ object LocationConf {
   import com.typesafe.config.ConfigObject
 
   case class Entry(
-    dir: File,
+    dirname: String,
     query: String = "",
     recursive: Boolean = false,
-    all: Boolean = false)
+    all: Boolean = false) {
+
+    lazy val dir = File(dirname)
+
+    def relativeTo(root: Option[File]) = root match {
+      case Some(rootDir) =>
+        copy(dirname = paths.relative(rootDir)(dir).toString)
+      case _ => this
+    }
+
+    def resolveTo(root: Option[File]) = root match {
+      case Some(rootDir) =>
+        copy(dirname = paths.resolve(rootDir)(dirname))
+      case _ => this
+    }
+
+    def changeDirTo(f: File) = copy(dirname = f.pathAsString)
+  }
+
+  object Entry {
+    def apply(dir: File, query: String, recursive: Boolean, all: Boolean): Entry =
+      Entry(dir.pathAsString, query, recursive, all)
+  }
 
   implicit val entryConv: Conversion[Entry] = Conversion(
     entry => fromMap.make(Map(
-      "dir" -> entry.dir.path.toString,
+      "dir" -> entry.dirname,
       "query" -> entry.query,
       "recursive" -> entry.recursive,
       "all" -> entry.all
@@ -61,7 +92,7 @@ object LocationConf {
     cv => {
       val cfg = cv.asInstanceOf[ConfigObject].toConfig()
       Entry(
-        dir = File(cfg.getString("dir")),
+        dirname = cfg.getString("dir"),
         query = cfg.getString("query"),
         recursive = cfg.getBoolean("recursive"),
         all = cfg.getBoolean("all"))

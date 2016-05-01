@@ -23,22 +23,23 @@ trait CommandSetup {
     dir
   }
 
-  private val globalSetup: File => Directories =
+  val globalSetup: File => Directories =
     dir => Directories.inDirectory(dir)
 
-  private val repoSetup: File => Directories = { dir =>
+  val repoSetup: File => Directories = { dir =>
     val dirs = Directories.atRepoRoot(dir).copy(userDir = Some(dir))
     dirs.configDir.foreach(_.createDirectories())
     dirs
   }
 
-  private val addImages: Setup => Setup = { setup =>
+  val addImages: Setup => Setup = { setup =>
     addLocation(setup.files, setup)
     setup
   }
 
   private def teardown(setupVals: Setup) = {
-    setupVals.userDir.delete()
+    if (setupVals.userDir.exists)
+      setupVals.userDir.delete()
   }
 
   def addLocation(pics: File, setupVals: Setup): Unit = {
@@ -46,7 +47,7 @@ trait CommandSetup {
     TestInfo.images.foreach(f => f.copyTo(pics / f.name))
     val addCmd = new LocationAdd with BufferOut
     val addOpts = LocationAdd.Opts(dirs = Seq(pics), recursive = true)
-    val sqlite = new SqliteBackend(setupVals.cfg.getIndexDb)
+    val sqlite = new SqliteBackend(setupVals.cfg)
     addCmd.indexDirs(setupVals.cfg, addOpts, sqlite)
   }
 
@@ -62,18 +63,17 @@ trait CommandSetup {
     }
   }
 
-  def globalChee(code: Setup => Any): Unit = {
-    cheeSetup(globalSetup andThen Setup.apply)(code)
+  def globalChee(before: Setup => Setup = identity)(code: Setup => Any): Unit = {
+    cheeSetup(globalSetup andThen Setup.apply andThen before)(code)
   }
 
-  def globalCheeWithImages(code: Setup => Any): Unit =
-    cheeSetup(globalSetup andThen Setup.apply andThen addImages)(code)
+  def repoChee(before: Setup => Setup = identity)(code: Setup => Any): Unit =
+    cheeSetup(repoSetup andThen Setup.apply andThen before)(code)
 
-  def repoRoot(code: Setup => Any): Unit =
-    cheeSetup(repoSetup andThen Setup.apply)(code)
-
-  def repoRootWithImages(code: Setup => Any): Unit =
-    cheeSetup(repoSetup andThen Setup.apply andThen addImages)(code)
+  def bothChee(before: Setup => Setup = identity)(code: Setup => Any): Unit = {
+    globalChee(before)(code)
+    repoChee(before)(code)
+  }
 
   implicit class CommandBufferRun(cmd: Command with BufferOut) extends LazyLogging {
     def run(setup: Setup, args: String*): (List[String], List[String]) = {

@@ -11,7 +11,7 @@ import AbstractLs._
 trait AbstractLs {
 
   private def isIndexed(cfg: Config)(flag: Boolean): MapGet[Boolean] = {
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     sqlite.idExists.map(_.get == flag)
   }
 
@@ -32,7 +32,7 @@ trait AbstractLs {
   }
 
   private def indexFind(cond: Condition, cfg: Config, opts: LsOpts): Stream[LazyMap] = {
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg.getIndexDb, cfg.getRepoRoot)
     val filter = if (opts.all) MapGet.unit(true) else Predicates.fileExists
     MapGet.filter(sqlite.find(cond).get, filter)
   }

@@ -11,21 +11,21 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
   val checksum = Patterns.lookup(Ident.checksum).right.result _
 
   "find" should "load pages of results" in {
-    val sqlite = new SqliteBackend(TestInfo.sampleDb, 2)
+    val sqlite = new SqliteBackend(TestInfo.sampleDb, None, 2)
     val stream = sqlite.find(TrueCondition).get
     stream.map(filename).toList.sorted should be (
       List("CIMG2590_s.JPG", "CIMG2590_s.JPG", "IMG_7437_s.JPG", "IMG_7437_s.JPG", "test1.jpg", "test1.jpg"))
   }
 
   it should "resolve pixel property" in {
-    val sqlite = new SqliteBackend(TestInfo.sampleDb, 2)
+    val sqlite = new SqliteBackend(TestInfo.sampleDb, None, 2)
     val stream = sqlite.find(Prop(Comp.Gt, VirtualProperty.defaults.pixel.ident -> "300")).get
     stream.map(filename).toList.sorted should be (
       List("CIMG2590_s.JPG", "CIMG2590_s.JPG", "IMG_7437_s.JPG", "IMG_7437_s.JPG", "test1.jpg", "test1.jpg"))
   }
 
   it should "do like on dates" in {
-    val sqlite = new SqliteBackend(TestInfo.sampleDb, 2)
+    val sqlite = new SqliteBackend(TestInfo.sampleDb, None, 2)
     val stream = sqlite.find(Prop(Comp.Like, Ident.lastModified -> "2015*")).get
     stream.map(filename).toList.sorted should be (
       List("CIMG2590_s.JPG", "CIMG2590_s.JPG", "IMG_7437_s.JPG", "IMG_7437_s.JPG", "test1.jpg", "test1.jpg"))
@@ -34,7 +34,7 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
   it should "add all properties" in withNewFile { file =>
     import FormatPatterns.lisp
 
-    val sqlite = new SqliteBackend(file)
+    val sqlite = new SqliteBackend(file, None)
     val map0 = LazyMap.fromFile(TestInfo.images.head) + (Ident.location -> "./")
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get
 
@@ -44,7 +44,7 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   "exists" should "check for existing files" in withNewFile { file =>
-    val sqlite = new SqliteBackend(file)
+    val sqlite = new SqliteBackend(file, None)
     val map0 = LazyMap.fromFile(TestInfo.images.head)
 
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get

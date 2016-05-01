@@ -72,17 +72,29 @@ Any value in the config file can be overridden by a system property.
 ==== Repository Mode
 
 You can restrict chee to work only on a specific folder, the
-repository, by creating a folder `.chee`. On start chee looks for a
-directory of name `.chee` in the current working directory and
-above. If it exists it marks the directory as a repository and
-`chee.configdir` and `chee.workingdir` are set accordingly: The
-configuration file is read from `.chee/chee.conf` and the working
-directory is `.chee/work/`. If a config file doesn't exists, an empty
-one is used. The repository is isolated from the global chee data.
+repository. A repository is a directory that has a `.chee` directory
+as its direct child. So a repository can be created by simply doing
+`mkdir .chee`.
+
+On start chee looks for a `.chee` directory in the current working
+directory and above. If it is found, the chee configures itself by
+setting `chee.configdir` to `.chee` and `chee.workingdir` to
+`.chee/work`. The configuration file is read from
+`.chee/chee.conf`. If a config file doesn't exists, an empty one is
+used.
+
+The repository is isolated from global chee data and only directories
+below the repository folder can be added. The repository contains the
+images as well as chee data and can be moved around in the file
+system. When files inside a repository are indexed, file names
+relative to the repository root are stored.
 
 By default only directories inside the repository can be added as
 locations. But this check can be removed by setting
-`chee.repo.restrict-to-root` to `false` (in `.chee/chee.conf`).
+`chee.repo.restrict-to-root` to `false` (in `.chee/chee.conf`). Note
+that this breaks the isolation, because the index must use absolute
+paths to reference files outside the repository. This means the
+repository cannot be renamed or moved around.
 
 
 ==== Logging

@@ -165,7 +165,7 @@ class LocationSync extends ScoptCommand with LockSupport {
   }
 
   def sync(cfg: Config, opts: Opts): Unit = {
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     val entries = checkDirsToSync(cfg.getLocationConf, opts)
     if (opts.reindex) {
       entries.foreach(reindex(_, cfg, sqlite))

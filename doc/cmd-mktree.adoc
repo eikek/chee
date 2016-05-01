@@ -36,3 +36,97 @@ specified, if more are given, the last option wins.
 The `query` argument is the query string that is run against the index
 or a directory (if `-f` is given). See xref:_query[query] concept page
 for details.
+
+.Symlink files with default pattern
+----------------------------------------------------------------------
+$ chee mktree -u --target sorted/ --first 10 'make:nikon*'
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6248.JPG → /home/eike/testdir/pics/sorted/2015/06/22-17-31_DSC_6248.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6259.JPG → /home/eike/testdir/pics/sorted/2015/06/22-17-48_DSC_6259.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6261.JPG → /home/eike/testdir/pics/sorted/2015/06/22-17-48_DSC_6261.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6262.JPG → /home/eike/testdir/pics/sorted/2015/06/22-17-48_DSC_6262.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6265.JPG → /home/eike/testdir/pics/sorted/2015/06/22-18-02_DSC_6265.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6283.JPG → /home/eike/testdir/pics/sorted/2015/07/07-19-21_DSC_6283.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6285.JPG → /home/eike/testdir/pics/sorted/2015/07/07-19-22_DSC_6285.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6288.JPG → /home/eike/testdir/pics/sorted/2015/07/07-19-22_DSC_6288.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6293.JPG → /home/eike/testdir/pics/sorted/2015/07/09-18-01_DSC_6293.JPG … Ok
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6305.JPG → /home/eike/testdir/pics/sorted/2015/07/18-14-45_DSC_6305.JPG … Ok
+10 files processed in 0:00:00.108
+----------------------------------------------------------------------
+
+If no pattern is specified, chee uses a default pattern that sorts
+images according to their creation timestamp. If that's not available,
+the last modification timestamp of the file is used. Images are sorted
+into folders by month and prefixed with the day, hour and minute. The
+first picture in the example output above was taken on
+2015/06/22 17:31.
+
+The resulting directory structure of the example above is:
+
+.Structure
+----------------------------------------------------------------------
+$ tree sorted/
+sorted/
+└── 2015
+    ├── 06
+    │   ├── 22-17-31_DSC_6248.JPG -> ../../../repo2/DSC_6248.JPG
+    │   ├── 22-17-48_DSC_6259.JPG -> ../../../repo2/DSC_6259.JPG
+    │   ├── 22-17-48_DSC_6261.JPG -> ../../../repo2/DSC_6261.JPG
+    │   ├── 22-17-48_DSC_6262.JPG -> ../../../repo2/DSC_6262.JPG
+    │   └── 22-18-02_DSC_6265.JPG -> ../../../repo2/DSC_6265.JPG
+    └── 07
+        ├── 07-19-21_DSC_6283.JPG -> ../../../repo2/DSC_6283.JPG
+        ├── 07-19-22_DSC_6285.JPG -> ../../../repo2/DSC_6285.JPG
+        ├── 07-19-22_DSC_6288.JPG -> ../../../repo2/DSC_6288.JPG
+        ├── 09-18-01_DSC_6293.JPG -> ../../../repo2/DSC_6293.JPG
+        └── 18-14-45_DSC_6305.JPG -> ../../../repo2/DSC_6305.JPG
+
+3 directories, 10 files
+----------------------------------------------------------------------
+
+A custom pattern can be specified with `--pattern`. This can get quite
+complex, but patterns can be bookmarked in the configuration file and
+refered to by name.
+
+.Symlink files using custom pattern
+----------------------------------------------------------------------
+$ chee mktree -u --target sorted/ --first 10 --pattern '~:ext/~[created~;~#cr~fE~;~#l~fE~]/~#file' 'make:nikon*'
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6248.JPG → /home/eike/testdir/pics/sorted/JPG/Mon/DSC_6248.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6259.JPG → /home/eike/testdir/pics/sorted/JPG/Mon/DSC_6259.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6261.JPG → /home/eike/testdir/pics/sorted/JPG/Mon/DSC_6261.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6262.JPG → /home/eike/testdir/pics/sorted/JPG/Mon/DSC_6262.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6265.JPG → /home/eike/testdir/pics/sorted/JPG/Mon/DSC_6265.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6283.JPG → /home/eike/testdir/pics/sorted/JPG/Tue/DSC_6283.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6285.JPG → /home/eike/testdir/pics/sorted/JPG/Tue/DSC_6285.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6288.JPG → /home/eike/testdir/pics/sorted/JPG/Tue/DSC_6288.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6293.JPG → /home/eike/testdir/pics/sorted/JPG/Thu/DSC_6293.JPG … Skipped
+RelativeSymlink /home/eike/testdir/pics/repo2/DSC_6305.JPG → /home/eike/testdir/pics/sorted/JPG/Sat/DSC_6305.JPG … Skipped
+10 files processed in 0:00:00.69
+----------------------------------------------------------------------
+
+The pattern results in a folder per extension and weekday. The `~:ext`
+refers to the file extension. Then the timestamp is either taken from
+the `created` property, or if that does not exist, from the
+`lastmodified` property. The names are abbreviated to `cr` and
+`l`. The `~fE` applies a format to the timestamp that results in the
+weekday. And at last the `filename` is appended.
+
+.Structure
+----------------------------------------------------------------------
+$ tree sorted/
+sorted/
+└── JPG
+    ├── Mon
+    │   ├── DSC_6248.JPG -> ../../../repo2/DSC_6248.JPG
+    │   ├── DSC_6259.JPG -> ../../../repo2/DSC_6259.JPG
+    │   ├── DSC_6261.JPG -> ../../../repo2/DSC_6261.JPG
+    │   ├── DSC_6262.JPG -> ../../../repo2/DSC_6262.JPG
+    │   └── DSC_6265.JPG -> ../../../repo2/DSC_6265.JPG
+    ├── Sat
+    │   └── DSC_6305.JPG -> ../../../repo2/DSC_6305.JPG
+    ├── Thu
+    │   └── DSC_6293.JPG -> ../../../repo2/DSC_6293.JPG
+    └── Tue
+        ├── DSC_6283.JPG -> ../../../repo2/DSC_6283.JPG
+        ├── DSC_6285.JPG -> ../../../repo2/DSC_6285.JPG
+        └── DSC_6288.JPG -> ../../../repo2/DSC_6288.JPG
+----------------------------------------------------------------------

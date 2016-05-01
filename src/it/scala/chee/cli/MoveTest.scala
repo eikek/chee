@@ -11,14 +11,14 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
   def move = new Move with BufferOut
   def linfo = new LocationInfo with BufferOut
 
-  "Move" should "error if source dir is not a location" in globalCheeWithImages { setup =>
+  "Move" should "error if source dir is not a location" in bothChee(addImages) { setup =>
     val nonExistingDir = setup.userDir / "does-not-exist"
     intercept[UserError] {
       move.run(setup, nonExistingDir.pathAsString, nonExistingDir.sibling("targetdir").pathAsString)
     }
   }
 
-  it should "rename a location" in globalCheeWithImages { setup =>
+  it should "rename a location" in bothChee(addImages) { setup =>
     val images = setup.userDir / "images"
     val (stdout, Nil) = move.run(setup, setup.files.pathAsString, images.pathAsString)
     stdout should have size (2)
@@ -34,7 +34,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     info(0) should startWith (images.pathAsString)
   }
 
-  it should "move multiple files in another directory" in globalCheeWithImages { setup =>
+  it should "move multiple files in another directory" in bothChee(addImages) { setup =>
     val dir = setup.files / "bla"
     dir.createDirectories()
     val src = setup.files.list.filter(_.isRegularFile).take(2).toList
@@ -59,7 +59,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     beforeLoc should be (afterLoc)
   }
 
-  it should "refuse to move multiple files in non existing target" in globalCheeWithImages { setup =>
+  it should "refuse to move multiple files in non existing target" in bothChee(addImages) { setup =>
     val dir = setup.files / "bla"
     val src = setup.files.list.filter(_.isRegularFile).take(2).toList
     src should have size (2)
@@ -69,7 +69,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     }  
   }
 
-  it should "move files from one location to another" in globalCheeWithImages { setup =>
+  it should "move files from one location to another" in bothChee(addImages) { setup =>
     val otherLoc = setup.userDir / "morefiles"
     addLocation(otherLoc, setup)
 
@@ -104,7 +104,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     beforeLoc should have size (afterLoc.size)
   }
 
-  it should "rename files" in globalCheeWithImages { setup =>
+  it should "rename files" in bothChee(addImages) { setup =>
     val src = setup.files.list.toStream
       .filter(_.getExtension.map(_.toLowerCase) == Some("jpg"))
       .headOption.getOrElse(sys.error("invalid test setup"))
@@ -135,7 +135,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
         s""":extension "jpg"""")) should be (afterOut)
   }
 
-  it should "rename directories" in globalCheeWithImages { setup =>
+  it should "rename directories" in bothChee(addImages) { setup =>
     val subdir = setup.files / "dir1"
     subdir.createDirectories()
 
@@ -168,7 +168,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     beforeLoc should be (afterLoc)
   }
 
-  it should "refuse if source does not exist" in globalCheeWithImages { setup =>
+  it should "refuse if source does not exist" in bothChee(addImages) { setup =>
     intercept[UserError] {
       move.run(setup,
         (setup.files / "234.png").pathAsString,
@@ -176,7 +176,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     }
   }
 
-  it should "refuse if target is child of source" in globalCheeWithImages { setup =>
+  it should "refuse if target is child of source" in bothChee(addImages) { setup =>
     intercept[UserError] {
       move.run(setup,
         setup.files.pathAsString,
@@ -184,7 +184,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     }
   }
 
-  it should "refuse if target exists" in globalCheeWithImages { setup =>
+  it should "refuse if target exists" in bothChee(addImages) { setup =>
     intercept[UserError] {
       move.run(setup,
         setup.files.list.toList(0).pathAsString,
@@ -192,7 +192,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     }
   }
 
-  it should "move a location into another" in globalCheeWithImages { setup =>
+  it should "move a location into another" in bothChee(addImages) { setup =>
     val otherLoc = setup.userDir / "morefiles"
     addLocation(otherLoc, setup)
 
@@ -227,7 +227,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
         "/morefiles: 0")) should be (afterLoc)
   }
 
-  it should "move a directory back to a location root" in globalCheeWithImages { setup =>
+  it should "move a directory back to a location root" in bothChee(addImages) { setup =>
     val otherLoc = setup.userDir / "morefiles"
     addLocation(otherLoc, setup)
     val (beforeOut, Nil) = findLisp(setup)

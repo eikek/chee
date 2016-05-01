@@ -54,7 +54,7 @@ a custom pattern. For example
 
 would only print the year of the created property in 4 digits. A
 description of possible date patterns can be found
-http://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[here].
+http://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns[here].
 
 
 ==== Readable Directive

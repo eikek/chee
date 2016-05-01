@@ -22,7 +22,7 @@ class Remove extends ScoptCommand with LockSupport {
 
     arg[File]("<files...>") unbounded() required() action { (x, c) =>
       c.copy(files = c.files :+ x)
-    } textW ("The files or directories to remove.")
+    } textW ("The files or directories to remove. Directories are removed recursively.")
   }
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
@@ -46,12 +46,12 @@ object Remove {
     files: Seq[File] = Seq.empty)
 
   def remove(cfg: Config, file: File, indexOnly: Boolean): Try[Int] = Try {
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     val n = sqlite.delete(Prop(Comp.Like, Ident.path -> s"${file.pathAsString}*")).get
     if (cfg.getLocationConf.list.get.exists(_.dir == file)) {
       cfg.getLocationConf.remove(file).get
     }
-    if (file.exists) {
+    if (file.exists && !indexOnly) {
       file.delete()
     }
     n

@@ -44,8 +44,6 @@ case class MapGet[+A](run: LazyMap => (LazyMap, A)) { self =>
 }
 
 object MapGet {
-  type GetProp = MapGet[Option[Property]]
-  type GetStr = MapGet[Option[String]]
 
   val virtualKeys: MapGet[Set[Ident]] = get.map(_.virtualKeys)
   val propertyKeys: MapGet[Set[Ident]] = get.map(_.propertyKeys)
@@ -56,9 +54,11 @@ object MapGet {
     else propertyKeys.map(Ident.sort)
   }
 
-  def find(id: Ident): GetProp = MapGet(map => map(id))
+  def find(id: Ident): MapGet[Option[Property]] =
+    MapGet(map => map(id))
 
-  def value(id: Ident): GetStr = find(id).map(_.map(_.value))
+  def value(id: Ident): MapGet[Option[String]] =
+    find(id).map(_.map(_.value))
 
   def valueForce(id: Ident): MapGet[String] =
     value(id).map {
@@ -71,6 +71,17 @@ object MapGet {
 
   def existingPath: MapGet[Option[File]] =
     path.map(p => Option(p).filter(_.exists))
+
+  /** Modifies the map by changing {{path}} and {{location}} properties
+    * by the given function. */
+  def changePath(f: String => String): MapGet[Unit] =
+    seq(Seq(find(Ident.path), find(Ident.location))).flatMap { list =>
+      val props = list.collect({
+        case Some(Property(id, value)) =>
+          Property(id, f(value))
+      })
+      modify(props.foldLeft(_){ (m, p) => m + p })
+    }
 
   def convert[T](id: Ident, conv: Converter[T]) =
     value(id).map(v => v.map(conv.parse(_)))
@@ -113,10 +124,13 @@ object MapGet {
       _ <- set(f(m))
     } yield ()
 
-  def filter(iter: Stream[LazyMap], pred: MapGet[Boolean]): Stream[LazyMap] =
+  def filter(iter: Traversable[LazyMap], pred: MapGet[Boolean]): Traversable[LazyMap] =
     iter.map(pred.run).collect {
       case (m, true) => m
     }
+
+  def filter(iter: Stream[LazyMap], pred: MapGet[Boolean]): Stream[LazyMap] =
+    filter(iter.asInstanceOf[Traversable[LazyMap]], pred).toStream
 
   def parfilter(iter: Stream[LazyMap], pred: MapGet[Boolean]) = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -167,7 +181,7 @@ object MapGet {
       }
     )
 
-  def fold[T](zero: T, maps: Iterable[LazyMap])(action: T => MapGet[T]): T =
+  def fold[T](zero: T, maps: Traversable[LazyMap])(action: T => MapGet[T]): T =
     maps.foldLeft(zero) { (t, m) => action(t).result(m) }
 
   def foreach[T](maps: Iterable[LazyMap], action: Int => MapGet[T]): Int =

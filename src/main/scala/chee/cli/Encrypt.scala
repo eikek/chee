@@ -23,7 +23,7 @@ object Encrypt extends ScoptCommand with AbstractLs with CryptCommand {
 
   def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] = {
     import Processing._
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     opts.cryptMethod.getOrElse(cfg.getCryptMethod) match {
       case CryptMethod.Password =>
         outln("Using password based encryption.")

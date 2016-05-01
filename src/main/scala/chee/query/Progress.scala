@@ -23,7 +23,7 @@ trait Progress[T, C] { self =>
     }
 
   /** Apply `action` to every element in `maps` invoking callbacks of this progress. */
-  final def foreach(zero: C, zd: Duration = Duration.ZERO)(maps: Iterable[LazyMap], action: MapGet[T]): (C, Duration) =
+  final def foreach(zero: C, zd: Duration = Duration.ZERO)(maps: Traversable[LazyMap], action: MapGet[T]): (C, Duration) =
     Progress.foreach(zero, zd)(this, maps, action)
 }
 
@@ -66,7 +66,7 @@ object Progress {
   def seq[T, C](ps: Progress[T, C]*): Progress[T, C] =
     ps.reduce { (a, b) => a andThen b }
 
-  def foreach[T, C](zero: C, zd: Duration = Duration.ZERO)(p: Progress[T, C], maps: Iterable[LazyMap], action: MapGet[T]) = {
+  def foreach[T, C](zero: C, zd: Duration = Duration.ZERO)(p: Progress[T, C], maps: Traversable[LazyMap], action: MapGet[T]) = {
     val a: C => MapGet[C] = n => action.around(p.before(n), p.after(n, _, _))
     val t = chee.Timing.timedResult(MapGet.fold(zero, maps)(a))
     p.done(t._1, zd.plus(t._2))

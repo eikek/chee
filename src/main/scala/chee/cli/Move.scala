@@ -38,9 +38,9 @@ class Move extends ScoptCommand with LockSupport {
         failure(s"Multiple source files require an existing target directory: ${trg.path} does not exist or is not a directory.")
       case SrcDest(src, trg) if src contains trg =>
         failure("Source and target are the same file.")
-      case SrcDest(src, trg) if src.exists(s => trg.isChildOf(s)) =>
+      case SrcDest(src, trg) if src.exists(s => trg.childOf(s)) =>
         failure("Cannot move a file into a sub directory of itself: "+
-          src.filter(s => trg.isChildOf(s)).mkString(", "))
+          src.filter(s => trg.childOf(s)).mkString(", "))
       case _ =>
         success
     }
@@ -99,7 +99,7 @@ object Move {
 
   private def findLocations(cfg: Config, source: File, target: File): (LocationConf.Entry, Option[LocationConf.Entry]) = {
     val locations = cfg.getLocationConf.list.get
-    val sourceLocation = locations.find(l => source.isChildOf(l.dir)) match {
+    val sourceLocation = locations.find(l => source.childOf(l.dir)) match {
       case Some(x) => x
       case None => sys.error("unreachable code, this condition must be checked beforehand")
     }
@@ -128,13 +128,13 @@ object Move {
       // location list must be updated only if target is not already a location
       case Some(newLoc) if targetLocation.isEmpty =>
         cfg.getLocationConf.remove(sourceLocation.dir).get
-        cfg.getLocationConf.add(sourceLocation.copy(dir = newLoc)).get
+        cfg.getLocationConf.add(sourceLocation.changeDirTo(newLoc)).get
       case _ =>
     }
 
     // update database before actual moving, because it relies on that
     // source still exists
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
     val n = sqlite.move(source, target, newLocation).get
 
     if (!indexOnly) {

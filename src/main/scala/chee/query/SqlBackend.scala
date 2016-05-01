@@ -4,6 +4,7 @@ import better.files._
 import chee.crypto.CheeCrypt
 import chee.properties._
 import chee.util.files._
+import java.nio.file.Path
 
 // todo: despite its name SqlBackend, some queries  are sqlite specific
 object SqlBackend {
@@ -71,17 +72,18 @@ object SqlBackend {
   def count(table: String, c: Condition): String =
     s"SELECT COUNT(*) FROM $table WHERE ${whereClause(c)}"
 
-  def move(source: File, target: File, newLocation: Option[File]): String = {
+  def move(source: Path, target: Path, isRegularFile: Boolean, newLocation: Option[Path]): String = {
     val len = source.toString.length + 1
-    val updates = newLocation.map(nl => s"location = '${nl.path}'").toList ++ (source match {
-      case RegularFile(_) => List(
-        s"path = '${target.path}'",
-        s"filename = '${target.name}'",
-        s"""extension = ${target.getExtension.map("'" +_+ "'").getOrElse("null")}""")
-      case _ =>
-        List(s"path = '${target.path}' || substr(path, $len)")
-    })
-    s"""UPDATE chee_index SET ${updates.mkString(", ")} WHERE path like '${source.path}%'"""
+    val t: File = target
+    val updates = newLocation.map(nl => s"location = '$nl'").toList ++ {
+      if (isRegularFile) List(
+        s"path = '$target'",
+        s"filename = '${t.name}'",
+        s"""extension = ${t.getExtension.map("'" +_+ "'").getOrElse("null")}""")
+      else
+        List(s"path = '${target}' || substr(path, $len)")
+    }
+    s"""UPDATE chee_index SET ${updates.mkString(", ")} WHERE path like '${source}%'"""
   }
 
 

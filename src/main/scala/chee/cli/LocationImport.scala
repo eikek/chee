@@ -117,7 +117,7 @@ class LocationImport extends ScoptCommand with AbstractLs with LockSupport {
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
     Location.checkRegisteredLocations(cfg.getLocationConf, Seq(opts.location))
     Location.checkNotRegisteredLocations(cfg.getLocationConf, Seq(getSource(opts)))
-    val sqlite = new SqliteBackend(cfg.getIndexDb)
+    val sqlite = new SqliteBackend(cfg)
 
     val action = exists(sqlite).flatMap { ex =>
       if (ex && !opts.duplicates) unit(Result.Duplicate)

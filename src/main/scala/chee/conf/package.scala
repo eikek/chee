@@ -26,7 +26,7 @@ package object conf {
     def getIndexDb = getFile("chee.dbfile")
 
     def getSystemConfig = ConfigFile(getFile("chee.system-config"))
-    def getLocationConf = new LocationConf(getSystemConfig)
+    def getLocationConf = new LocationConf(getSystemConfig, getRepoRoot)
     def getCollectionConf = new CollectionConf(getSystemConfig)
 
     def makeQuery: Query = Query.create(

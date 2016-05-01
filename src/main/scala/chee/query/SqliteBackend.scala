@@ -1,36 +1,45 @@
 package chee.query
 
+import com.typesafe.config.Config
+import com.typesafe.scalalogging.StrictLogging
 import java.nio.file.Path
 import java.sql._
 import java.time.Duration
 
 import scala.util.{Failure, Success, Try}
 
-import better.files._
+import better.files.File
 import chee.Timing
 import chee.properties._
 import com.typesafe.scalalogging.LazyLogging
+import chee.conf._
+import chee.util.paths
 
-class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
+class SqliteBackend(dbfile: File, root: Option[File], pageSize: Int = 500) extends JdbcConnection with LazyLogging {
   import SqliteBackend._
+  def this(cfg: Config) = this(cfg.getIndexDb, cfg.getRepoRoot)
 
   dbfile.parent.createDirectories()
-  
+
+  val jdbcUrl = s"jdbc:sqlite:${dbfile.path}"
+
   final def find(cond: Condition): Try[Stream[LazyMap]] = {
+    val c = root.map(relativeCond(_)(cond)) getOrElse cond
     val sql = (s"""SELECT ${SqlBackend.idents.map(_.name).mkString(",")},coalesce(created,lastmodified) as sorting"""
-      + s""" FROM chee_index WHERE ${SqlBackend.whereClause(cond)}"""
+      + s""" FROM chee_index WHERE ${SqlBackend.whereClause(c)}"""
       + s""" ORDER BY sorting""")
-    findNext(sql, 0).recoverWith {
+    val files = findNext(sql, 0).recoverWith {
       case ex => Failure(new RuntimeException(s"Error for sql: $sql", ex))
     }
+    files.map(resolveTo(root))
   }
 
-  final def findNext(sql: String, skip: Int): Try[Stream[LazyMap]] = {
+  private final def findNext(sql: String, skip: Int): Try[Stream[LazyMap]] = {
     val first = withConn(dbfile) { implicit conn =>
       val buffer = collection.mutable.ListBuffer[LazyMap]()
       val rs = sqlQuery(sql + s" limit $skip,$pageSize")
       while (rs.next) {
-        buffer += rs.toPropertyMap
+        buffer += rs.toPropertyMap(root)
       }
       buffer.toStream
     }
@@ -41,16 +50,16 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
     }
   }
 
-  final def insert[C](maps: Iterable[LazyMap], zero: C, p: Progress[Boolean, C]): Try[Unit] = {
+  final def insert[C](maps: Traversable[LazyMap], zero: C, p: Progress[Boolean, C]): Try[Unit] = {
     withConn(dbfile) { conn =>
-      val (count, dur) = p.foreach(zero)(maps, insertProperties(conn))
+      val (count, dur) = p.foreach(zero)(maps, insertProperties(root)(conn))
       logger.trace(s"Added $count properties in ${Timing.format(dur)}")
     }
   }
 
   final def insertOne(lm: LazyMap): Try[(LazyMap, Boolean)] =
     withConn(dbfile) { conn =>
-      insertProperties(conn).run(lm)
+      insertProperties(root)(conn).run(lm)
     }
 
   final def checksumMatch(path: String, checksum: String): Try[Boolean] = {
@@ -58,28 +67,44 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
     n.map(_ == 1)
   }
 
-  final def update(maps: Iterable[LazyMap], columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path), p: Progress[Boolean, Int] = Progress.empty): Try[Unit] = {
+  final def update(maps: Traversable[LazyMap],
+    columns: MapGet[Seq[Ident]] = MapGet.idents(false),
+    where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path),
+    p: Progress[Boolean, Int] = Progress.empty): Try[Unit] =
+  {
     withConn(dbfile) { conn =>
-      val (count, dur) = p.foreach(0)(maps, updateProperties(columns, where)(conn))
+      val (count, dur) = p.foreach(0)(maps, updateProperties(columns, where, root)(conn))
       logger.trace(s"Updated $count properties in ${Timing.format(dur)}")
     }
   }
 
-  final def updateOne(lm: LazyMap, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path)): Try[(LazyMap, Boolean)] =
+  final def updateOne(lm: LazyMap,
+    columns: MapGet[Seq[Ident]] = MapGet.idents(false),
+    where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path)): Try[(LazyMap, Boolean)] =
     withConn(dbfile) { conn =>
-      updateProperties(columns, where)(conn).run(lm)
+      updateProperties(columns, where, root)(conn).run(lm)
     }
 
   final def move(source: File, target: File, newLocation: Option[File]): Try[Int] =
     withConn(dbfile) { implicit conn =>
-      sqlUpdate(SqlBackend.move(source, target, newLocation))
+      val src = root.map(paths.relative(_)(source)) getOrElse source.path
+      val trg = root.map(paths.relative(_)(target)) getOrElse target.path
+      val loc = root match {
+        case Some(dir) => newLocation.map(paths.relative(dir))
+        case None => newLocation.map(_.path)
+      }
+      sqlUpdate(SqlBackend.move(src, trg, source.isRegularFile, loc))
     }
 
-  final def delete(cond: Condition): Try[Int] =
-    withConn(dbfile)(c => deleteAll(cond)(c))    
+  final def delete(cond: Condition): Try[Int] = {
+    val c = root.map(relativeCond(_)(cond)) getOrElse cond
+    withConn(dbfile)(conn => deleteAll(c)(conn))
+  }
 
-  final def count(cond: Condition): Try[Int] =
-    withConn(dbfile)(c => SqliteBackend.count(cond)(c))
+  final def count(cond: Condition): Try[Int] = {
+    val c = root.map(relativeCond(_)(cond)) getOrElse cond
+    withConn(dbfile)(conn => SqliteBackend.count(c)(conn))
+  }
 
   final def idExists: MapGet[Try[Boolean]] =
     MapGet.value(Ident.checksum).map {
@@ -87,53 +112,17 @@ class SqliteBackend(dbfile: File, pageSize: Int = 500) extends LazyLogging {
       case None => Success(false)
     }
 
-  final def pathExists(path: String): Try[Boolean] =
-    withConn(dbfile)(c => existsPath(path)(c))
-
-  final def createSchema: Try[Unit] = withConn(dbfile)(initialize)
+  final def pathExists(path: String): Try[Boolean] = {
+    val p = root.map(paths.relativeStr(_)(path)) getOrElse path
+    withConn(dbfile)(c => existsPath(p)(c))
+  }
 
 }
 
-object SqliteBackend extends LazyLogging {
+object SqliteBackend extends JdbcStatement with LazyLogging {
+
   logger.trace("Loading jdbc driver class")
   Class.forName("org.sqlite.JDBC")
-
-  def withConn[A](dbfile: File)(body: Connection => A): Try[A] = Try {
-    Timing.timed((_: A, d) => logger.trace(s"JDBC Code Block took ${Timing.format(d)}")) {
-      val conn = DriverManager.getConnection(s"jdbc:sqlite:${dbfile.path}")
-      try {
-        logger.trace("[[[ open sqlite connecion")
-        try {
-          body(conn)
-        } catch {
-          case e1: SQLException =>
-            try { initialize(conn) } catch {
-              case e2: Exception =>
-                e1.addSuppressed(e2)
-                throw e1
-            }
-            body(conn)
-        }
-      } finally {
-        conn.close
-        logger.trace("closed sqlite connection ]]]")
-      }
-    }
-  }
-
-  def sqlQuery(sql: String)(implicit conn: Connection): ResultSet = {
-    logger.debug(s"Running sql query: $sql")
-    Timing.timed((_: ResultSet, d) => logger.trace(s"sql query ran in ${Timing.format(d)}")) {
-      conn.createStatement.executeQuery(sql)
-    }
-  }
-
-  def sqlUpdate(sql: String)(implicit conn: Connection): Int = {
-    logger.debug(s"Running sql update: $sql")
-    Timing.timed((_: Int, d) => logger.trace(s"sql update ran in ${Timing.format(d)}")) {
-      conn.createStatement.executeUpdate(sql)
-    }
-  }
 
   def existsId(checksum: String)(implicit conn: Connection): Boolean = {
     val rs = sqlQuery(s"select count(checksum) from chee_index where checksum = '$checksum'")
@@ -152,17 +141,20 @@ object SqliteBackend extends LazyLogging {
     else false
   }
 
-  def insertProperties(implicit conn: Connection): MapGet[Boolean] = 
-    MapGet.value(Ident.path).flatMap { path => 
-      if (existsPath(path.get)) MapGet.unit(false)
-      else SqlBackend.insertStatement("chee_index").map(sql => { sqlUpdate(sql); true})
+  def insertProperties(root: Option[File])(implicit conn: Connection): MapGet[Boolean] =
+    relativeTo(root) {
+      MapGet.value(Ident.path).flatMap { path =>
+        if (existsPath(path.get)) MapGet.unit(false)
+        else SqlBackend.insertStatement("chee_index").map(sql => { sqlUpdate(sql); true})
+      }
     }
 
-  def updateProperties(columns: MapGet[Seq[Ident]], where: IdentProp)(implicit conn: Connection): MapGet[Boolean] = {
-    SqlBackend.updateRowStatement("chee_index", columns, where).map { sql =>
-      sqlUpdate(sql) != 0
+  def updateProperties(columns: MapGet[Seq[Ident]], where: IdentProp, root: Option[File])(implicit conn: Connection): MapGet[Boolean] = 
+    relativeTo(root) {
+      SqlBackend.updateRowStatement("chee_index", columns, where).map { sql =>
+        sqlUpdate(sql) != 0
+      }
     }
-  }
 
   def deleteAll(cond: Condition)(implicit conn: Connection): Int = {
     sqlUpdate(SqlBackend.deleteStatement("chee_index", cond))
@@ -174,57 +166,20 @@ object SqliteBackend extends LazyLogging {
     rs.getInt(1)
   }
 
-  trait Schema {
-    def create(implicit conn: Connection): Unit
-  }
-    
-  object Schema {
-    def getVersion(implicit conn: Connection): Int = {
-      val v = Try {
-        val rs = sqlQuery("select max(version) from chee_schema_version")
-        if (rs.next) rs.getInt(1)
-        else sys.error(s"Unknown database state. The version table exists, but is empty.")
-      }
-      v.getOrElse(-1)
-    }
-    val migrations: Map[Int, Schema] = Map(
-      1 -> InitialSchema
-    )
+  def relativeTo[T](root: Option[File])(m: MapGet[T]): MapGet[T] = root match {
+    case Some(dir) => paths.relativeTo(dir).flatMap(_ => m)
+    case _ => m
   }
 
-  object InitialSchema extends Schema with LazyLogging {
-    def create(implicit conn: Connection): Unit = {
-      logger.info("Running initial schema migration, to version 1")
-      val stmt = conn.createStatement
-      stmt.executeUpdate("CREATE TABLE chee_schema_version (version integer)")
-      stmt.executeUpdate(SqlBackend.createTable("chee_index"))
-      stmt.executeUpdate("CREATE UNIQUE INDEX path_idx ON chee_index (path)")
-      for (id <- (SqlBackend.idents.filter(_ != Ident.path))) {
-        stmt.executeUpdate(s"CREATE INDEX ${id.name}_idx ON chee_index (${id.name})")
-      }
-      stmt.executeUpdate("INSERT INTO chee_schema_version VALUES (1)")
-      ()
-    }
+  def resolveTo(root: Option[File])(maps: Stream[LazyMap]): Stream[LazyMap] = root match {
+    case Some(dir) => MapGet.filter(maps, paths.resolveTo(dir).map(_ => true))
+    case _ => maps
   }
 
-  def initialize(conn: Connection): Unit = {
-    val version = Schema.getVersion(conn)
-    val migs = Schema.migrations.keys.dropWhile(_ <= version).toList.sorted
-    for (mig <- migs) {
-      Schema.migrations(mig).create(conn)
-    }
-  }
-
-  implicit class ResultSetOps(rs: ResultSet) {
-    import better.files._
-    def toPropertyMap: LazyMap = {
-      val path = rs.getString(Ident.path.name)
-      val map = LazyMap.fromFile(File(path))
-      SqlBackend.idents.foldLeft(map) { (m, id) =>
-        val value = Option(rs.getObject(id.name)).map(_.toString)
-        m.add(value.map(v => Property(id, v)))
-      }
-    }
-  }
-
+  def relativeCond(root: File)(c: Condition): Condition = Condition.mapAll({
+    case Prop(comp, Property(id, name))
+        if id == Ident.location || id == Ident.path =>
+      Prop(comp, Property(id, paths.relativeStr(root)(name)))
+    case n => n
+  })(c)
 }
