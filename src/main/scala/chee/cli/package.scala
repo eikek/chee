@@ -47,7 +47,7 @@ package object cli {
   }
 
   implicit val _readFile: scopt.Read[File] =
-    scopt.Read.reads(File(_))
+    scopt.Read.reads(s => java.nio.file.Paths.get(s).toAbsolutePath)
 
   private val numberRegex = """([0-9]+)""".r
   private val sizeRegex = """([0-9]+)x([0-9]+)""".r
