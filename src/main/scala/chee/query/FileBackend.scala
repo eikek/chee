@@ -10,7 +10,7 @@ object FileBackend {
     * path.
     */
   def walk(start: File, recursive: Boolean): Stream[File] = {
-    if (recursive) start.glob("**", "glob").toStream
+    if (recursive) start.glob("**")(File.PathMatcherSyntax.glob).toStream
     else start.list.toStream
   }
 
