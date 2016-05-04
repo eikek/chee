@@ -22,10 +22,9 @@ object Query {
   def create(settings: QuerySettings): Query = new QueryImpl(settings)
 
   private class QueryImpl(settings: QuerySettings) extends Query {
-    val parser: String => Either[String, Condition] =
-      QueryParser(_, settings.comps ++ settings.transform.comps)
+    val parser = new QueryParser(settings.comps ++ settings.transform.comps)
 
-    def parse(in: String) = parser(s"(& $in )")
+    def parse(in: String) = parser.parse(s"(& $in )")
 
     def apply(in: String) =
       parse(in).right flatMap process

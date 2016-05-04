@@ -42,7 +42,7 @@ object FileSizeConverter extends Converter[Long] {
 
 object LocalDateTimeConverter extends Converter[LocalDateTime] {
   def parse(str: String) =
-    new DateTimeParser(LocalDateTime.now).parseDate(str, false)
+    new LocalDateTimeParser(LocalDateTime.now, false).parseDate(str)
 
   override def render(ld: LocalDateTime) = ld.asString
 }

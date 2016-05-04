@@ -1,8 +1,9 @@
 package chee.properties
 
-import scala.util.parsing.combinator.RegexParsers
+import fastparse.all._
+import chee.util.parsing._
 import Patterns._
-import chee.Processing
+import scala.util.{ Success, Try }
 
 /** The Parser[Ident => Pattern] is only needed for the loop body, but
   * declared for all parsers to reuse them in the loop body.
@@ -13,88 +14,99 @@ import chee.Processing
   * the loop), the identifier provided to the function is used,
   * otherwise the parsed identifier is used.
   */
-final class PatternParser(idents: Iterable[Ident]) extends RegexParsers {
-  override val whiteSpace = "".r
+final class PatternParser(idents: Traversable[Ident]) {
 
-  def lift(p: Parser[Pattern]): Parser[Ident => Pattern] = p.map(id => _)
+  def lift(p: P[Pattern]): P[Ident => Pattern] = p.map(p => _ => p)
 
-  val tilde: Parser[String] = "~" ~> "~"
+  val tilde: P[String] = P("~" ~ "~".!)
+  val noTilde: P[String] = P(CharsWhile(_ != '~').!)
 
-  val rawValue: Parser[Pattern] = rep1(tilde | """[^~]""".r) ^^ {
-    list => seqq(list.map(raw))
+  val rawValue: P[Pattern] = P((tilde | noTilde).rep(1)).map {
+    list => seqq(list.map(raw(_)))
   }
 
-  val lookupValue: Parser[Ident => Pattern] =
-    "~#" ~> Ident.identRegex.r ~ opt("~f" ~> "[^~]+".r) ^^ {
-      case "value" ~ format => id => lookup(id, format)
-      case s ~ format => _ => lookup(Ident(s), format)
+  val lookupValue: P[Ident => Pattern] =
+    P("~#" ~ identString.! ~ ("~f" ~ noTilde.!).?).map {
+      case ("value", format) => id => lookup(id, format)
+      case (id, format) => _ => lookup(Ident(id), format)
     }
 
-  val readableValue: Parser[Ident => Pattern] =
-    "~:" ~> Ident.identRegex.r ^^ {
+  val readableValue: P[Ident => Pattern] =
+    P("~:" ~ identString.!).map {
       case "value" => id => readable(id)
       case s => _ => readable(Ident(s))
     }
 
-  val newlineValue: Parser[Pattern] = "~%" ^^ { _ => newline }
+  val newlineValue: P[Pattern] = P("~%").map { _ => newline }
 
-  val emptyValue: Parser[Pattern] = "~." ^^ { _ => empty }
+  val emptyValue: P[Pattern] = P("~.").map { _ => empty }
 
-  val simpleDirective: Parser[Ident => Pattern] =
+  val simpleDirective: P[Ident => Pattern] =
     lift(emptyValue) | lift(newlineValue) | lookupValue | readableValue | lift(rawValue)
 
-  def quotedValue: Parser[Ident => Pattern] = "~" ~> ("\"" | "'") ~ directive ^^ {
-    case q ~ directive => id => quote(q.charAt(0), directive(id))
-  }
+  def quotedValue: P[Ident => Pattern] =
+    P("~" ~ ("\"" | "'").! ~ directive).map {
+      case (q, directive) => id => quote(q.charAt(0), directive(id))
+    }
 
-  def sequence: Parser[Ident => Pattern] = "~{" ~> rep1(directive) <~ "~}" ^^ {
-    list => id => seqq(list.map(_(id)))
-  }
+  def sequence: P[Ident => Pattern] =
+    P("~{" ~ directive.rep(1) ~ "~}").map {
+      case ds => id => seqq(ds.map(_(id)))
+    }
 
-  def existsPred: Parser[Ident => MapGet[Either[String, Boolean]]] = Ident.identRegex.r ^^ {
-    case "value" => id => existsIdent(id)
-    case s => _ => existsIdent(Ident(s))
-  }
+  def existsPred: P[Ident => MapGet[Either[String, Boolean]]] =
+    P(identString.!).map {
+      case "value" => id => existsIdent(id)
+      case s => _ => existsIdent(Ident(s))
+    }
   //todo: more? file-exists, etc?
 
-  def conditional2(p: Parser[Ident => MapGet[Either[String, Boolean]]]): Parser[Ident => Pattern] =
-    "~[" ~> p ~ ("~;" ~> directive) ~ ("~;" ~> directive) <~ "~]" ^^ {
-      case c ~ ifTrue ~ ifFalse => id => cond(c(id), ifTrue(id), ifFalse(id))
+  def conditional2(p: P[Ident => MapGet[Either[String, Boolean]]]): P[Ident => Pattern] =
+    P("~[" ~ p ~ "~;" ~ directive ~ "~;" ~ directive ~ "~]").map {
+      case (c, ifTrue, ifFalse) => id => cond(c(id), ifTrue(id), ifFalse(id))
     }
 
-  def conditional: Parser[Ident => Pattern] = conditional2(existsPred)
+  def conditional: P[Ident => Pattern] = conditional2(existsPred)
 
-  def length: Parser[Ident => Pattern] = "~" ~> "[0-9]+".r ~ opt("m") ~ ("l" | "r") ~ directive ^^ {
-    case num ~ None ~ pad ~ dir => id => fixedwidth(num.toInt, dir(id), pad == "l")
-    case num ~ Some(_) ~ pad ~ dir => id => maxlen(num.toInt, dir(id), pad == "r")
-  }
+  def length: P[Ident => Pattern] =
+    P("~" ~ (digit.rep(1)).! ~ ("m".!).? ~ ("l" | "r").! ~ directive).map {
+      case (num, None, pad, dir) => id => fixedwidth(num.toInt, dir(id), pad == "l")
+      case (num, Some(_), pad, dir) => id => maxlen(num.toInt, dir(id), pad == "r")
+    }
 
-  def loopBodySimple: Parser[Ident => Pattern] =
+  def loopBodySimple: P[Ident => Pattern] =
     simpleDirective | quotedValue | sequence | conditional | length
 
-  def combine(l: List[Ident => Pattern]): Ident => Pattern =
+  def combine(l: Seq[Ident => Pattern]): Ident => Pattern =
     id => seqq(l.map(_(id)))
 
-  def loopBody: Parser[(Ident => Pattern, Ident => Pattern)] =
-    rep1(loopBodySimple) ~ opt("~^" ~> rep1(loopBodySimple)) ^^ {
-      case main ~ Some(stop) => (combine(main), combine(stop))
-      case main ~ None => (combine(main), _ => empty)
+  def loopBody: P[(Ident => Pattern, Ident => Pattern)] =
+    P(loopBodySimple.rep(1) ~ ("~^" ~ loopBodySimple.rep(1)).?).map {
+      case (main, Some(stop)) => (combine(main), combine(stop))
+      case (main, None) => (combine(main), _ => empty)
     }
 
-  def loopDirective: Parser[Ident => Pattern] = "~@" ~> opt("!") ~ opt("*") ~ ("~{" ~> loopBody <~ "~}") ^^ {
-    case excl ~ all ~ body =>
-      val idents = if (all.isDefined) Ident.defaults else (Ident.defaults diff VirtualProperty.idents.all)
-      _ => loop(body._1, body._2, MapGet.idents(all.isDefined), excl.isEmpty)
-  }
+  def loopDirective: Parser[Ident => Pattern] =
+    P("~@" ~ ("!".!.?) ~ ("*".!.?) ~ "~{" ~ loopBody ~ "~}").map {
+      case (excl, all, body) =>
+        val idents = if (all.isDefined) Ident.defaults else (Ident.defaults diff VirtualProperty.idents.all)
+        _ => loop(body._1, body._2, MapGet.idents(all.isDefined), excl.isEmpty)
+    }
 
-  def directive: Parser[Ident => Pattern] = simpleDirective | quotedValue | sequence | conditional | length | loopDirective
+  def directive: P[Ident => Pattern] =
+    simpleDirective | quotedValue | sequence | conditional | length | loopDirective
 
-  def controlString: Parser[Pattern] = rep1(directive) ^^ { list => seqq(list.map(_('value))) }
+  def controlString: P[Pattern] =
+    P(directive.rep(1)).map { list => seqq(list.map(_('value))) }
 
   def parsePattern(str: String): Either[String, Pattern] =
-    scala.util.Try(parseAll(controlString, str)).toEither match {
-      case Right(Success(cs, _)) => Right(cs)
-      case Right(f) => Left("Invalid format string!\n" + f.toString)
-      case Left(m) => Left(m)
+    Try(controlString.parseAll(str)) match {
+      case Success(p) => p
+      case f =>  Left("Invalid format string!\n" + f.toString)
     }
+    // scala.util.Try(parseAll(controlString, str)).toEither match {
+    //   case Right(Success(cs, _)) => Right(cs)
+    //   case Right(f) => Left("Invalid format string!\n" + f.toString)
+    //   case Left(m) => Left(m)
+    // }
 }

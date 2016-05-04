@@ -48,23 +48,39 @@ case class LocalDateTime(
 
   def asJava: JLD = JLD.of(year, Month.of(month), day, hour, minute, second)
 
-  def + (t: TimeAmount): LocalDateTime = t match {
-    case Years(n) => copy(year = year + n)
-    case Months(n) => fromJava(asJava.plusMonths(n))
-    case Days(n) => fromJava(asJava.plusDays(n))
-    case Hours(n) => fromJava(asJava.plusHours(n))
-    case Minutes(n) => fromJava(asJava.plusMinutes(n))
-    case Seconds(n) => fromJava(asJava.plusSeconds(n))
+  def + (t: TimeAmount): LocalDateTime = t.n match {
+    case 0 => this
+    case n if n < 0 => this - t.abs
+    case _ => t match {
+      case Years(n) => copy(year = year + n)
+      case Months(n) => fromJava(asJava.plusMonths(n))
+      case Days(n) => fromJava(asJava.plusDays(n))
+      case Hours(n) => fromJava(asJava.plusHours(n))
+      case Minutes(n) => fromJava(asJava.plusMinutes(n))
+      case Seconds(n) => fromJava(asJava.plusSeconds(n))
+    }
   }
 
-  def - (t: TimeAmount): LocalDateTime = t match {
-    case Years(n) => copy(year = year - n)
-    case Months(n) => fromJava(asJava.minusMonths(n))
-    case Days(n) => fromJava(asJava.minusDays(n))
-    case Hours(n) => fromJava(asJava.minusHours(n))
-    case Minutes(n) => fromJava(asJava.minusMinutes(n))
-    case Seconds(n) => fromJava(asJava.minusSeconds(n))
+  def - (t: TimeAmount): LocalDateTime = t.n match {
+    case 0 => this
+    case n if n < 0 => this + t.abs
+    case _ => t match {
+      case Years(n) => copy(year = year - n)
+      case Months(n) => fromJava(asJava.minusMonths(n))
+      case Days(n) => fromJava(asJava.minusDays(n))
+      case Hours(n) => fromJava(asJava.minusHours(n))
+      case Minutes(n) => fromJava(asJava.minusMinutes(n))
+      case Seconds(n) => fromJava(asJava.minusSeconds(n))
+    }
   }
+
+  def resetTime(amount: TimeAmount): LocalDateTime =
+    amount match {
+      case _: Hours => copy(minute = 0, second = 0)
+      case _: Minutes => copy(second = 0)
+      case _: Seconds => this
+      case _ => copy(hour = 0, minute = 0, second = 0)
+    }
 
   def toDateTime(zone: ZoneId = ZoneId.systemDefault): DateTime =
     DateTime(asJava.atZone(zone).toInstant)
@@ -124,13 +140,31 @@ object LocalDateTime {
     else atStart(year, Some(mon), Some(day))
   }
 
-  sealed trait TimeAmount
-  case class Years(n: Int) extends TimeAmount
-  case class Months(n: Long) extends TimeAmount
-  case class Days(n: Long) extends TimeAmount
-  case class Hours(n: Long) extends TimeAmount
-  case class Minutes(n: Long) extends TimeAmount
-  case class Seconds(n: Long) extends TimeAmount
+  sealed trait TimeAmount {
+    val n: Int
+    def abs: TimeAmount = map(_.abs)
+    // reduce this boilerplate with shapless
+    // http://www.cakesolutions.net/teamblogs/copying-sealed-trait-instances-a-journey-through-generic-programming-and-shapeless
+    def map(f: Int => Int): TimeAmount
+  }
+  case class Years(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
+  case class Months(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
+  case class Days(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
+  case class Hours(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
+  case class Minutes(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
+  case class Seconds(n: Int) extends TimeAmount {
+    def map(f: Int => Int) = copy(f(n))
+  }
 
   implicit class IntTime(n: Int) {
     def years = Years(n)

@@ -11,9 +11,7 @@ lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 lazy val dependencies = Seq(
   "org.scalatest"              %% "scalatest"                % "2.2.4"    % "it,test",
   "org.scalacheck"             %% "scalacheck"               % "1.12.5"   % "test",
-  "org.scala-lang.modules"     %% "scala-parser-combinators" % "1.0.4" excludeAll(
-    scalaLib
-  ),
+  "com.lihaoyi"                %% "fastparse"                % "0.3.7",
   "com.github.pathikrit"       %% "better-files"             % "2.15.0" excludeAll(
     scalaLib
   ),

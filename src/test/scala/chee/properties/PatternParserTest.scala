@@ -1,6 +1,8 @@
 package chee.properties
 
 import org.scalatest._
+import fastparse.all._
+import chee.util.parsing._
 import chee.TestInfo
 
 class PatternParserTest extends FlatSpec with Matchers {
@@ -11,9 +13,9 @@ class PatternParserTest extends FlatSpec with Matchers {
 
   import parser._
 
-  def parseVal(p: Parser[Ident => Pattern], in: String): MapGet[String] = {
-    parser.parseAll(p, in) match {
-      case parser.Success(dir, _) => dir('value).right
+  def parseVal(p: P[Ident => Pattern], in: String): MapGet[String] = {
+    p.parseAll(in) match {
+      case Right(dir) => dir('value).right
       case f => MapGet.unit(f.toString)
     }
   }
@@ -44,7 +46,7 @@ class PatternParserTest extends FlatSpec with Matchers {
     (Ident.height -> "400") +
     (Ident.length -> "21")
 
-    def parse(s: String) = parseVal(parser.lookupValue, s).result(map)
+    def parse(s: String) = parseVal(lookupValue, s).result(map)
 
     parse("~#iso~f%05d") should be ("00200")
     parse("~#height~f%05d") should be ("00400")
@@ -79,7 +81,7 @@ class PatternParserTest extends FlatSpec with Matchers {
   }
 
   "loopBody" should "combine different patterns" in {
-    val parser.Success((mf, sf), _) = parser.parseAll(loopBody, "size: ~:value")
+    val Right((mf, sf)) = loopBody.parseAll("size: ~:value")
     mf('length).result(LazyMap(Ident.length -> "12311222")) should be (Right("size: 11.7mb"))
   }
 

@@ -1,72 +1,59 @@
 package chee.query
 
-import scala.util.parsing.combinator.RegexParsers
+import chee.util.parsing._
 import chee.properties._
 
-object QueryParser extends RegexParsers {
+class QueryParser(comparators: Set[Comp]) {
+  import fastparse.noApi._
+  import IgnoreWhitespace._
 
-  val ident: Parser[Ident] = Ident.identRegex.r ^^ (id => Ident(id))
+  lazy val comp: P[Comp] =
+    P(comparators.map(c => ic(c.name).!).reduce(_ | _)).map(Comp.apply)
 
-  def comp(all: Set[Comp]): Parser[Comp] =
-    all.map(c => literal(c.name)).reduce(_ | _).map(c => Comp(c))
+  lazy val ident: P[Ident] = identString.!.map(Ident.apply)
 
-  val simpleValue: Parser[String] = """[^\s\\)"']+""".r
+  lazy val propValue: P[String] = P(
+    QueryParser.quotedValue | QueryParser.simpleValue
+  )
 
-  private def escapedChar(escapeChar: Char, terminalChars: Set[Char]): Parser[Char] = Parser { in =>
-    if (in.atEnd) Failure("empty input", in)
-    else {
-      val fchar = in.first
-      if (fchar == escapeChar) {
-        val fin = in.drop(1)
-        if (fin.atEnd) Failure("escape char at end", in.rest)
-        else Success(fin.first, fin.rest)
-      } else {
-        if (terminalChars contains fchar) Failure("end of input sequence", in)
-        else Success(fchar, in.rest)
-      }
+  lazy val prop: P[Prop] = P(ident ~ comp ~ propValue).map {
+    case (id, c, v) => Prop(c, id -> v)
+  }
+
+  lazy val idprop: P[IdentProp] = P(ident ~ comp ~ ("'" ~ ident)).map {
+    case (id1, c, id2) => IdentProp(c, id1, id2)
+  }
+
+  lazy val exists: P[Exists] = P(ident ~ "?").map(Exists.apply)
+
+  lazy val juncOp: P[Junc.Op] = P("&" | "|").!.map {
+    case "&" => Junc.And
+    case _ => Junc.Or
+  }
+
+  lazy val not: P[Not] = P("!" ~ condition).map(Not.apply)
+
+  lazy val junc: P[Junc] =
+    P("(" ~ juncOp ~ condition.rep(1) ~ ")").map {
+      case (op, conds) => Junc(op, conds.toList)
     }
-  }
 
-  private def quotedChars(quoteChar: Char): Parser[String] =
-    quoteChar ~ rep(escapedChar('\\', Set(quoteChar))) ~ quoteChar ^^ {
-      case _ ~ seq ~ _ => seq.mkString
-    }
+  lazy val condition: P[Condition] =
+    junc | not | idprop | prop | exists
 
-  val quotedValue: Parser[String] = quotedChars('"') | quotedChars(''')
+  def parse(in: String): Either[String, Condition] =
+    condition.parseAll(in)
+}
 
-  val propValue: Parser[String] = quotedValue | simpleValue
+object QueryParser {
+  import fastparse.all._
 
-  def prop(all: Set[Comp]): Parser[Prop] = ident ~ comp(all) ~ propValue ^^ {
-    case id ~ op ~ value => Prop(op, id -> value)
-  }
+  lazy val quotedValue: P[String] = P(quotedString('"') | quotedString('''))
+  lazy val simpleValue: P[String] = P(CharNotIn(Seq(')', '"', ''', ' ', '\t')).rep.!)
 
-  def idprop(all: Set[Comp]): Parser[IdentProp] = ident ~ comp(all) ~ ("'" ~> ident) ^^ {
-    case id1 ~ op ~ id2 => IdentProp(op, id1, id2)
-  }
+  private lazy val defaultParser = new QueryParser(Comp.all)
 
-  def exists: Parser[Exists] = ident <~ "?" ^^ {
-    case name => Exists(name)
-  }
-
-  def not(all: Set[Comp]): Parser[Not] = "!" ~> condition(all) ^^ {
-    case cond => Not(cond)
-  }
-
-  def juncOp: Parser[Junc.Op] = accept("Expected & or |", {
-    case '&' => Junc.And
-    case '|' => Junc.Or
-  })
-
-  def junc(all: Set[Comp]): Parser[Junc] = "(" ~> juncOp ~ rep1(condition(all)) <~ ")" ^^ {
-    case op ~ conds => Junc(op, conds)
-  }
-
-  def condition(all: Set[Comp]): Parser[Condition] =
-    junc(all) | not(all) | prop(all) | idprop(all) | exists
-
-  def apply(in: String, comps: Set[Comp] = Comp.all): Either[String, Condition] =
-    parseAll(condition(comps), in.trim) match {
-      case Success(v, _) => Right(v)
-      case f => Left(f.toString)
-    }
+  def parse(in: String, comps: Set[Comp] = Comp.all): Either[String, Condition] =
+    if (comps == Comp.all) defaultParser.parse(in)
+    else new QueryParser(comps).parse(in)
 }

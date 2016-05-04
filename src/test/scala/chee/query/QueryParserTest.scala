@@ -2,56 +2,61 @@ package chee.query
 
 import org.scalatest._
 import chee.properties._
+import chee.util.parsing._
 
 class QueryParserTest extends FlatSpec with Matchers {
 
-  import QueryParser._
+  val parser = new QueryParser(Comp.all)
 
   "identprop" should "parse successful" in {
-    parseAll(idprop(Comp.all), "width>'height").get should be (
+    parser.idprop.parseAll("width>'height") should be (Right(
       IdentProp(Comp.Gt, Ident.width, Ident.height)
-    )
+    ))
   }
 
   "simpleValue" should "parse successful" in {
-    parseAll(simpleValue, "test").get should be ("test")
-    parseAll(simpleValue, "12-test").get should be ("12-test")
+    QueryParser.simpleValue.parseAll("test") should be (Right("test"))
+    QueryParser.simpleValue.parseAll("12-test") should be (Right("12-test"))
   }
 
   "simpleValue" should "fail properly" in {
-    val Failure(_, _) = parseAll(simpleValue, "tes test")
-    val Failure(_, _) = parseAll(simpleValue, "te\"st")
-    val Failure(_, _) = parseAll(simpleValue, "te()st")
+    val simple = QueryParser.simpleValue
+    simple.parseAll("tes test") should be ('left)
+    simple.parseAll("te\"st") should be ('left)
+    simple.parseAll("te()st") should be ('left)
   }
 
   "quotedValue" should "parse successful" in {
-    parseAll(quotedValue, "\"\\a\"").get should be ("a")
-    parseAll(quotedValue, "'ab\\\"cde'").get should be ("ab\"cde")
-    parseAll(quotedValue, "'ab\"cde'").get should be ("ab\"cde")
-    parseAll(quotedValue, "'ab\\'cde)'").get should be ("ab'cde)")
-    parseAll(quotedValue, "'some thing'").get should be ("some thing")
-    parseAll(quotedValue, "''").get should be ("")
+    val quotedValue = QueryParser.quotedValue
+    quotedValue.parseAll("'ab\\\"cde'") should be (Right("ab\"cde"))
+    quotedValue.parseAll("'ab\"cde'") should be (Right("ab\"cde"))
+    quotedValue.parseAll("'ab\\'cde)'") should be (Right("ab'cde)"))
+    quotedValue.parseAll("'some thing'") should be (Right("some thing"))
+    quotedValue.parseAll("''") should be (Right(""))
+    quotedValue.parseAll("'\\a'") should be (Right("a"))
+    quotedValue.parseAll("\"\\a\"") should be (Right("a"))
   }
 
   "quotedValue" should "fail properly" in {
-    val Failure(_, _) = parseAll(quotedValue, "'ab ")
-    val Failure(_, _) = parseAll(quotedValue, "eb'")
-    val Failure(_, _) = parseAll(quotedValue, "\"eb'")
-    val Failure(_, _) = parseAll(quotedValue, "")
+    val quotedValue = QueryParser.quotedValue
+    quotedValue.parseAll("'ab ") should be ('left)
+    quotedValue.parseAll("eb'") should be ('left)
+    quotedValue.parseAll("\"eb'") should be ('left)
+    quotedValue.parseAll("") should be ('left)
   }
 
   "propValue" should "parse successful" in {
-    parseAll(propValue, "jpg").get should be ("jpg")
-    parseAll(propValue, "'jpg test'").get should be ("jpg test")
+    parser.propValue.parseAll("jpg") should be (Right("jpg"))
+    parser.propValue.parseAll("'jpg test'") should be (Right("jpg test"))
   }
 
   "prop" should "parse successful" in {
-    parseAll(prop(Comp.all.toSet), "ext:jpg").get should be (
-      Prop(Comp.Like, Ident("ext") -> "jpg"))
+    parser.prop.parseAll("ext:jpg") should be (Right(
+      Prop(Comp.Like, Ident("ext") -> "jpg")))
   }
 
   "exists" should "parse successful" in {
-    parseAll(exists, "ext?").get should be (Exists(Ident("ext")))
+    parser.exists.parseAll("ext?") should be (Right(Exists(Ident("ext"))))
   }
 
   "not" should "parse successful" in {
@@ -61,22 +66,22 @@ class QueryParserTest extends FlatSpec with Matchers {
       "!!!!ext:jpg" -> Not(Not(Not(Not(Prop(Comp.Like, Ident("ext") -> "jpg"))))))
 
     for ((str, tree) <- tries) {
-      parseAll(QueryParser.not(Comp.all.toSet), str).get should be (tree)
-      parseAll(QueryParser.condition(Comp.all.toSet), str).get should be (tree)
+      parser.not.parseAll(str) should be (Right(tree))
+      parser.condition.parseAll(str) should be (Right(tree))
     }
   }
 
   "juncOp" should "parse successful" in {
-    parseAll(juncOp, "&").get should be (Junc.And)
-    parseAll(juncOp, "|").get should be (Junc.Or)
+    parser.juncOp.parseAll("&") should be (Right(Junc.And))
+    parser.juncOp.parseAll("|") should be (Right(Junc.Or))
   }
 
   "junc" should "parse successful" in {
-    val parsed = parseAll(junc(Comp.all.toSet), "(& ext:jpg file:bla*)")
-    parsed.get should be (
+    val parsed = parser.junc.parseAll("(& ext:jpg file:bla*)")
+    parsed should be (Right(
       Condition.and(
         Prop(Comp.Like, Ident("ext") -> "jpg"),
-        Prop(Comp.Like, Ident("file") -> "bla*")))
+        Prop(Comp.Like, Ident("file") -> "bla*"))))
   }
 
   "conditions" should "parse successfully" in {
@@ -94,12 +99,13 @@ class QueryParserTest extends FlatSpec with Matchers {
         Prop(Comp.Like, Ident("ext") -> "jpg")))),
       "(& !ext:test)" -> Condition.and(
         Not(Prop(Comp.Like, Ident("ext") -> "test"))),
+      "width>'height" -> IdentProp(Comp.Gt, Ident.width, Ident.height),
       "(& !ext:rest !ext:test)" -> Condition.and(
         Not(Prop(Comp.Like, Ident("ext") -> "rest")),
         Not(Prop(Comp.Like, Ident("ext") -> "test"))))
 
     for ((str, tree) <- tries) {
-      QueryParser(str) should be (Right(tree))
+      parser.parse(str) should be (Right(tree))
     }
   }
 

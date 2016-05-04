@@ -2,6 +2,8 @@ package chee.query
 
 import chee.Collection
 import chee.properties._
+import fastparse.all._
+import chee.util.parsing._
 
 trait Transform extends (Condition => Condition) { self =>
   def comps: Set[Comp] = Set.empty
@@ -92,25 +94,21 @@ object EnumMacro extends Transform {
   def apply(c: Condition) = Condition.mapAll({
     case p@Prop(`comp`, Property(id, value)) =>
       EnumParser.parse(value) match {
-        case Right(list) =>
-          Junc(Junc.Or, list.map(v => Prop(Comp.Like, id -> v)))
+        case Right(s) =>
+          Junc(Junc.Or, s.map(v => Prop(Comp.Like, id -> v)).toList)
         case Left(msg) =>
           chee.UserError(msg)
       }
     case n => n
   })(c)
 
-  object EnumParser extends scala.util.parsing.combinator.RegexParsers {
-    override val whiteSpace = "".r
-    val item: Parser[String] = "[^;]+".r
-    val enum: Parser[List[String]] = (item <~ ";") ~ rep1sep(item, ";") ^^ {
-      case first ~ rest => first :: rest
+  object EnumParser {
+    val item: P[String] = P(CharNotIn(Seq(';')).rep(1).!)
+    val enum: P[Seq[String]] = P(item ~ ";" ~ item.rep(1, ";")).map {
+      case (first, rest) => first +: rest
     }
-    def parse(str: String): Either[String, List[String]] =
-      parseAll(enum, str.trim) match {
-        case Success(l, _) => Right(l)
-        case f => Left(f.toString)
-      }
+    def parse(str: String): Either[String, Seq[String]] =
+      enum.parseAll(str)
   }
 }
 
@@ -122,7 +120,7 @@ class RangeMacro(now: LocalDateTime)  extends Transform {
 
   def apply(c: Condition) = Condition.mapAll({
     case p@Prop(`comp`, Property(id, value)) =>
-      parser.parseRange(value) match {
+      parser.parse(value) match {
         case Right((a, b)) =>
           Condition.and(Prop(Comp.Gt, id -> a), Prop(Comp.Lt, id -> b))
         case Left(msg) =>
@@ -131,21 +129,18 @@ class RangeMacro(now: LocalDateTime)  extends Transform {
     case n => n
   })(c)
 
-  class SimpleRangeParser(now: LocalDateTime) extends DateTimeParser(now) {
-    val someRange: Parser[(String, String)] = "[^\\-]+".r ~ (("-"|"--") ~> "[^\\-]+".r) ^^ {
-      case s1 ~ s2 => (s1, s2)
-    }
+  class SimpleRangeParser(now: LocalDateTime) extends LocalDateTimeRangeParser(now) {
+    val nonDash: P[String] = P(!"-" ~ AnyChar).rep(1).!
+
+    val someRange: P[(String, String)] = P(nonDash ~ ("-"|"--") ~ nonDash)
 
     val stringDateRange: Parser[(String, String)] = dateRange.map {
       case DateRange(s, e) => (s.asString, e.asString)
     }
 
     val range: Parser[(String, String)] = stringDateRange | someRange
-    def parseRange(str: String): Either[String, (String, String)] =
-      parseAll(range, str.trim) match {
-        case Success(r, _) => Right(r)
-        case f => Left(f.toString)
-      }
+    def parse(str: String): Either[String, (String, String)] =
+      range.parseAll(str)
   }
 }
 
