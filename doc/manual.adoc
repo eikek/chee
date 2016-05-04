@@ -1,10 +1,9 @@
-chee
-====
+Chee- Photo Organizer (<version>)
+============================
 Eike Kettner
 v<version> (build <commit> at <buildtime>)
 
-Chee is a command line tool for managing photos and photo
-collections.
+Chee is a command line tool for managing and organizing photos.
 
 How do you organize your photos? I have a bunch of folders with
 contents from various flash cards, because manually sorting alot of
