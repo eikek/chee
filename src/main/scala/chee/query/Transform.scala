@@ -15,6 +15,11 @@ trait Transform extends (Condition => Condition) { self =>
 }
 
 object Transform {
+  val empty = new Transform {
+    def apply(c: Condition): Condition = c
+    override val comps = Set.empty[Comp]
+  }
+
   def makeChain(now: LocalDateTime) = {
     PrefixIdentTransform.default ~>
     new RangeMacro(now) ~> EnumMacro ~> DateMacro ~> IdMacro

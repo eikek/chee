@@ -120,8 +120,5 @@ class LocalDateTimeRangeParser(now: LocalDateTime) {
   val dateRange: Parser[DateRange] = calcRange | simpleRange
 
   def parseRange(str: String): Either[String, DateRange] =
-    dateRange.parse(str.trim) match {
-      case Parsed.Success(r, _) => Right(r)
-      case f => Left(f.toString)
-    }
+    dateRange.parseAll(str.trim)
 }

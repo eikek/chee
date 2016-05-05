@@ -10,6 +10,14 @@ object parsing {
   lazy val identString: P0 =
     CharIn('a' to 'z', 'A' to 'Z', '0' to '9', "_-").rep(1)
 
+  def alphaPlus(more: Seq[Char]*): P0 = {
+    val alpha: Seq[Seq[Char]] = Seq(('a' to 'z'), ('A' to 'Z'))
+    CharIn(alpha ++ more: _*)
+  }
+
+  def alphanumPlus(more: Seq[Char]): P0 =
+    alphaPlus('0' to '9', more)
+
   def ic(s: String) = IgnoreCase(s)
 
   def CharNotIn(chars: Seq[Char]*) = chars match {
@@ -30,7 +38,13 @@ object parsing {
     def times(n: Int) = self.rep(min = n, max = n)
 
     def parseAll(in: String): Either[String, T] =
-      P(self ~ End).parse(in.trim) match {
+      P(self ~ End).parse(in) match {
+        case fastparse.core.Parsed.Success(c, _) => Right(c)
+        case f => Left(f.toString)
+      }
+
+    def parsePrefix(in: String): Either[String, T] =
+      self.parse(in) match {
         case fastparse.core.Parsed.Success(c, _) => Right(c)
         case f => Left(f.toString)
       }

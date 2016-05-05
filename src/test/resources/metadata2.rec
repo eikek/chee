@@ -1,0 +1,59 @@
+# a head comment
+
+%rec: metadata
+%key: Checksum
+%unique: Comment
+%type: Checksum regexp /[a-f0-9]+/
+%type: Tag regexp /[a-zA-Z_]+/
+
+# a comment between records 1
+
+Checksum: f3f
+Tag: summer
+Tag: holidays
+Comment: A comment to the image.
+
+# a comment between records 2
+Checksum: e53
+Tag: spring
+Tag: car
+# a comment in a record
+Tag: swimming
+Comment: Some more text with new lines
++
++ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas
++ rhoncus tortor in eleifend eleifend. Nulla dictum, mauris iaculis
++ efficitur fermentum, odio nunc pharetra orci, ac vehicula velit velit
++ in leo. Donec magna nunc, posuere vitae facilisis ut, rhoncus ut
++ massa. In in pretium tellus. Morbi in massa vehicula, blandit ligula
++ nec, auctor ante. Suspendisse suscipit, diam a pharetra cursus,
++ turpis quam gravida elit, quis fermentum purus diam a turpis. Mauris
++ quis erat purus. Quisque rhoncus et dui at maximus. Maecenas
++ condimentum mauris arcu, sit amet dignissim velit pulvinar
++ nec. Phasellus rhoncus elit quam, a auctor enim tempor ac. Curabitur
++ semper magna vel ex pellentesque dignissim. Donec non mollis dui, in
++ dapibus erat. Suspendisse tempor lorem turpis, finibus porta nibh
++ rutrum vel. Sed nec nisi eget quam pharetra egestas.
++
++ Integer porttitor ligula luctus mattis finibus. Ut volutpat urna eros,
++ mollis pretium quam pellentesque a. Nulla sapien diam, viverra non
++ lobortis eget, sodales eget justo. Duis dapibus, arcu a luctus
++ interdum, tellus enim pellentesque erat, ac ultrices massa dolor id
++ leo. Duis pulvinar feugiat nibh. Vivamus quis sodales sem. Sed ut
++ pretium dui. In et quam lacus. Nulla facilisi. Aenean sapien lorem,
++ hendrerit eget velit quis, ullamcorper maximus elit.
++
++ Suspendisse eget imperdiet elit, maximus scelerisque lacus. Cras id
++ risus ac ligula bibendum tristique at sit amet orci. Quisque finibus
++ nibh vitae lacus varius tincidunt. Nulla aliquam augue erat, eget
++ faucibus nisi egestas nec. Fusce vitae ullamcorper nulla, nec varius
++ purus. Nullam et nisl nec massa porttitor fermentum nec eu magna. Cras
++ ac mattis turpis, vel placerat tellus. Duis quis congue ante. Mauris
++ aliquet semper turpis ac ullamcorper. Proin commodo gravida
++ tempus. Aliquam nec neque et tortor semper malesuada non mollis
++ mi. Donec at sagittis sem. Aenean est diam, pharetra eu arcu sit amet,
++ aliquet mollis felis. Nam auctor aliquam arcu quis
++ lobortis. Suspendisse et imperdiet leo.
+
+
+# end file comment
