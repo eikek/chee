@@ -1,12 +1,10 @@
-package chee
+package chee.metadata
 
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 import chee.metadata.RecElement._
 
-package object metadata {
-
-
+object Generators {
   implicit val arbComment: Arbitrary[Comment] =
     Arbitrary(Gen.alphaStr.map(s => Comment(s, 0)))
 

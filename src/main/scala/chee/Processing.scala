@@ -1,6 +1,7 @@
 package chee
 
 import chee.crypto.{ Algorithm, CheeCrypt, FileProcessor }
+import chee.properties.BasicExtract
 import chee.query.SqliteBackend
 import org.bouncycastle.openpgp.{ PGPPrivateKey, PGPPublicKey }
 import scala.util.Try

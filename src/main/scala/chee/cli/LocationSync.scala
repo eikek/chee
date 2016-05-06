@@ -1,7 +1,5 @@
 package chee.cli
 
-import java.time.Duration
-
 import LocationSync.Opts
 import better.files._
 import chee.LocationConf
@@ -12,7 +10,6 @@ import chee.properties.Predicates._
 import chee.query._
 import chee.conf._
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 
 class LocationSync extends ScoptCommand with LockSupport {
 
@@ -166,17 +163,18 @@ class LocationSync extends ScoptCommand with LockSupport {
 
   def sync(cfg: Config, opts: Opts): Unit = {
     val sqlite = new SqliteBackend(cfg)
+    val mf = cfg.getMetadataFile
     val entries = checkDirsToSync(cfg.getLocationConf, opts)
     if (opts.reindex) {
       entries.foreach(reindex(_, cfg, sqlite))
     } else {
       for (locEntry <- entries) {
         outln(s"Sync ${locEntry.dir.path} …")
-        val files = FileBackend.find(fileCondition(locEntry, cfg), locEntry.dir, locEntry.recursive)
+        val files = FileBackend.find(fileCondition(locEntry, cfg), locEntry.dir, locEntry.recursive, mf)
         val (data, dur) = syncProgress.foreach(Data())(files, fsSync(sqlite))
         // delete non-existing files from db
         outln("\nDeleting non existing files from index …")
-        val dbfiles = MapGet.filter(sqlite.find(Prop(Comp.Eq, Ident.location -> locEntry.dir.path.toString)).get, not(fileExists))
+        val dbfiles = MapGet.filter(sqlite.find(Prop(Comp.Eq, Ident.location -> locEntry.dir.path.toString), mf).get, not(fileExists))
         (syncProgress andThen logDone).foreach(data, dur)(dbfiles, deleteIndex(sqlite))
       }
     }

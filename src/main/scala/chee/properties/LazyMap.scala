@@ -1,6 +1,7 @@
 package chee.properties
 
 import better.files._
+import chee.metadata.MetadataFile
 
 sealed trait LazyMap { self =>
   /** Lookup a property. If virtual, the value is computed into a normal property. */
@@ -67,12 +68,16 @@ sealed trait LazyMap { self =>
 object LazyMap {
   type VirtualMap = Map[Ident, VirtualProperty]
 
-  def fromFile(f: File, extr: Seq[Extraction] = Extraction.all): LazyMap = {
+  def fromFile(f: File, extr: Seq[Extraction]): LazyMap = {
     val map = new FromFile(f, extr, PropertyMap.empty, Set.empty, Map.empty)
-    VirtualProperty.defaults.all.foldLeft(map) { (m, vp) =>
-      m.addVirtual(vp)
-    }
+    VirtualProperty.defaults.all.foldLeft(map)(_ addVirtual _)
   }
+
+  def fromFile(f: File, mf: MetadataFile): LazyMap =
+    fromFile(f, Extraction.all(mf))
+
+  def fromFile(f: File): LazyMap =
+    fromFile(f, Extraction.noMetadata)
 
   def apply(m: PropertyMap): LazyMap =
     VirtualProperty.defaults.all.foldLeft(new ConstantMap(m, Map.empty)) { (m, vp) =>

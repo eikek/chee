@@ -16,11 +16,12 @@ trait AbstractLs {
   }
 
   private def directoryFind(cond: Condition, cfg: Config, opts: LsOpts): Option[Stream[LazyMap]] = {
+    val mf = cfg.getMetadataFile
     val props = opts.directory map {
       case Directory(d) =>
-        FileBackend.find(cond, d, opts.recursive)
+        FileBackend.find(cond, d, opts.recursive, mf)
       case RegularFile(f) =>
-        Stream(LazyMap.fromFile(f).add(Ident.location -> f.parent.pathAsString))
+        Stream(LazyMap.fromFile(f, mf).add(Ident.location -> f.parent.pathAsString))
       case _ =>
         Stream.empty[LazyMap]
     }
@@ -33,8 +34,9 @@ trait AbstractLs {
 
   private def indexFind(cond: Condition, cfg: Config, opts: LsOpts): Stream[LazyMap] = {
     val sqlite = new SqliteBackend(cfg.getIndexDb, cfg.getRepoRoot)
+    val mf = cfg.getMetadataFile
     val filter = if (opts.all) MapGet.unit(true) else Predicates.fileExists
-    MapGet.filter(sqlite.find(cond).get, filter)
+    MapGet.filter(sqlite.find(cond, mf).get, filter)
   }
 
   private def lift(f: (Stream[LazyMap], Int) => Stream[LazyMap]): Option[Int] => Stream[LazyMap] => Stream[LazyMap] =
@@ -59,12 +61,17 @@ trait AbstractLs {
 }
 
 object AbstractLs {
+  private lazy val logger: com.typesafe.scalalogging.Logger =
+    com.typesafe.scalalogging.Logger(org.slf4j.LoggerFactory.getLogger(getClass.getName))
+
   def getIndexCondition(q: Query, query: String): Either[String, Condition] = {
+    logger.trace(s"Make index condition for query: $query")
     if (query.trim.isEmpty) Right(TrueCondition)
     else q(query.trim)
   }
 
   def getFileCondition(q: Query, query: String, cfg: Config, all: Boolean): Either[String, Condition] = {
+    logger.trace(s"Make file condition for query: $query")
     val defquery =
       if (all) Right(TrueCondition)
       else cfg.fileDefaultQuery(q)

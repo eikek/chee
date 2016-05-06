@@ -26,7 +26,7 @@ package metadata {
 
     val tagValues: MapGet[Seq[Tag]] =
       value(idents.tag).map {
-        case Some(s) if s startsWith "[" =>
+        case Some(s) if s startsWith Tag.separator =>
           s.substring(1, s.length-1)
             .split(Tag.separator.charAt(0))
             .map(n => Tag(n.trim)).toSeq
@@ -36,14 +36,17 @@ package metadata {
       }
 
     def setTags(tags: Seq[Tag]): MapGet[Unit] = modify { m =>
-      m + (idents.tag -> tags.map(_.name).mkString(Tag.separator, Tag.separator, Tag.separator))
+      if (tags.isEmpty) m remove idents.tag
+      else m + (idents.tag -> tagsToTagString(tags))
     }
 
     def setTags(t1: Tag, ts: Tag*): MapGet[Unit] =
       setTags(t1 +: ts)
 
+    def removeTags = setTags(Seq.empty)
+
     def setComment(c: String): MapGet[Unit] = modify { m =>
-      if (c.isEmpty) m
+      if (c.isEmpty) m remove idents.comment
       else m + (idents.comment -> c)
     }
 
@@ -60,7 +63,29 @@ package metadata {
             .set("Comment", comment.toSeq: _*)
       }
 
+    def makePropertyMap(mapping: Ident => Ident): MapGet[PropertyMap] =
+      pair(valueForce(Ident.checksum), pair(value(idents.tag), value(idents.comment))).map {
+        case (id, (tags, comment)) =>
+          PropertyMap.empty +
+            (mapping(Ident.checksum) -> id) +?
+            tags.map(mapping(idents.tag) -> _) +?
+            comment.map(mapping(idents.comment) -> _)
+      }
+
     val idAndRecord: MapGet[(String, Record)] =
       pair(valueForce(Ident.checksum), makeRecord)
   }
+}
+
+package object metadata {
+
+  private[metadata] def fieldsToTagString(fs: Seq[RecElement.Field]): String =
+    stringsToTagString(fs.map(_.value))
+
+  private[metadata] def tagsToTagString(ts: Seq[Tag]): String =
+    stringsToTagString(ts.map(_.name))
+
+  @inline
+  private def stringsToTagString(s: Seq[String]): String =
+    s.mkString(Tag.separator, Tag.separator, Tag.separator)
 }

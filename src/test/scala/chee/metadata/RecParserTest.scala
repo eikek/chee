@@ -8,6 +8,7 @@ import chee.properties.{ FormatPatterns, MapGet }
 import chee.util.parsing._
 import RecElement._
 import RecFormat._
+import Generators._
 
 class RecParserTest extends FlatSpec with Matchers {
 

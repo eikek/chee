@@ -1,6 +1,7 @@
 package chee.properties
 
 import better.files._
+import chee.metadata.{ MetadataExtract, MetadataFile }
 import java.time.Duration
 import com.typesafe.scalalogging.LazyLogging
 import chee.Timing
@@ -20,7 +21,9 @@ object Extraction {
 
   def added(dt: DateTime) = Property(Ident.added, dt.instant.toString)
 
-  val all = List(new BasicExtract(), new ImageExtract(), new ChecksumExtract())
+  def noMetadata = List(new BasicExtract(), new ImageExtract(), new ChecksumExtract())
+
+  def all(mf: MetadataFile) = noMetadata ::: List(new MetadataExtract(mf))
 }
 
 final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction {

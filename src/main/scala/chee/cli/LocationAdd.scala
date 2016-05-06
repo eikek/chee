@@ -1,17 +1,13 @@
 package chee.cli
 
-import java.time.Duration
-
 import LocationAdd._
 import better.files._
 import chee.conf._
 import chee.LocationConf.Entry
 import chee.Timing
-import chee.Timing.timed
 import chee.properties._
 import chee.query._
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 
 class LocationAdd extends ScoptCommand with LockSupport {
 
@@ -78,10 +74,11 @@ class LocationAdd extends ScoptCommand with LockSupport {
 
   def indexDirs(cfg: Config, opts: Opts, sqlite: SqliteBackend): Unit = {
     val cond = fileCondition(opts, cfg)
+    val mf = cfg.getMetadataFile
     val added = Extraction.added(DateTime.now)
     for (dir <- opts.dirs) {
       cfg.getLocationConf.add(Entry(dir, opts.query, opts.recursive, opts.all)).get
-      val files = FileBackend.find(cond, dir, opts.recursive).map(_ +  added)
+      val files = FileBackend.find(cond, dir, opts.recursive, mf).map(_ +  added)
       sqlite.insert(files, ProgressCount(), progress)
     }
   }

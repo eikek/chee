@@ -1,5 +1,6 @@
 package chee.query
 
+import chee.metadata.MetadataFile
 import org.scalatest._
 import chee.properties._
 import chee.properties.Patterns._
@@ -35,7 +36,7 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
     import FormatPatterns.lisp
 
     val sqlite = new SqliteBackend(file, None)
-    val map0 = LazyMap.fromFile(TestInfo.images.head) + (Ident.location -> "./")
+    val map0 = LazyMap.fromFile(TestInfo.images.head, MetadataFile.empty) + (Ident.location -> "./")
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get
 
     val maps = sqlite.find(TrueCondition).get.toList

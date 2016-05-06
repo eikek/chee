@@ -93,6 +93,5 @@ class PredicateTest extends FlatSpec with Matchers {
     import Condition._
     val Failure(_) = Try(Predicates(and(or())))
     val Failure(_) = Try(Predicates(Prop(Comp("abc"), width -> "10")))
-    val Failure(_) = Try(Predicates(Prop(Comp.Eq, Ident("blabla") -> "22")))
   }
 }

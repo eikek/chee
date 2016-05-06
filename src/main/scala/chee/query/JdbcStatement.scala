@@ -1,5 +1,6 @@
 package chee.query
 
+import chee.metadata.MetadataFile
 import java.sql.{Connection, ResultSet}
 
 import better.files._
@@ -37,14 +38,14 @@ trait JdbcStatement {
   }
 
   implicit class ResultSetOps(rs: ResultSet) {
-    def toPropertyMap(root: Option[File]): LazyMap = {
+    def toPropertyMap(root: Option[File], mf: MetadataFile): LazyMap = {
       val path = (root, rs.getString(Ident.path.name)) match {
         case (Some(dir), name) =>
           paths.resolve(dir)(name)
         case (None, name) =>
           name
       }
-      val map = LazyMap.fromFile(File(path))
+      val map = LazyMap.fromFile(File(path), mf)
       SqlBackend.idents.foldLeft(map) { (m, id) =>
         val value = Option(rs.getObject(id.name)).map(_.toString)
         m.add(value.map(v => Property(id, v)))

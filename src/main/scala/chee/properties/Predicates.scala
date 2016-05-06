@@ -1,8 +1,9 @@
 package chee.properties
 
 import better.files._
+import com.typesafe.scalalogging.LazyLogging
 
-object Predicates {
+object Predicates extends LazyLogging {
   import MapGet._
 
   type Predicate = MapGet[Boolean]
@@ -31,9 +32,9 @@ object Predicates {
     p.map(b => !b)
 
   def prop(p: Prop): Predicate = {
-    require(Ident.isDefault(p.ident), s"Identifier '${p.ident}' cannot be compared.")
-    require(Comp.isDefault(p.comp), s"Comparator '${p.comp} not supported.")
+    require(Comp.isDefault(p.comp), s"Comparator `${p.comp.name} not supported.")
     val conv = Value.forIdent(p.ident)
+    logger.trace(s"Compare $p with conversion $conv")
     value(p.ident).map {
       case None => false
       case Some(v) =>

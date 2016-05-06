@@ -1,6 +1,7 @@
 package chee.query
 
 import chee.Collection
+import chee.metadata.{ MetadataFile, MetadataMacro }
 import chee.properties._
 import fastparse.all._
 import chee.util.parsing._
@@ -20,13 +21,13 @@ object Transform {
     override val comps = Set.empty[Comp]
   }
 
-  def makeChain(now: LocalDateTime) = {
-    PrefixIdentTransform.default ~>
+  def makeChain(now: LocalDateTime, mf: MetadataFile = MetadataFile.empty) = {
+    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~>
     new RangeMacro(now) ~> EnumMacro ~> DateMacro ~> IdMacro
   }
 
-  def withCollectionMacro(colls: Seq[Collection]): Transform =
-    PrefixIdentTransform.default ~> new CollectionMacro(colls) ~>
+  def withCollectionMacro(colls: Seq[Collection], mf: MetadataFile = MetadataFile.empty): Transform =
+    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~> new CollectionMacro(colls, mf) ~>
     new RangeMacro(LocalDateTime.now) ~> EnumMacro ~> DateMacro ~> IdMacro
 }
 
@@ -51,7 +52,7 @@ final class PrefixIdentTransform(val idents: Set[Ident]) extends Transform {
 object PrefixIdentTransform {
   def apply(idents: Iterable[Ident]) = new PrefixIdentTransform(idents.toSet)
 
-  val default = PrefixIdentTransform(IdMacro.ident :: DateMacro.ident :: CollectionMacro.ident :: Ident.defaults)
+  val default = PrefixIdentTransform(IdMacro.ident :: DateMacro.ident :: CollectionMacro.ident :: Ident.defaults ++ MetadataMacro.metaIdents)
 }
 
 object DateMacro extends Transform {
@@ -149,11 +150,11 @@ class RangeMacro(now: LocalDateTime)  extends Transform {
   }
 }
 
-final class CollectionMacro(colls: Seq[Collection]) extends Transform {
+final class CollectionMacro(colls: Seq[Collection], mf: MetadataFile) extends Transform {
 
   import CollectionMacro._
 
-  val query = Query.create(QuerySettings(Comp.all, Transform.makeChain(LocalDateTime.now) ~> this))
+  val query = Query.create(QuerySettings(Comp.all, Transform.makeChain(LocalDateTime.now, mf) ~> this))
 
   lazy val queryMap = colls.map(c => c.name -> c.query).toMap
 

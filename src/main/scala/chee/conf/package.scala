@@ -7,6 +7,7 @@ import scala.util.Try
 
 import better.files._
 import chee.crypto._
+import chee.metadata.MetadataFile
 import chee.properties._
 import chee.properties.Patterns._
 import chee.query._
@@ -28,9 +29,10 @@ package object conf {
     def getSystemConfig = ConfigFile(getFile("chee.system-config"))
     def getLocationConf = new LocationConf(getSystemConfig, getRepoRoot)
     def getCollectionConf = new CollectionConf(getSystemConfig)
+    def getMetadataFile = MetadataFile(getFile("chee.metadata-file"))
 
     def makeQuery: Query = Query.create(
-      QuerySettings(LocalDateTime.now, getCollectionConf.list.get))
+      QuerySettings(LocalDateTime.now, getMetadataFile, getCollectionConf.list.get))
 
     def getFormat(p: Option[String], fallbackKey: String): Either[String, Pattern] = {
       def forPattern(pattern: String) = pattern match {

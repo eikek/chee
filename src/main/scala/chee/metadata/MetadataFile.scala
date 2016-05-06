@@ -7,7 +7,7 @@ import chee.query._
 import chee.util.files._
 import RecElement._
 import RecFormat._
-import MapGet._
+import com.typesafe.scalalogging.LazyLogging
 
 trait MetadataFile {
   def findIds(c: Condition): Traversable[String] = {
@@ -31,15 +31,19 @@ trait MetadataFile {
     * property. Additional the {{tag}} and {{comment}} properties are
     * read and the corresponding entry is updated in the metadata
     * file. */
-  def write(data: Stream[LazyMap]): MetadataFile
+  def write(data: Traversable[LazyMap]): MetadataFile
 }
 
 object MetadataFile {
+  val empty = new MetadataFile {
+    def find(c: Condition): Traversable[LazyMap] = Seq.empty
+    def write(data: Traversable[LazyMap]): MetadataFile = this
+  }
 
   def apply(f: File): MetadataFile = new Impl(f)
 
   def parseCondition(q: String): Either[String, Condition] = 
-    queryParser(q)
+    queryParser.parse(q)
 
   object TagValueTransform extends Transform {
     def apply(c: Condition): Condition = Condition.mapAll({
@@ -65,29 +69,26 @@ object MetadataFile {
   )))
 
 
-  private class Impl(f: File) extends MetadataFile {
+  private class Impl(f: File) extends MetadataFile with LazyLogging {
     val parser = new MapParser()
     val dbParser = new DatabaseParser()
     // read the file once, subsequent finds can reuse the result
-    lazy val results = parser.parseFile(f) match {
-      case Right(r) => r
-      case Left(msg) => UserError(s"The metadata file contains errors: $msg")
-    }
+    lazy val results = parse(parser.parseFile).getOrElse(Seq.empty)
+
+    private def parse[A](p: File => Either[String, A]): Option[A] =
+      f.existing.map(p(_) match {
+        case Right(x) => x
+        case Left(msg) => UserError(s"The metadata file contains errors: $msg")
+      })
 
     def find(c: Condition): Traversable[LazyMap] = {
+      logger.trace(s"Search metadata for: $c")
       val p = Predicates(queryTransform(c))
       MapGet.filter(results, p)
     }    
 
-    def write(data: Stream[LazyMap]): MetadataFile = {
-      def parse(f: File) = dbParser.parseFile(f) match {
-        case Right(x) => x
-        case Left(msg) => UserError(s"The metadata file contains errors: $msg")
-      }
-      // load recfile
-      val db = f.existing.map(parse) getOrElse newDatabase
-
-      // build data and apply changes from map
+    def write(data: Traversable[LazyMap]): MetadataFile = {
+      // build up new data
       val (ids, records) = 
         MapGet.fold((Set.empty[String], Vector.empty[Record]), data) {
           case (ids, records) =>
@@ -95,6 +96,9 @@ object MetadataFile {
               (ids + id, records :+ rec)
             }
         }
+      // load recfile
+      val db = parse(dbParser.parseFile) getOrElse newDatabase
+      // keep only those not in data and append data
       val newDb = db.filterIdNot(ids) ++ Database(records)
 
       // write back to file

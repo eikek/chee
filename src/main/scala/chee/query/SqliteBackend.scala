@@ -1,19 +1,17 @@
 package chee.query
 
-import com.typesafe.config.Config
-import com.typesafe.scalalogging.StrictLogging
-import java.nio.file.Path
 import java.sql._
-import java.time.Duration
 
 import scala.util.{Failure, Success, Try}
 
 import better.files.File
 import chee.Timing
-import chee.properties._
-import com.typesafe.scalalogging.LazyLogging
 import chee.conf._
+import chee.metadata.MetadataFile
+import chee.properties._
 import chee.util.paths
+import com.typesafe.config.Config
+import com.typesafe.scalalogging.LazyLogging
 
 class SqliteBackend(dbfile: File, root: Option[File], pageSize: Int = 500) extends JdbcConnection with LazyLogging {
   import SqliteBackend._
@@ -23,30 +21,33 @@ class SqliteBackend(dbfile: File, root: Option[File], pageSize: Int = 500) exten
 
   val jdbcUrl = s"jdbc:sqlite:${dbfile.path}"
 
-  final def find(cond: Condition): Try[Stream[LazyMap]] = {
+  final def find(cond: Condition): Try[Stream[LazyMap]] =
+    find(cond, MetadataFile.empty)
+
+  final def find(cond: Condition, mf: MetadataFile): Try[Stream[LazyMap]] = {
     val c = root.map(relativeCond(_)(cond)) getOrElse cond
     val sql = (s"""SELECT ${SqlBackend.idents.map(_.name).mkString(",")},coalesce(created,lastmodified) as sorting"""
       + s""" FROM chee_index WHERE ${SqlBackend.whereClause(c)}"""
       + s""" ORDER BY sorting""")
-    val files = findNext(sql, 0).recoverWith {
+    val files = findNext(sql, 0, mf).recoverWith {
       case ex => Failure(new RuntimeException(s"Error for sql: $sql", ex))
     }
     files.map(resolveTo(root))
   }
 
-  private final def findNext(sql: String, skip: Int): Try[Stream[LazyMap]] = {
+  private final def findNext(sql: String, skip: Int, mf: MetadataFile): Try[Stream[LazyMap]] = {
     val first = withConn(dbfile) { implicit conn =>
       val buffer = collection.mutable.ListBuffer[LazyMap]()
       val rs = sqlQuery(sql + s" limit $skip,$pageSize")
       while (rs.next) {
-        buffer += rs.toPropertyMap(root)
+        buffer += rs.toPropertyMap(root, mf)
       }
       buffer.toStream
     }
     Try {
       val f = first.get
       if (f.isEmpty) f
-      else f #::: findNext(sql, skip+pageSize).get
+      else f #::: findNext(sql, skip+pageSize, mf).get
     }
   }
 

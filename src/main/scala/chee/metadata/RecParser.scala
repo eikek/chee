@@ -88,11 +88,8 @@ class RecParser[T](descriptor: Descriptor, f: Entry => Option[T]) {
 
 final class DatabaseParser(descriptor: Descriptor = Descriptor.Empty, f: Entry => Option[Entry] = e => Some(e))
     extends RecParser(descriptor, f) {
-  lazy val rec: P[Database] = allRecords.map {
-    case seq => seq.foldLeft(Database.Empty){
-      case (d, r) => d + r
-    }
-  }
+  lazy val rec: P[Database] = allRecords.map(_.foldLeft(Database.Empty)(_ + _))
+
   def parse(str: String) = rec.parseAll(str)
   def parseFile(f: File) = parse(f.contentAsString)
 }
@@ -114,10 +111,8 @@ object MapParser {
   }
 
   private val fieldToProperty: (String, Vector[Field]) => Property =
-    (name, fs) => Ident(name.toLowerCase) -> (fs.drop(1) match {
-      case x if x.isEmpty =>
-        fs.head.value
-      case _ =>
-        fs.map(_.value).mkString(Tag.separator, Tag.separator, Tag.separator)
-    })
+    (name, fs) => Ident(name.toLowerCase) match {
+      case idents.tag => idents.tag -> fieldsToTagString(fs)
+      case id => id -> fs.map(_.value).mkString("\n")
+    }
 }

@@ -1,9 +1,7 @@
 package chee.conf
 
 import better.files._
-import chee.ConfigFile
 import com.typesafe.config.{ Config, ConfigFactory, ConfigValue, ConfigValueFactory }
-
 
 object CheeConf {
   // for scala.concurrent.ExecutionContext.Implicits.global
