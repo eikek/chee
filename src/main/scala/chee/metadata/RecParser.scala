@@ -4,14 +4,14 @@ import better.files.File
 import fastparse.all._
 import chee.properties.{ Ident, LazyMap, Property }
 import chee.util.parsing._
-import RecFormat._
+import RecElement._
 import RecElParser._
 
 /** See https://www.gnu.org/software/recutils/manual/recutils.html#The-Rec-Format */
 object RecElParser {
   /** Any line having an # (ASCII 0x23) character in the first column is
     * a comment line. comments in recfiles must be complete lines. */
-  val comment: P[String] = P("#" ~ CharNotIn("\n").rep.!)
+  val comment: P[String] = P("#" ~/ CharNotIn("\n").rep.!)
 
   /** A field name is a sequence of alphanumeric characters plus
     * underscores (_), starting with a letter or the character %. The
@@ -36,8 +36,8 @@ object RecElParser {
     case seq => seq.mkString
   })
 
-  val field: P[Field] = P(Index ~ label.! ~ ":" ~ " ".? ~ value).map {
-    case (i, l, v) => Field(l, v, i)
+  val field: P[Field] = P(Index ~ label.! ~ ":" ~ " ".? ~ value.?).map {
+    case (i, l, v) => Field(l, v.getOrElse(""), i)
   }
 
   val recordEl: P[RecordEl] = P(!"%" ~ field)
@@ -70,32 +70,30 @@ class RecParser[T](descriptor: Descriptor, f: Entry => Option[T]) {
     case x => x.toVector
   })
 
-  lazy val recdesc: P[Seq[T]] = P("\n".rep ~ (records | withDescr))
+  lazy val recdesc: P[Seq[T]] = P((records | withDescr))
 
-  lazy val comments: P[Seq[T]] = P("\n".rep ~ Index ~ (comment.rep(sep = "\n"))).map {
-    case (p, cs) => cs.foldLeft(Vector[T]()) { (v, s) => f(Comment(s, p)).toVector }
+  lazy val comments: P[Seq[T]] = P(Index ~ (comment.rep(1, sep = "\n"))).map {
+    case (p, cs) => f(Comment(cs.mkString("\n"), p)).toSeq
   }
 
   lazy val recdescWithComments: P[Seq[T]] =
-    P(comments ~ recdesc).map {
-      case (c1, db) => c1 ++ db
-    }
+    P(comments | recdesc)
 
   lazy val allRecords: P[Seq[T]] =
-    P(recdescWithComments.rep(sep = "\n\n") ~ comments).map {
-      case (x, c) if x.isEmpty => c
-      case (x, c) => x.reduce(_ ++ _) ++ c
+    P(recdescWithComments.rep(sep = "\n".rep) ~ WS.rep).map {
+      case x if x.isEmpty => Seq.empty
+      case x => x.reduce(_ ++ _)
     }
 }
 
-final class DatabaseParser(descriptor: Descriptor = Descriptor.Empty)
-    extends RecParser(descriptor, e => Some(e)) {
+final class DatabaseParser(descriptor: Descriptor = Descriptor.Empty, f: Entry => Option[Entry] = e => Some(e))
+    extends RecParser(descriptor, f) {
   lazy val rec: P[Database] = allRecords.map {
     case seq => seq.foldLeft(Database.Empty){
       case (d, r) => d + r
     }
   }
-  def parse(str: String) = rec.parseAll(str.trim)
+  def parse(str: String) = rec.parseAll(str)
   def parseFile(f: File) = parse(f.contentAsString)
 }
 
@@ -116,7 +114,10 @@ object MapParser {
   }
 
   private val fieldToProperty: (String, Vector[Field]) => Property =
-    (name, fs) =>
-      if (fs.drop(1).isEmpty) Ident(name.toLowerCase()) -> fs.head.value
-      else Ident(name.toLowerCase()) -> fs.map(_.value).mkString("[", "][", "]")
+    (name, fs) => Ident(name.toLowerCase) -> (fs.drop(1) match {
+      case x if x.isEmpty =>
+        fs.head.value
+      case _ =>
+        fs.map(_.value).mkString(Tag.separator, Tag.separator, Tag.separator)
+    })
 }

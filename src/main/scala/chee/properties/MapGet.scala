@@ -31,6 +31,8 @@ case class MapGet[+A](run: LazyMap => (LazyMap, A)) { self =>
 
   def result(lmap: LazyMap): A = run(lmap)._2
 
+  def toMap: MapGet[LazyMap] = self.flatMap(_ => MapGet.get)
+
   def modify(f: LazyMap => LazyMap): MapGet[A] =
     flatMap(a => MapGet.modify(f).map(_ => a))
 
@@ -97,6 +99,9 @@ object MapGet {
     gs.foldRight(unit(List[A]())){ (e, acc) =>
       e.combine(acc)(_ :: _)
     }
+
+  def seq[A](g: MapGet[A], gs: MapGet[A]*): MapGet[List[A]] =
+    seq(g +: gs)
 
   def concat(ds: Seq[MapGet[String]]): MapGet[String] =
     ds.foldLeft(unit("")) { (acc, e) =>

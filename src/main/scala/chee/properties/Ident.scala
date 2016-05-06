@@ -30,8 +30,6 @@ object Ident {
   val orientation: Ident = 'orientation
   val iso: Ident = 'iso
   val mimetype: Ident = 'mimetype
-  val tag: Ident = 'tag
-  val comment: Ident = 'comment
 
   lazy val fileProperties = List(
     Ident.path, Ident.filename, Ident.length,
@@ -42,10 +40,8 @@ object Ident {
     Ident.make, Ident.model, Ident.width, Ident.height,
     Ident.iso, Ident.orientation, Ident.created)
 
-  lazy val metaProperties = List(tag, comment)
-
   lazy val defaults: List[Ident] =
-    fileProperties ::: imageProperties ::: metaProperties ::: VirtualProperty.idents.all
+    fileProperties ::: imageProperties ::: VirtualProperty.idents.all
 
   def validate(s: String): Boolean = s matches identRegex
 

@@ -2,6 +2,7 @@ package chee.util
 
 import better.files._
 import better.files.File.LinkOptions
+import scala.io.Codec
 
 object files {
   object Directory {
@@ -103,5 +104,15 @@ object files {
     /** Like {{isChildOf}} but works for non-existing files (filenames) */
     def childOf(p: File): Boolean =
       p.parentOf(f)
+
+    /** Writes text by first writing it to a temporary file and then
+      * moving it to current file */
+    def writeMove(text: String, parent: Option[File] = None)
+      (implicit openOptions: File.OpenOptions = File.OpenOptions.default, codec: Codec) = {
+      val temp = File.newTemporaryFile("chee", "tmp", parent)
+      temp < text
+      temp.moveTo(f, overwrite = true)
+    }
+    def ==>>:(text: String) = writeMove(text)
   }
 }

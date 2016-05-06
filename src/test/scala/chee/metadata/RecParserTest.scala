@@ -1,8 +1,12 @@
 package chee.metadata
 
-import chee.properties.{ FormatPatterns, MapGet }
+import org.scalacheck.Properties
+import org.scalacheck.Prop.forAll
 import org.scalatest._
+import fastparse.all.P
+import chee.properties.{ FormatPatterns, MapGet }
 import chee.util.parsing._
+import RecElement._
 import RecFormat._
 
 class RecParserTest extends FlatSpec with Matchers {
@@ -119,12 +123,32 @@ class RecParserTest extends FlatSpec with Matchers {
     checkMetadataFile(db)
   }
 
-  "db parser" should "parse comments" in {
+  it should "parse comments" in {
     val Right(db) = dp.parse(metadataFile(2))
     db.records should have size (2)
     db.els should have size (7)
 
     checkMetadataFile(db)
+  }
+
+  it should "succeed with comments at bottom" in {
+    val db0 = Database.Empty + Record(Field("Name", "Silly", 0)) + Comment("hello", 13)
+    dp.parse(db0.render) should be (Right(db0))
+  }
+
+  it should "succeed for comments only" in {
+    val db0 = Database(Vector(
+      Comment("aaa", 0),
+      Comment("bbb", 6),
+      Comment("ccc", 12)))
+    dp.parse(db0.render) should be (Right(db0))
+  }
+
+  it should "parse multiline comments" in {
+    val db0 = Database(Vector(
+      Comment("aaa\nbbb", 0),
+      Comment("ccc", 11)))
+    dp.parse(db0.render) should be (Right(db0))
   }
 
   "map parser" should "create correct maps" in {
@@ -139,15 +163,60 @@ class RecParserTest extends FlatSpec with Matchers {
 
     val r1 = lm1.toList.apply(0)
     MapGet.valueForce('checksum).result(r1) should be ("f3f")
-    MapGet.valueForce('tag).result(r1) should be ("[summer][holidays]")
+    MapGet.valueForce('tag).result(r1) should be ("|summer|holidays|")
     MapGet.valueForce('comment).result(r1) should be ("A comment to the image.")
 
     val r2 = lm1.toList.apply(1)
     MapGet.valueForce('checksum).result(r2) should be ("e53")
-    MapGet.valueForce('tag).result(r2) should be ("[spring][car][swimming]")
+    MapGet.valueForce('tag).result(r2) should be ("|spring|car|swimming|")
     val str = MapGet.valueForce('comment).result(r2)
     str should include ("quam, a auctor enim")
     str should include ("eget, sodales eget")
     str should include ("sem. Aenean est diam")
+  }
+}
+
+
+object RecParserSpec extends Properties("RecParser") {
+
+  // set positions to 0
+  val zeroPos: RecElement.Entry => Option[RecElement.Entry] = {
+    case Record(fs, d, n) => Some(Record(fs.map({
+      case Field(l, v, n) => Field(l, v, 0)
+      case Comment(t, n) => Comment(t, 0)
+    }), Descriptor.Empty ,0))
+    case Comment(t, n) => Some(Comment(t, 0))
+    case Descriptor.NonEmpty(els, n) => Some(Descriptor.NonEmpty(els.map({
+      case Field(l, v, n) => Field(l, v, 0)
+      case Comment(t, n) => Comment(t, 0)
+    }), 0))
+    case n => Some(n)
+  }
+  val parser = new DatabaseParser(Descriptor.Empty, zeroPos)
+
+  def parse[T](p: P[T], in: String): T = p.parsePrefix(in) match {
+    case Right(x) => x
+    case Left(m) => sys.error(m)
+  }
+
+  property("parse(field.render) == field") = forAll { (f: Field) =>
+    parse(RecElParser.field, f.render) == f
+  }
+
+  property("parse(comment.render) == comment") = forAll { (c: Comment) =>
+    parse(RecElParser.comment, c.render) == c.text
+  }
+
+  property("parse(record.render) == record") = forAll { (r: Record) =>
+    parse(parser.record, r.render) == Some(r)
+  }
+
+  // generator generates only non-empty descriptors
+  property("parse(descriptor.render) == descriptor") = forAll { (d: Descriptor) =>
+    zeroPos(parse(parser.descript, d.render)) == Some(d)
+  }
+
+  property("parse(database.render) == database") = forAll { (db: Database) =>
+    parser.parse(db.render) == Right(db)
   }
 }

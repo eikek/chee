@@ -1,4 +1,4 @@
-# a head comment
+# head comment
 
 %rec: metadata
 %key: Checksum
@@ -6,14 +6,14 @@
 %type: Checksum regexp /[a-f0-9]+/
 %type: Tag regexp /[a-zA-Z_]+/
 
-# a comment between records 1
+# 1 record comment
 
 Checksum: f3f
 Tag: summer
 Tag: holidays
 Comment: A comment to the image.
 
-# a comment between records 2
+# 2 record comment
 Checksum: e53
 Tag: spring
 Tag: car

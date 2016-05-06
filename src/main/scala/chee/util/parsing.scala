@@ -10,6 +10,8 @@ object parsing {
   lazy val identString: P0 =
     CharIn('a' to 'z', 'A' to 'Z', '0' to '9', "_-").rep(1)
 
+  lazy val WS = CharIn("\n\t ")
+
   def alphaPlus(more: Seq[Char]*): P0 = {
     val alpha: Seq[Seq[Char]] = Seq(('a' to 'z'), ('A' to 'Z'))
     CharIn(alpha ++ more: _*)

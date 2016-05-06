@@ -4,15 +4,19 @@ import better.files.File
 import chee.UserError
 import chee.properties._
 import chee.query._
+import chee.util.files._
+import RecElement._
 import RecFormat._
 import MapGet._
 
 trait MetadataFile {
-
   def findIds(c: Condition): Traversable[String] = {
     val id = MapGet.valueForce(Ident.checksum)
     find(c).map(id.result)
   }
+
+  def query(q: String): Either[String, Traversable[LazyMap]] =
+    MetadataFile.parseCondition(q).right.map(find)
 
   /** Search the metadata file using the given condition.
     * 
@@ -36,39 +40,30 @@ object MetadataFile {
 
   def parseCondition(q: String): Either[String, Condition] = 
     queryParser(q)
-  
-  val idents = Set(
-    Ident.checksum,
-    Ident.tag,
-    Ident.comment)
-
-  private val descriptor = Descriptor (
-    Field("%rec", "chee-metadata", 0),
-    Field("%key", "Checksum", 0),
-    Field("%unique", "Comment", 0),
-    Field("%type", "Checksum regexp /[a-f0-9]+/", 0),
-    Field("%type", "Tag regexp /[^\\s,;'\"]+/", 0)
-  )
 
   object TagValueTransform extends Transform {
     def apply(c: Condition): Condition = Condition.mapAll({
-      case Prop(comp, Property(Ident.tag, value)) =>
-        Prop(comp, Property(Ident.tag, "*["+value+"]*"))
+      case Prop(comp, Property(idents.tag, value)) =>
+        Prop(comp, Property(idents.tag, s"*${Tag.separator}${value}${Tag.separator}*"))
       case n => n
     })(c)
   }
 
   private val queryTransform =
-    new PrefixIdentTransform(idents) ~> TagValueTransform ~> EnumMacro ~> IdMacro 
+    new PrefixIdentTransform(idents.all.toSet + Ident.checksum) ~>
+    TagValueTransform ~> EnumMacro ~> IdMacro
 
   private val queryParser = Query.create(QuerySettings(Comp.all, queryTransform))
 
-  private def updateFn: MapGet[(String, Record => Record)] =
-    pair(valueForce(Ident.checksum), pair(value(Ident.tag), value(Ident.comment))).map {
-      case (id, (tag, comment)) =>
-        val f: Record => Record = ???
-        (id, f)
-    }
+
+  private val newDatabase = Database(Vector(Descriptor(
+    Field("%rec", "chee-metadata", 0),
+    Field("%key", "Checksum", 0),
+    Field("%unique", "Comment", 0),
+    Field("%type", "Checksum regexp /[a-f0-9]+/", 0),
+    Field("%type", s"Tag regexp /${Tag.tagRegex}/", 0)
+  )))
+
 
   private class Impl(f: File) extends MetadataFile {
     val parser = new MapParser()
@@ -85,21 +80,25 @@ object MetadataFile {
     }    
 
     def write(data: Stream[LazyMap]): MetadataFile = {
-      // load recfile
-      val db = dbParser.parseFile(f) match {
+      def parse(f: File) = dbParser.parseFile(f) match {
         case Right(x) => x
         case Left(msg) => UserError(s"The metadata file contains errors: $msg")
       }
-      // apply changes from map
-      val updates: Map[String, Record => Record] =
-        data.map(updateFn.result).toMap
-      val newDb = db.mapPf {
-        case RecordId(id, r) if updates contains id =>
-          updates(id)(r)
-      }
-      // write back to file (new file + move; make a utility for that in files)
-      "" `>:` f
-      ???
+      // load recfile
+      val db = f.existing.map(parse) getOrElse newDatabase
+
+      // build data and apply changes from map
+      val (ids, records) = 
+        MapGet.fold((Set.empty[String], Vector.empty[Record]), data) {
+          case (ids, records) =>
+            mapget.idAndRecord.map { case (id, rec) =>
+              (ids + id, records :+ rec)
+            }
+        }
+      val newDb = db.filterIdNot(ids) ++ Database(records)
+
+      // write back to file
+      newDb.render ==>>: f 
       // return new instance (clears search data)
       new Impl(f)
     }

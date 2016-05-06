@@ -1,6 +1,6 @@
 package chee.metadata
 
-object RecFormat {
+object RecElement {
   sealed trait Element
   sealed trait RecordEl extends Element
   sealed trait Entry extends Element
@@ -33,6 +33,11 @@ object RecFormat {
       case f: Field => f
     }
 
+    def set(label: String, values: String*): Record =
+      values.foldLeft(filter(_.label != label)) { (r, v) =>
+        r + Field(label, v, 0)
+      }
+
     def get(label: String): Vector[Field] =
       fields.filter(_.label == label)
 
@@ -62,8 +67,7 @@ object RecFormat {
       }
   }
 
-
-  case class Database(els: Vector[Entry]) {
+  case class Database(els: Vector[Entry]) extends Element {
     def + (r: Entry) = Database(els :+ r)
     def ++ (d: Database) = Database(els ++ d.els)
 
@@ -74,8 +78,16 @@ object RecFormat {
     def filter(p: Record => Boolean) =
       Database(els filter {
         case r: Record => p(r)
-        case _ => false
+        case _ => true
       })
+
+    def filterId(p: String => Boolean) = filter {
+      case RecordId(id, _) => p(id)
+    }
+
+    def filterIdNot(p: String => Boolean) = filter {
+      case RecordId(id, _) => !p(id)
+    }
 
     def mapPf(pf: PartialFunction[Entry, Entry]): Database = Database {
       els.map(e => if (pf.isDefinedAt(e)) pf(e) else e)
@@ -85,4 +97,68 @@ object RecFormat {
   object Database {
     val Empty = Database(Vector.empty)
   }
+}
+
+trait RecRender[A <: RecElement.Element] {
+  def render(a: A): String
+}
+
+object RecRender {
+  def apply[A <: RecElement.Element](f: A => String): RecRender[A] =
+    new RecRender[A] {
+      def render(a: A) = f(a)
+    }
+}
+
+object RecFormat {
+  import RecElement._
+
+  implicit val _comment: RecRender[Comment] =
+    RecRender { comment =>
+      "#" + comment.text.replace("\n", "\n#")
+    }
+
+  implicit val _field: RecRender[Field] =
+    RecRender { field =>
+      s"""${field.label}: ${field.value.replace("\n", "\n+ ")}"""
+    }
+
+  implicit def _recordEl(implicit rf: RecRender[Field], rc: RecRender[Comment]): RecRender[RecordEl] =
+    RecRender {
+      case f: Field => rf.render(f)
+      case c: Comment => rc.render(c)
+    }
+
+  implicit def _record(implicit re: RecRender[RecordEl]): RecRender[Record] =
+    RecRender { record =>
+      record.els.map(re.render).mkString("\n")
+    }
+
+  implicit def _descriptor(implicit re: RecRender[RecordEl]): RecRender[Descriptor] =
+    RecRender {
+      case Descriptor.Empty => ""
+      case Descriptor.NonEmpty(els, _) => els.map(re.render).mkString("\n")
+    }
+
+  implicit def _entry(implicit
+    rr: RecRender[Record],
+    rd: RecRender[Descriptor],
+    rc: RecRender[Comment]): RecRender[Entry] =
+  RecRender {
+    case c: Comment => rc.render(c)
+    case r: Record => rr.render(r)
+    case d: Descriptor => rd.render(d)
+  }
+
+  implicit def _database(implicit re: RecRender[Entry]): RecRender[Database] =
+    RecRender { db =>
+      db.els.map(re.render).mkString("\n\n")
+    }
+
+
+  implicit class ElementOps[A <: Element](el: A) {
+    def render(implicit renderer: RecRender[A]): String =
+      renderer.render(el)
+  }
+
 }

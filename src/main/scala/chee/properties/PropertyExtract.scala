@@ -51,7 +51,6 @@ final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction 
 
 final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
   import com.drew.imaging.ImageMetadataReader
-  import com.drew.metadata.Metadata
   import com.sksamuel.scrimage.{ImageMetadata, Image}
   import scala.util.{Try, Success, Failure}
 
