@@ -82,15 +82,21 @@ object LazyMap {
   def apply(ps: Property*): LazyMap =
     apply(PropertyMap(ps: _*))
 
-  final class FromFile(val file: File, extr: Seq[Extraction], val map: PropertyMap, seen: Set[Ident], vmap: VirtualMap) extends LazyMap {
-    def get(ident: Ident) = {
+  private final class FromFile(val file: File, val extr: Seq[Extraction], val map: PropertyMap, val seen: Set[Ident], val vmap: VirtualMap) extends LazyMap {
+    def get(ident: Ident): (LazyMap, Option[Property]) = {
       if (seen.contains(ident)) (this, map(ident))
       else {
         extr.find(_.idents contains ident) match {
           case None => (this, None)
           case Some(e) =>
-            val next = new FromFile(file, extr, map ++ e.extract(file), seen ++ e.idents, vmap)
-            (next, next.map(ident))
+            val (next0, props) = e.extractM(file).run(this)
+            val next = next0 match {
+              case m: FromFile =>
+                new FromFile(m.file, m.extr, m.map ++ props, m.seen ++ e.idents, m.vmap)
+              case _ =>
+                sys.error("extractors should not change maps")
+            }
+            (next, props(ident))
         }
       }
     }
@@ -107,7 +113,7 @@ object LazyMap {
       new FromFile(file, extr.map(_.mapIdents(f)), map.mapIdents(f), seen.map(f), vmap.mapIdents(f))
   }
 
-  final class ConstantMap(map: PropertyMap, vmap: VirtualMap) extends LazyMap {
+  private final class ConstantMap(map: PropertyMap, vmap: VirtualMap) extends LazyMap {
     def add(p: Property) =
       new ConstantMap(map + p, vmap)
     def get(id: Ident) = (this, map(id))

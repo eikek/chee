@@ -4,10 +4,12 @@ import better.files._
 import java.time.Duration
 import com.typesafe.scalalogging.LazyLogging
 import chee.Timing
+import MapGet._
 
 trait Extraction {
   def idents: Set[Ident]
-  def extract(file: File): PropertyMap
+  def extractM(file: File): MapGet[PropertyMap]
+  final def extract(file: File): PropertyMap = extractM(file).result(LazyMap())
   def mapIdents(f: Ident => Ident): Extraction
 }
 
@@ -31,8 +33,8 @@ final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction 
 
   def mapIdents(f: Ident => Ident) = new BasicExtract(mapping andThen f)
 
-  def extract(file: File) =
-    Try(basicFile(file)).getOrElse(empty)
+  def extractM(file: File) =
+    unit(Try(basicFile(file)).getOrElse(empty))
 
   def basicFile(f: File): PropertyMap = Extraction.assertExists(f) {
     PropertyMap(
@@ -74,7 +76,7 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
   // could be retrieved using: Image.fromPath(f.path).width/height
   // but it is expensive
 
-  def extract(f: File): PropertyMap = Extraction.assertExists(f) {
+  def extractM(f: File): MapGet[PropertyMap] = Extraction.assertExists(f) {
     def logTime(m: Try[PropertyMap], d: Duration): Unit = m match {
       case Success(_) =>
         logger.trace(s"Extracted image properties from ${f.path} in ${Timing.format(d)}")
@@ -101,7 +103,7 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
         })
     }
 
-    props.toOption.getOrElse(PropertyMap.empty)
+    unit(props.toOption.getOrElse(PropertyMap.empty))
   }
 
   def fromMetadata(meta: ImageMetadata): PropertyMap = {
@@ -124,11 +126,11 @@ final class ChecksumExtract(mapping: Ident => Ident = identity) extends Extracti
 
   val idents = Set(Ident.checksum).map(mapping)
 
-  private def logTime(file: File)(map: PropertyMap, d: Duration): Unit =
+  private def logTime(file: File)(map: MapGet[PropertyMap], d: Duration): Unit =
     logger.trace(s"Created checksum for ${file.path} in ${Timing.format(d)}")
 
-  def extract(file: File) = Timing.timed(logTime(file)) {
-    PropertyMap(checksum(file))
+  def extractM(file: File) = Timing.timed(logTime(file)) {
+    unit(PropertyMap(checksum(file)))
   }
 
   def checksum(f: File): Property =
