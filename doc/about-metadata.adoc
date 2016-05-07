@@ -1,0 +1,55 @@
+=== Metadata
+
+Chee allows to attach custom metadata, _tags_ and _comments_, to files.
+
+This data is stored in a plain text file using the
+https://www.gnu.org/software/recutils/[rec format]. It is attached to
+the contents of a file, rather to its name. Thus, if files are moved
+or duplicated, the tags and comments are preserved. It also means, if
+files are modified all original tags and comments are “gone”: they are
+in the database, but not attached to the modified file.
+
+Here is a sample file:
+
+.Sample metadata file
+----------------------------------------------------------------------
+Checksum: 7c90e5fad6b2386e00e990fb28722bada270def72bb61e58d1d84d353972221b
+Comment: funny ride
+Tag: car
+Tag: bike
+
+Checksum: d13081ea54417bd5f06f536ac56f3a064dea733411c102475b4ff0d337d96125
+Comment: funny ride
+Tag: car
+Tag: bike
+----------------------------------------------------------------------
+
+This contains two entries, that each add a comment and two tags to a
+file. The file checksum is required, because it identifies the
+contents of a file. Tags and comments are optional. Tags can occur
+multiple times, but comments at most once. The order of the fields
+does not matter.
+
+This format has some advantages:
+
+-  https://www.gnu.org/software/recutils/manual/recutils.html#The-Rec-Format[it is simple]
+   and can be easily edited by any text editor
+- https://www.gnu.org/software/recutils[gnu recutils] can be used to
+  query the data (besides chee) making it easy to integrate
+  with/migrate to other tools
+- plain text remains accessible, even once the tools are gone
+
+But it comes at the cost that searching and modifying is slower than
+with other options.
+
+Tags and comments can be refered to in normal queries. It is
+implemented by a macro that replaces `tag` and `comment` conditions
+with a `checksum` condition, that is created by searching the metadata
+file first.
+
+When used in format patterns, tags are wrapped by a `|` characters. So
+multiple tags can be distinguished: `|car|bike|`.
+
+Metadata can be edited using chee's xref:_meta[meta] command or a text
+editor. The file is by default in chee's config dir, called
+`metadata.rec`.

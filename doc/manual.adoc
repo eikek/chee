@@ -31,6 +31,11 @@ Some features are:
   files are not touched)
 - encrypt files using a password or a public key. Encryption is done
   via OpenPGP.
+- tag and comment photos: user metadata (tags and comments) is stored
+  in a https://www.gnu.org/software/recutils/[rec] plain text
+  file. That allow to edit it manually or use the
+  https://www.gnu.org/software/recutils/[rec utilities] to access the
+  data.
 
 It is a simple program: the metadata of image (and other) files are
 put in a database which can then be queried more conveniently. But
@@ -49,6 +54,8 @@ include::about-collection.adoc[]
 
 include::about-format.adoc[]
 
+include::about-metadata.adoc[]
+
 include::about-encryption.adoc[]
 
 include::about-config.adoc[]
@@ -63,6 +70,8 @@ include::cmd-find.adoc[]
 include::cmd-view.adoc[]
 
 include::cmd-location.adoc[]
+
+include::cmd-meta.adoc[]
 
 include::cmd-mv.adoc[]
 

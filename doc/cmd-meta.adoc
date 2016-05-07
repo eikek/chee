@@ -1,0 +1,102 @@
+=== meta
+
+Manage custom metadata.
+
+.Usage
+----------------------------------------------------------------------
+chee meta [attach|find] […]
+----------------------------------------------------------------------
+
+
+==== attach
+
+Attach or remove tags and comments.
+
+.Usage
+----------------------------------------------------------------------
+<usage_meta_attach>
+----------------------------------------------------------------------
+
+Attach comments and tags to a selection of files. Files are selected
+as with the xref:_find[] command. The given comments or tags are
+applied to all files in the selection.
+
+Tags are specified with `--tags` and can be a comma-separated list of
+names. The `--comment` option allows to define some commentary
+text. This is then attached to the selected files, overwriting any
+existing value.
+
+To remove something, use `--drop-tags` or `--drop-comment`. If both
+are given, the entry is removed from the database.
+
+.Attach tags
+----------------------------------------------------------------------
+$ chee meta attach --tags car,bike --first 7 'date/2015-03-20--+2d'
+Attaching to _DSC0286.JPG …
+Attaching to _DSC0286.JPG …
+Attaching to _DSC0287.JPG …
+Attaching to _DSC0287.JPG …
+Attaching to _DSC0288.JPG …
+Attaching to _DSC0288.JPG …
+Attaching to _DSC0289.JPG …
+Metadata file written.
+----------------------------------------------------------------------
+
+This adds the tags _car_ and _bike_ to the first 7 files in the given
+time range. Now the files can be searched by one of tags:
+
+.Find by tag
+----------------------------------------------------------------------
+$ chee find 'tag:bike'
+2015-03-20 11:46  3872x2592 10mp    (NIKON D200)         4.1mb /mnt/nas…s/sdcard _DSC0286.JPG
+2015-03-20 11:46  3872x2592 10mp    (NIKON D200)         4.1mb /mnt/nas…s/sdcard _DSC0286.JPG
+2015-03-20 11:47  3872x2592 10mp    (NIKON D200)         5.6mb /mnt/nas…s/sdcard _DSC0287.JPG
+2015-03-20 11:47  3872x2592 10mp    (NIKON D200)         5.6mb /mnt/nas…s/sdcard _DSC0287.JPG
+2015-03-20 11:47  3872x2592 10mp    (NIKON D200)         5.4mb /mnt/nas…s/sdcard _DSC0288.JPG
+2015-03-20 11:47  3872x2592 10mp    (NIKON D200)         5.4mb /mnt/nas…s/sdcard _DSC0288.JPG
+2015-03-20 11:48  3872x2592 10mp    (NIKON D200)         5.4mb /mnt/nas…s/sdcard _DSC0289.JPG
+----------------------------------------------------------------------
+
+
+==== find
+
+Query the metadata database.
+
+.Usage
+----------------------------------------------------------------------
+<usage_meta_find>
+----------------------------------------------------------------------
+
+This command queries the metadata database only. The output can be
+controlled via a xref:_format_patterns[] using the `--pattern` option
+(like with the xref:_find[] command). Here only the properties
+`checksum`, `tag` and `comment` are available, though.
+
+.Example
+----------------------------------------------------------------------
+$ chee meta find 'tag?'
+checksum:            c37b3f3f8ac8cd21d6f26d1632ec774aa82a4f2bbaf73bea5860306c1f91ca66
+tag:                 |car|bike|
+
+checksum:            7425f8d4ceb858ccf1a062d6b82e1b008cf1ba1d9586fd1b721103a6051ecb45
+tag:                 |car|bike|
+
+checksum:            c37b3f3f8ac8cd21d6f26d1632ec774aa82a4f2bbaf73bea5860306c1f91ca66
+tag:                 |car|bike|
+
+checksum:            7425f8d4ceb858ccf1a062d6b82e1b008cf1ba1d9586fd1b721103a6051ecb45
+tag:                 |car|bike|
+
+checksum:            0839f9657bf7429fd7a868cc5b6ab92d105369ee1031f9322a9216d718439509
+tag:                 |car|bike|
+
+checksum:            c37b3f3f8ac8cd21d6f26d1632ec774aa82a4f2bbaf73bea5860306c1f91ca66
+tag:                 |car|bike|
+
+checksum:            7425f8d4ceb858ccf1a062d6b82e1b008cf1ba1d9586fd1b721103a6051ecb45
+tag:                 |car|bike|
+----------------------------------------------------------------------
+
+The query syntax is not different, but only applicable to the three
+mentioned properties. The default output prints a list of _rec_
+records.

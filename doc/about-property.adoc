@@ -33,6 +33,10 @@ Then there are properties that are only applicable to image files:
 If image properties cannot be obtained from a file, they are ignored
 (they are then not part of the properties set of that file).
 
+.Custom metadata
+- `tag`  a list of tags associated to a file
+- `comment`  a comment on a file
+
 
 ==== Virtual Properties
 
