@@ -1,7 +1,15 @@
+sudo: false
 language: scala
 scala:
-  - 2.11.7
+  - 2.11.8
+
 jdk:
   - oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot
+
 script:
-  - sbt ";genDocResources;test;it:test"
+  - sbt ++$TRAVIS_SCALA_VERSION ";genDocResources;test;it:test"
