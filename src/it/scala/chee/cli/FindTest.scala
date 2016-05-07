@@ -1,7 +1,6 @@
 package chee.cli
 
 import chee.it.CommandSetup.Setup
-import java.util.UUID
 import org.scalatest._
 import chee.it._
 

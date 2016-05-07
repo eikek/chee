@@ -1,8 +1,7 @@
 package chee.cli
 
-import java.time.Duration
 import better.files._
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
@@ -22,6 +21,7 @@ object Main extends LazyLogging {
     new Help,
     new Version,
     new Find,
+    HubCommand("meta", List(new MetaFind, new MetaAttach)),
     Location.root,
     HubCommand("collection", List(new CollectionEdit, new CollectionShow)),
     View,

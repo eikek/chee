@@ -37,11 +37,10 @@ package object conf {
     def getFormat(p: Option[String], fallbackKey: String): Either[String, Pattern] = {
       def forPattern(pattern: String) = pattern match {
         case "" => Right(FormatPatterns.oneline)
-        case "oneline" => Right(FormatPatterns.oneline)
-        case "lisp" => Right(FormatPatterns.lisp)
-        case "detail" => Right(FormatPatterns.detail)
-        case "paths" => Right(FormatPatterns.paths)
-        case _ => findCustomFormat(pattern)
+        case _ => FormatPatterns.formats.get(pattern) match {
+          case Some(p) => Right(p)
+          case _ => findCustomFormat(pattern)
+        }
       }
       p.map(forPattern).getOrElse {
         forPattern(cfg.getString(fallbackKey))

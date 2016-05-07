@@ -39,16 +39,12 @@ trait AbstractLs {
     MapGet.filter(sqlite.find(cond, mf).get, filter)
   }
 
-  private def lift(f: (Stream[LazyMap], Int) => Stream[LazyMap]): Option[Int] => Stream[LazyMap] => Stream[LazyMap] =
-    n => s => n.map(f(s, _)).getOrElse(s)
-
   def find(cfg: Config, opts: LsOpts): Stream[LazyMap] =
     getQueryCondition(cfg, opts) match {
       case Right(cond) =>
         val stream = directoryFind(cond, cfg, opts) getOrElse indexFind(cond, cfg, opts)
         val x: Int => Stream[LazyMap] = stream.drop _
-        val optSlice = lift(_ drop _)(opts.skip) andThen lift(_ take _)(opts.first)
-        optSlice(stream)
+        sliced(opts.first, opts.skip)(stream).toStream
       case Left(msg) =>
         userError(msg)
     }

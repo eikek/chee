@@ -51,6 +51,49 @@ class MetadataFileTest extends FlatSpec with Matchers with FileLoan {
     nmf.querySize("tag:car") should be (1)
   }
 
+  it should "not add duplicates" in withNewFile { f =>
+    val map0 = MapGet.seq(
+      mapget.setTags(Tag("car"), Tag("bus")),
+      mapget.setComment("a comment so fine"),
+      mapget.setId("e53")).toMap.result(LazyMap())
+
+    val map1 = MapGet.seq(
+      mapget.setTags(Tag("cat"), Tag("eagle")),
+      mapget.setComment("a movement so great"),
+      mapget.setId("e53")).toMap.result(LazyMap())
+
+    val maps = Seq(map0, map1)
+    val mf = MetadataFile(f).write(maps)
+    val res = mf.find(TrueCondition)
+    res should have size (1)
+    //first wins, not a hard requirement, but interesting if it would change
+    FormatPatterns.lisp.result(res.head) should be (FormatPatterns.lisp.result(map0))
+  }
+
+  it should "change multiple records" in withNewFile { f =>
+    val map0 = MapGet.seq(
+      mapget.setTags(Tag("car"), Tag("bus")),
+      mapget.setComment("a comment so fine"),
+      mapget.setId("e53")).toMap.result(LazyMap())
+
+    val map1 = MapGet.seq(
+      mapget.setTags(Tag("car"), Tag("bus")),
+      mapget.setComment("a comment so fine"),
+      mapget.setId("e52")).toMap.result(LazyMap())
+
+    val maps = Seq(map0, map1)
+    val mf = MetadataFile(f).write(maps)
+    val res = mf.find(TrueCondition)
+    res should have size (2)
+    mf.querySize("comment:*fine*") should be (2)
+
+    val maps2 = MapGet.filter(maps, mapget.setComment("new comment!").map(_ => true))
+    val mf2 = mf.write(maps2)
+    mf2.find(TrueCondition) should have size (2)
+    mf2.querySize("comment:*fine*") should be (0)
+    mf2.querySize("comment:*new*") should be (2)
+  }
+
   "find" should "find nothing for non existing file" in withNewFile { f =>
     f.exists should be (false)
     val mf = MetadataFile(f)

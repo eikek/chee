@@ -69,6 +69,8 @@ sealed trait LazyMap { self =>
 object LazyMap {
   type VirtualMap = Map[Ident, VirtualProperty]
 
+  val empty: LazyMap = new ConstantMap(PropertyMap.empty, Map.empty)
+
   def fromFile(f: File, extr: Seq[Extraction]): LazyMap = {
     val map = new FromFile(f, extr, PropertyMap.empty, Set.empty, Map.empty)
     VirtualProperty.defaults.all.foldLeft(map)(_ addVirtual _)

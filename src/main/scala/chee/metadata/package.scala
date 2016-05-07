@@ -9,10 +9,14 @@ package metadata {
   case class Tag(name: String)
 
   object Tag {
-
     private [chee] val separator = "|"
 
-    val tagRegex = (s"[^\\s,${separator}]+").r
+    val tagRegex = s"[^\\s,;${separator}]+"
+
+    def validated(name: String): Tag = {
+      if (name matches tagRegex) Tag(name)
+      else UserError(s"`$name' is not a valid tag name! Must match `$tagRegex'.")
+    }
   }
 
   object idents {
@@ -36,7 +40,7 @@ package metadata {
       }
 
     def setTags(tags: Seq[Tag]): MapGet[Unit] = modify { m =>
-      if (tags.isEmpty) m remove idents.tag
+      if (tags.isEmpty) m.remove(idents.tag)
       else m + (idents.tag -> tagsToTagString(tags))
     }
 
@@ -46,7 +50,7 @@ package metadata {
     def removeTags = setTags(Seq.empty)
 
     def setComment(c: String): MapGet[Unit] = modify { m =>
-      if (c.isEmpty) m remove idents.comment
+      if (c.isEmpty) m.remove(idents.comment)
       else m + (idents.comment -> c)
     }
 
@@ -55,12 +59,12 @@ package metadata {
     }
 
     val makeRecord: MapGet[Record] =
-      pair(valueForce(Ident.checksum), pair(tagValues, value(idents.comment))).map {
-        case (id, (tags, comment)) =>
+      pair(valueForce(Ident.checksum), pair(value(idents.comment), tagValues)).map {
+        case (id, (comment, tags)) =>
           Record()
-            .set("Checksum", id)
-            .set("Tag", tags.map(_.name): _*)
-            .set("Comment", comment.toSeq: _*)
+            .set(Ident.checksum.name.capitalize, id)
+            .set(idents.comment.name.capitalize, comment.toSeq: _*)
+            .set(idents.tag.name.capitalize, tags.map(_.name): _*)
       }
 
     def makePropertyMap(mapping: Ident => Ident): MapGet[PropertyMap] =

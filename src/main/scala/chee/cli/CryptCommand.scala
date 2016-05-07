@@ -9,7 +9,6 @@ import chee.properties._
 import chee.properties.MapGet._
 import chee.query.Progress
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 
 trait CryptCommand { self: ScoptCommand with AbstractLs =>
 

@@ -14,14 +14,17 @@ object FormatPatterns {
     newline
   )
 
-  val detail: Pattern = seq(
+  private def detail(inclVirt: Boolean): Pattern = seq(
     loop(
       id => seq(fixedwidth(20, seq(readable('ident), raw(":")), frontPad = false), raw(" "), readable(id), newline),
       id => empty,
-      MapGet.idents(true),
+      MapGet.idents(inclVirt),
       includeEmpty = true),
     newline
   )
+
+  val fullDetail = detail(true)
+  val detailNoVirtual = detail(false)
 
   val date = fixedwidth(17,
     cond(existsIdent(Ident.created, false),
@@ -65,6 +68,15 @@ object FormatPatterns {
     newline)
 
   val paths = seq(lookup(Ident.path), newline)
+
+  val formats = Map(
+    "oneline" -> oneline,
+    "oneline-no-location" -> onelineNoLocation,
+    "detail" -> fullDetail,
+    "detail-no-virtual" -> detailNoVirtual,
+    "lisp" -> lisp,
+    "paths" -> paths
+  )
 
   private val parser = new PatternParser(Ident.defaults)
 

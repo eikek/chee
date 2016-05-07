@@ -106,7 +106,7 @@ final class MapParser(descriptor: Descriptor = Descriptor.Empty)
 object MapParser {
   val mapper: Entry => Option[LazyMap] = {
     case r: Record =>
-      Some(r.fields.groupBy(_.label).foldLeft(LazyMap())(_ + fieldToProperty.tupled(_)))
+      Some(r.fields.groupBy(_.label).foldLeft(LazyMap.empty)(_ + fieldToProperty.tupled(_)))
     case _ => None
   }
 

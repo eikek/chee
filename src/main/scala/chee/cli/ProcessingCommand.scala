@@ -10,7 +10,6 @@ import chee.properties._
 import chee.properties.Patterns._
 import chee.query._
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 
 trait ProcessingCommand extends ScoptCommand {
 
@@ -55,19 +54,13 @@ trait ProcessingCommand extends ScoptCommand {
     format.right(userError).map(name => dir / name)
   }
 
-  def getFormat(cfg: Config, pattern: Option[String]): Either[String, Pattern] =
-    pattern match {
-      case None => Right(FormatPatterns.onelineNoLocation)
-      case Some("oneline") => Right(FormatPatterns.onelineNoLocation)
-      case _ => cfg.getFormat(pattern, "")
-    }
-
   def processingAction(cfg: Config, opts: T): MapGet[Boolean]
 
   def procOpts(opts: T): ProcessingOptions.Opts
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {
-    getFormat(cfg, procOpts(opts).pattern) match {
+    val format = cfg.getFormat(procOpts(opts).pattern, s"chee.formats.default-${name}-format")
+    format match {
       case Right(pattern) =>
         val proc = processingAction(cfg, opts)
         val action = MapGet.get.map(m => out(pattern.right(userError).result(m)))

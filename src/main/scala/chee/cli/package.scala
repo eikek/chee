@@ -1,14 +1,17 @@
 package chee
 
 import better.files._
+import chee.crypto.CryptMethod
 
 package object cli {
 
-  import chee.crypto.CryptMethod
-  import com.typesafe.config.Config
-  import better.files.File.LinkOptions
-
   def userError(s: String) = chee.UserError(s)
+
+  private def lift[A](f: (Traversable[A], Int) => Traversable[A]): Option[Int] => Traversable[A] => Traversable[A] =
+    n => s => n.map(f(s, _)).getOrElse(s)
+
+  def sliced[A](first: Option[Int], skip: Option[Int]): Traversable[A] => Traversable[A] =
+    lift[A](_ drop _)(skip) andThen lift[A](_ take _)(first)
 
   def promptPassphrase(prompt: String = "Passphrase: "): Array[Char] = {
     def equals(a1: Array[Char], a2: Array[Char]): Boolean =

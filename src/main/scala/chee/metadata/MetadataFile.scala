@@ -5,6 +5,7 @@ import chee.UserError
 import chee.properties._
 import chee.query._
 import chee.util.files._
+import chee.util.predicates._
 import RecElement._
 import RecFormat._
 import com.typesafe.scalalogging.LazyLogging
@@ -32,12 +33,16 @@ trait MetadataFile {
     * read and the corresponding entry is updated in the metadata
     * file. */
   def write(data: Traversable[LazyMap]): MetadataFile
+
+  /** Delete all records matching the checksum of the given data. */
+  def delete(data: Traversable[LazyMap]): MetadataFile
 }
 
 object MetadataFile {
   val empty = new MetadataFile {
     def find(c: Condition): Traversable[LazyMap] = Seq.empty
     def write(data: Traversable[LazyMap]): MetadataFile = this
+    def delete(data: Traversable[LazyMap]): MetadataFile = this
   }
 
   def apply(f: File): MetadataFile = new Impl(f)
@@ -93,13 +98,14 @@ object MetadataFile {
         MapGet.fold((Set.empty[String], Vector.empty[Record]), data) {
           case (ids, records) =>
             mapget.idAndRecord.map { case (id, rec) =>
-              (ids + id, records :+ rec)
+              if (ids(id)) (ids, records)
+              else (ids + id, records :+ rec)
             }
         }
       // load recfile
       val db = parse(dbParser.parseFile) getOrElse newDatabase
       // keep only those not in data and append data
-      val newDb = db.filterIdNot(ids) ++ Database(records)
+      val newDb = db.filterId(not(ids)) ++ Database(records)
 
       // write back to file
       newDb.render ==>>: f 
@@ -107,5 +113,17 @@ object MetadataFile {
       new Impl(f)
     }
 
+    def delete(data: Traversable[LazyMap]): MetadataFile = {
+      logger.trace(s"Delete metadata …")
+      val ids = MapGet.fold(Set.empty[String], data) {
+        ids => MapGet.valueForce(Ident.checksum).map(ids + _)
+      }
+      // load recfile
+      val db = parse(dbParser.parseFile) getOrElse newDatabase
+      // keep only those not in data
+      val newDb = db.filterId(not(ids))
+      newDb.render ==>>: f
+      new Impl(f)
+    }
   }
 }

@@ -50,7 +50,7 @@ object RecElement {
     def filter(p: Field => Boolean) =
       copy(els = els filter {
         case f: Field => p(f)
-        case _ => false
+        case _ => true
       })
   }
 
@@ -83,14 +83,6 @@ object RecElement {
 
     def filterId(p: String => Boolean) = filter {
       case RecordId(id, _) => p(id)
-    }
-
-    def filterIdNot(p: String => Boolean) = filter {
-      case RecordId(id, _) => !p(id)
-    }
-
-    def mapPf(pf: PartialFunction[Entry, Entry]): Database = Database {
-      els.map(e => if (pf.isDefinedAt(e)) pf(e) else e)
     }
   }
 
