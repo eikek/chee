@@ -1,5 +1,6 @@
 package chee.properties
 
+import chee.metadata.MetadataFile
 import org.scalatest._
 import chee.TestInfo
 
@@ -55,7 +56,7 @@ class FormatPatternTest extends FlatSpec with Matchers {
 
     val image = chee.TestInfo.images.find(_.name == "test1.jpg").get
     val lastmod = DateTime(image.lastModifiedTime).format("yyyy-MM-dd HH:mm:ss")
-    val lmap = LazyMap.fromFile(image)
+    val lmap = LazyMap.fromFile(image, MetadataFile.empty)
     val expect = s"test: path -> ${TestInfo.baseDir.path}/src/test/resources/images/test1.jpg, " +
     "test: filename -> test1.jpg, " +
     "test: length -> 303.8kb, " +
@@ -71,7 +72,9 @@ class FormatPatternTest extends FlatSpec with Matchers {
     "test: orientation -> 1, " +
     "test: created -> 2014-06-12 20:31:23, " +
     "test: pixel -> 2.4mp, " +
-    "test: encrypted -> "
+    "test: encrypted -> , " +
+    "test: tag -> , " +
+    "test: comment -> "
 
     Patterns.loop(patf, id => raw(", "), MapGet.idents(true)).right.result(lmap) should be (expect)
   }

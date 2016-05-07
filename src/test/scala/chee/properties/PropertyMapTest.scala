@@ -1,12 +1,12 @@
 package chee.properties
 
-import scala.util.{Try, Failure}
+import chee.FileLoan
 import org.scalatest._
 import PropertyMap._
 import Ident._
 import chee.TestInfo
 
-class PropertyMapTest extends FlatSpec with Matchers {
+class PropertyMapTest extends FlatSpec with Matchers with FileLoan {
 
   val p1 = Property(filename, "test")
   val p2 = Property(filename, "tset")
@@ -96,5 +96,35 @@ class PropertyMapTest extends FlatSpec with Matchers {
 
     MapGet.value(VirtualProperty.idents.pixel).result(m1) should be (None)
     MapGet.valueForce(Ident("old-pixel")).result(m1) should be ("3145728")
+  }
+
+  it should "not overwrite existing properties by extractors" in {
+    val m0 = LazyMap.fromFile(image("test1.jpg"))
+    val m1 = m0 + (Ident.filename -> "myname.txt")
+    MapGet.valueForce(Ident.filename).result(m1) should be ("myname.txt")
+
+    // call to get length requires file extractor
+    val (m2, ext) = MapGet.valueForce(Ident.length).run(m1)
+    ext.toInt should be > (0)
+
+    // the extractor should not overwrite the filename
+    MapGet.valueForce(Ident.filename).result(m2) should be ("myname.txt")
+  }
+
+  it should "not reinsert missing properties from extractors" in  {
+    val m0 = LazyMap.fromFile(image("test1.jpg"))
+    val m1 = m0 + (Ident.filename -> "myname.txt")
+    MapGet.valueForce(Ident.filename).result(m1) should be ("myname.txt")
+
+    // now explicitely remove filename
+    val m2 = m1 remove Ident.filename
+    MapGet.value(Ident.filename).result(m2) should be ('empty)
+
+    // call to get length requires file extractor
+    val (m3, ext) = MapGet.valueForce(Ident.length).run(m2)
+    ext.toInt should be > (0)
+
+    // the extractor should not reinsert the filename
+    MapGet.value(Ident.filename).result(m3) should be ('empty)
   }
 }

@@ -21,9 +21,11 @@ object Extraction {
 
   def added(dt: DateTime) = Property(Ident.added, dt.instant.toString)
 
-  def noMetadata = List(new BasicExtract(), new ImageExtract(), new ChecksumExtract())
-
-  def all(mf: MetadataFile) = noMetadata ::: List(new MetadataExtract(mf))
+  def all(mf: MetadataFile) = List(
+    new BasicExtract(),
+    new ImageExtract(),
+    new ChecksumExtract(),
+    new MetadataExtract(mf))
 }
 
 final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction {

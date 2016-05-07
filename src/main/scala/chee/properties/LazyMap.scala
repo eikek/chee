@@ -2,6 +2,7 @@ package chee.properties
 
 import better.files._
 import chee.metadata.MetadataFile
+import chee.util.predicates._
 
 sealed trait LazyMap { self =>
   /** Lookup a property. If virtual, the value is computed into a normal property. */
@@ -77,7 +78,7 @@ object LazyMap {
     fromFile(f, Extraction.all(mf))
 
   def fromFile(f: File): LazyMap =
-    fromFile(f, Extraction.noMetadata)
+    fromFile(f, MetadataFile.empty)
 
   def apply(m: PropertyMap): LazyMap =
     VirtualProperty.defaults.all.foldLeft(new ConstantMap(m, Map.empty)) { (m, vp) =>
@@ -97,7 +98,8 @@ object LazyMap {
             val (next0, props) = e.extractM(file).run(this)
             val next = next0 match {
               case m: FromFile =>
-                new FromFile(m.file, m.extr, m.map ++ props, m.seen ++ e.idents, m.vmap)
+                val nprops = props filterKeys not(m.seen)
+                new FromFile(m.file, m.extr, m.map ++ nprops, m.seen ++ e.idents, m.vmap)
               case _ =>
                 sys.error("extractors should not change maps")
             }
@@ -110,7 +112,7 @@ object LazyMap {
     def add(p: Property) =
       new FromFile(file, extr, map + p, seen + p.ident, vmap)
     def remove(id: Ident) =
-      new FromFile(file, extr, map - id, seen - id, vmap - id)
+      new FromFile(file, extr, map - id, seen + id, vmap - id)
     def addVirtual(vp: VirtualProperty) =
       new FromFile(file, extr, map, seen, vmap + (vp.ident -> vp))
     def getVirtual(id: Ident) = vmap.get(id)
