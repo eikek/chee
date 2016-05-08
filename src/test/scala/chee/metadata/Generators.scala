@@ -5,13 +5,26 @@ import org.scalacheck.Arbitrary._
 import chee.metadata.RecElement._
 
 object Generators {
+  val genLabel: Gen[String] = (for {
+    alpha <- Gen.alphaChar
+    rest <- Gen.listOf(Gen.frequency(
+      (9, Gen.alphaNumChar),
+      (1, Gen.const('_'))))
+    } yield (alpha :: rest)).map(_.mkString)
+
+  def genValue(more: String): Gen[String] =
+    Gen.listOf(Gen.frequency(
+      (9, Gen.alphaNumChar),
+      (2, Gen.const(' ')),
+      (1, Gen.oneOf("„“–•@(){}<>[]…_^!&=/*?-:#$|~`+%\"" + more)))).map(_.mkString)
+
   implicit val arbComment: Arbitrary[Comment] =
-    Arbitrary(Gen.alphaStr.map(s => Comment(s, 0)))
+    Arbitrary(genValue("\\").map(s => Comment(s, 0)))
 
   def genField(labelPrefix: String = ""): Gen[Field] =
     for {
-      label <- Gen.alphaStr.suchThat(_.length > 1)
-      value <- Gen.alphaStr
+      label <- genLabel.suchThat(_.length > 1)
+      value <- genValue("\n")
     } yield Field(labelPrefix + label, value, 0)
 
 
