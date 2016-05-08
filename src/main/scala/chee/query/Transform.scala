@@ -111,9 +111,7 @@ object EnumMacro extends Transform {
 
   object EnumParser {
     val item: P[String] = P(CharNotIn(Seq(';')).rep(1).!)
-    val enum: P[Seq[String]] = P(item ~ ";" ~ item.rep(1, ";")).map {
-      case (first, rest) => first +: rest
-    }
+    val enum: P[Seq[String]] = P(item.rep(1, ";"))
     def parse(str: String): Either[String, Seq[String]] =
       enum.parseAll(str)
   }

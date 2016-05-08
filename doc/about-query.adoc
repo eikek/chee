@@ -263,16 +263,16 @@ To abbreviate conditions like the following:
 ----------------------------------------------------------------------
 
 the `~` macro can be used. The value must be an enumeration, where
-each item is separated by a semi-colon `;`. The above query can be
-written as:
+each item is separated by a semi-colon `;`. The wildcard (`*`)
+character is not allowed for an item. The above query can be written
+as:
 
 ----------------------------------------------------------------------
 ext~jpg;png;gif
 ----------------------------------------------------------------------
 
-and expands exactly to the more lengthy condition. All values are
-always compared with `like`. It is not possible to specify another
-comparator.
+Values are always compared case insensitive; as with `like` without
+wildcards.
 
 
 ===== range
