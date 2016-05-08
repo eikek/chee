@@ -45,7 +45,7 @@ object Generators {
 
   implicit val arbDatabase: Arbitrary[Database] = Arbitrary {
     for {
-      n <- Gen.choose(1, 50)
+      n <- Gen.choose(1, 20)
       els <- Gen.listOfN(n, genEntry)
     } yield Database(els.toVector)
   }
