@@ -16,6 +16,7 @@ lazy val dependencies = Seq(
     scalaLib
   ),
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.4.0" excludeAll(
+    ExclusionRule("org.scala-lang", "scala-reflect"),
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
