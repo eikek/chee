@@ -47,8 +47,10 @@ trait JdbcStatement {
       }
       val map = LazyMap.fromFile(File(path), mf)
       SqlBackend.idents.foldLeft(map) { (m, id) =>
-        val value = Option(rs.getObject(id.name)).map(_.toString)
-        m.add(value.map(v => Property(id, v)))
+        Option(rs.getObject(id.name)).map(_.toString) match {
+          case Some(v) => m.add(Property(id, v))
+          case None => m.remove(id) // so that extractors are not tried
+        }
       }
     }
   }
