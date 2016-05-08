@@ -60,7 +60,7 @@ object MetadataFile {
   }
 
   private val queryTransform =
-    new PrefixIdentTransform(idents.all.toSet + Ident.checksum) ~>
+    new PrefixIdentTransform(idents.all.toSet + Ident.checksum + IdMacro.ident) ~>
     TagValueTransform ~> IdMacro
 
   private val queryParser = Query.create(QuerySettings(Comp.all, queryTransform))
