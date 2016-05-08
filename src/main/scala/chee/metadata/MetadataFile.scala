@@ -6,6 +6,7 @@ import chee.properties._
 import chee.query._
 import chee.util.files._
 import chee.util.predicates._
+import chee.util.Render._
 import RecElement._
 import RecFormat._
 import com.typesafe.scalalogging.LazyLogging

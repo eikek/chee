@@ -1,5 +1,7 @@
 package chee.properties
 
+import chee.util.Render
+
 sealed trait Condition
 sealed trait Leaf extends Condition
 case class Prop(comp: Comp, prop: Property) extends Condition with Leaf {
@@ -82,15 +84,61 @@ object Condition {
     case n => n
   }
 
-  def render(c: Condition) = Condition.reduce[String](
-    leaf => leaf match {
-      case Exists(id) => s"${id.name}?"
-      case Prop(comp, Property(id, value)) => s"""${id.name}${comp.name}'${value.replaceAll("'", "\'")}'"""
-      case IdentProp(comp, id1, id2) => s"${id1.name}${comp.name}'${id2.name}"
-      case TrueCondition => "true"
-    },
-    op => (s1, s2) => s1 +" "+ s2,
-    op => os => s"""(${if (op == Junc.Or) "|" else "&"} """ + os.getOrElse("") + ")",
-    s => s"!$s")(c)
+  object Render {
+    implicit def _conditionRender(implicit
+      r0: Render[TrueCondition.type],
+      r1: Render[Exists],
+      r2: Render[Prop],
+      r3: Render[IdentProp],
+      r4: Render[Not],
+      r5: Render[Junc]): Render[Condition] =
+      chee.util.Render {
+        case c@TrueCondition => r0.render(c)
+        case c: Exists => r1.render(c)
+        case c: Prop => r2.render(c)
+        case c: IdentProp => r3.render(c)
+        case c: Not => r4.render(c)
+        case c: Junc => r5.render(c)
+      }
+  }
+}
 
+object ConditionFormat {
+  import Condition.Render._
+
+  implicit val _trueCondition: Render[TrueCondition.type] =
+    Render(_ => "true")
+
+  implicit val _existsCondition: Render[Exists] = Render {
+    case Exists(id) => s"${id.name}?"
+  }
+
+  implicit val _propCondition: Render[Prop] = Render {
+    case Prop(comp, Property(id, value)) =>
+      s"""${id.name}${comp.name}'${value.replaceAll("'", "\'")}'"""
+  }
+
+  implicit val _identPropRender: Render[IdentProp] = Render {
+    case IdentProp(comp, id1, id2) => s"${id1.name}${comp.name}'${id2.name}"
+  }
+
+  implicit def _juncRender: Render[Junc] = Render {
+    case Junc(op, nodes) =>
+      if (nodes.isEmpty) ""
+      else {
+        val r = implicitly[Render[Condition]]
+        s"""(${if (op == Junc.Or) "|" else "&"} ${nodes.map(n => r.render(n)).mkString(" ")})"""
+      }
+  }
+
+  implicit def _notRender: Render[Not] = Render {
+    case Not(c) =>
+      val r = implicitly[Render[Condition]]
+      s"!${r.render(c)}"
+  }
+
+  def render(c: Condition): String = {
+    val r = implicitly[Render[Condition]]
+    r.render(c)
+  }
 }

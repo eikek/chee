@@ -6,6 +6,7 @@ import org.scalatest._
 import fastparse.all.P
 import chee.properties.{ FormatPatterns, MapGet }
 import chee.util.parsing._
+import chee.util.Render.Ops
 import RecElement._
 import RecFormat._
 import Generators._

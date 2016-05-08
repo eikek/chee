@@ -1,5 +1,7 @@
 package chee.metadata
 
+import chee.util.Render
+
 object RecElement {
   sealed trait Element
   sealed trait RecordEl extends Element
@@ -91,66 +93,48 @@ object RecElement {
   }
 }
 
-trait RecRender[A <: RecElement.Element] {
-  def render(a: A): String
-}
-
-object RecRender {
-  def apply[A <: RecElement.Element](f: A => String): RecRender[A] =
-    new RecRender[A] {
-      def render(a: A) = f(a)
-    }
-}
-
 object RecFormat {
   import RecElement._
 
-  implicit val _comment: RecRender[Comment] =
-    RecRender { comment =>
+  implicit val _comment: Render[Comment] =
+    Render { comment =>
       "#" + comment.text.replace("\n", "\n#")
     }
 
-  implicit val _field: RecRender[Field] =
-    RecRender { field =>
+  implicit val _field: Render[Field] =
+    Render { field =>
       s"""${field.label}: ${field.value.replace("\n", "\n+ ")}"""
     }
 
-  implicit def _recordEl(implicit rf: RecRender[Field], rc: RecRender[Comment]): RecRender[RecordEl] =
-    RecRender {
+  implicit def _recordEl(implicit rf: Render[Field], rc: Render[Comment]): Render[RecordEl] =
+    Render {
       case f: Field => rf.render(f)
       case c: Comment => rc.render(c)
     }
 
-  implicit def _record(implicit re: RecRender[RecordEl]): RecRender[Record] =
-    RecRender { record =>
+  implicit def _record(implicit re: Render[RecordEl]): Render[Record] =
+    Render { record =>
       record.els.map(re.render).mkString("\n")
     }
 
-  implicit def _descriptor(implicit re: RecRender[RecordEl]): RecRender[Descriptor] =
-    RecRender {
+  implicit def _descriptor(implicit re: Render[RecordEl]): Render[Descriptor] =
+    Render {
       case Descriptor.Empty => ""
       case Descriptor.NonEmpty(els, _) => els.map(re.render).mkString("\n")
     }
 
   implicit def _entry(implicit
-    rr: RecRender[Record],
-    rd: RecRender[Descriptor],
-    rc: RecRender[Comment]): RecRender[Entry] =
-  RecRender {
+    rr: Render[Record],
+    rd: Render[Descriptor],
+    rc: Render[Comment]): Render[Entry] =
+  Render {
     case c: Comment => rc.render(c)
     case r: Record => rr.render(r)
     case d: Descriptor => rd.render(d)
   }
 
-  implicit def _database(implicit re: RecRender[Entry]): RecRender[Database] =
-    RecRender { db =>
+  implicit def _database(implicit re: Render[Entry]): Render[Database] =
+    Render { db =>
       db.els.map(re.render).mkString("\n\n")
     }
-
-
-  implicit class ElementOps[A <: Element](el: A) {
-    def render(implicit renderer: RecRender[A]): String =
-      renderer.render(el)
-  }
-
 }
