@@ -116,11 +116,11 @@ class RangeMacro(now: LocalDateTime)  extends Transform {
   })(c)
 
   class SimpleRangeParser(now: LocalDateTime) extends LocalDateTimeRangeParser(now) {
-    val nonDash: P[String] = P(!"-" ~ AnyChar).rep(1).!
+    val nonDash: P[String] = P(!"--" ~ AnyChar).rep(1).!
 
-    val someRange: P[(String, String)] = P(nonDash ~ ("-"|"--") ~ nonDash)
+    val someRange: P[(String, String)] = P(nonDash ~ "--" ~ nonDash)
 
-    val stringDateRange: Parser[(String, String)] = dateRange.map {
+    val stringDateRange: Parser[(String, String)] = calcRange.map {
       case DateRange(s, e) => (s.asString, e.asString)
     }
 
