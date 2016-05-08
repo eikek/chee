@@ -79,7 +79,7 @@ class LocationAdd extends ScoptCommand with LockSupport {
     for (dir <- opts.dirs) {
       cfg.getLocationConf.add(Entry(dir, opts.query, opts.recursive, opts.all)).get
       val files = FileBackend.find(cond, dir, opts.recursive, mf).map(_ +  added)
-      sqlite.insert(files, ProgressCount(), progress)
+      sqlite.insert(files, ProgressCount(), progress).get
     }
   }
 

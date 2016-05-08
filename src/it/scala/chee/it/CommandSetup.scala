@@ -11,8 +11,6 @@ import chee.TestInfo
 import chee.cli.{Command, LocationAdd}
 import chee.conf._
 import chee.query.SqliteBackend
-import chee.util.files._
-import com.typesafe.config.Config
 
 trait CommandSetup {
 

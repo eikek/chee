@@ -1,7 +1,6 @@
 package chee.query
 
 import better.files._
-import chee.crypto.CheeCrypt
 import chee.properties._
 import chee.util.files._
 import java.nio.file.Path
@@ -20,13 +19,13 @@ object SqlBackend {
       loop(
         id => lookup('ident),
         id => raw(","),
-        MapGet.idents(false),
+        MapGet.unit(idents),
         includeEmpty = false),
       raw(") VALUES ("),
       loop(
         id => cond(existsIdent(id), quote(''', lookup(id)), raw("null")),
         id => raw(","),
-        MapGet.idents(false),
+        MapGet.unit(idents),
         includeEmpty = false),
       raw(")")).right
 
