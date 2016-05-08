@@ -1,7 +1,6 @@
 package chee.properties
 
 import better.files._
-import chee.query.EnumMacro
 import com.typesafe.scalalogging.LazyLogging
 
 object Predicates extends LazyLogging {
@@ -54,6 +53,14 @@ object Predicates extends LazyLogging {
         unit(false)
     }
 
+  def in(in: In): Predicate =
+    value(in.id).map {
+      case Some(value) =>
+        val contains = in.values.map(_.toLowerCase).toSet
+        contains(value)
+      case None => false
+    }
+
   def and(ps: List[Predicate]): Predicate =
     ps.toStream.foldRight(unit(true))(combineAnd)
 
@@ -83,16 +90,58 @@ object Predicates extends LazyLogging {
     }
 
   def apply(c: Condition): Predicate =
-    Condition.reduce[List[Predicate]](
-      leaf => leaf match {
-        case p: Prop => List(prop(p))
-        case i: IdentProp => List(identprop(i))
-        case e: Exists => List(exists(e.ident))
-        case TrueCondition => List(True)
-      },
-      _ => (l1, l2) => l1 ::: l2,
-      op => ol => ol.map(x => List(junc(op, x: _*)))
-        .getOrElse(sys.error("Invalid tree: Cannot map an empty junction to a predicate.")),
-      l => l.map(not)
-    )(EnumMacro(c))(0)
+    Pred.createPredicate(c)
+
+  trait Pred[A] {
+    def pred(a: A): Predicate
+  }
+
+  object Pred {
+    def apply[A](f: A => Predicate): Pred[A] = new Pred[A] {
+      def pred(a: A) = f(a)
+    }
+
+    implicit val _trueCondition: Pred[TrueCondition.type] = Pred(_ => True)
+    implicit val _exists: Pred[Exists] = Pred {
+      case Exists(id) => exists(id)
+    }
+    implicit val _prop: Pred[Prop] = Pred(prop)
+    implicit val _identProp: Pred[IdentProp] = Pred(identprop)
+    implicit val _inPred: Pred[In] = Pred(in)
+
+    implicit def _juncPred: Pred[Junc] = Pred {
+      case Junc(op, nodes) =>
+        if (nodes.isEmpty) True
+        else {
+          val r = implicitly[Pred[Condition]]
+          junc(op, nodes.map(r.pred): _*)
+        }
+    }
+    implicit def _notPred: Pred[Not] = Pred {
+      case Not(c) =>
+        val r = implicitly[Pred[Condition]]
+        not(r.pred(c))
+    }
+
+    implicit def _conditionPred(implicit
+      r0: Pred[TrueCondition.type],
+      r1: Pred[Exists],
+      r2: Pred[Prop],
+      r3: Pred[IdentProp],
+      r4: Pred[Not],
+      r5: Pred[Junc],
+      r6: Pred[In]): Pred[Condition] =
+      Pred {
+        case c@TrueCondition => r0.pred(c)
+        case c: Exists => r1.pred(c)
+        case c: Prop => r2.pred(c)
+        case c: IdentProp => r3.pred(c)
+        case c: Not => r4.pred(c)
+        case c: Junc => r5.pred(c)
+        case c: In => r6.pred(c)
+      }
+
+    def createPredicate(c: Condition): Predicate =
+      _conditionPred.pred(c)
+  }
 }

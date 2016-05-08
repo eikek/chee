@@ -89,9 +89,13 @@ class PredicateTest extends FlatSpec with Matchers {
     po.result(LazyMap()) should be (true)
   }
 
+  it should "eval to True if empty" in {
+    Predicates(Condition.and()) should be (True)
+    Predicates(Condition.or()) should be (True)
+    Predicates(Condition.and(Condition.or())).result(LazyMap.empty) should be (true)
+  }
+
   "invalid trees" should "throw" in {
-    import Condition._
-    val Failure(_) = Try(Predicates(and(or())))
     val Failure(_) = Try(Predicates(Prop(Comp("abc"), width -> "10")))
   }
 }

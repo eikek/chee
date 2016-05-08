@@ -44,10 +44,10 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
     lisp.result(maps(0)) should be (lisp.result(map0))
   }
 
-  it should "expand enum macro" in {
+  it should "use in operator" in {
     val sqlite = new SqliteBackend(TestInfo.sampleDb, None)
     val Success(result1) = sqlite.find(Condition.or(Prop(Comp.Like, Ident.extension -> "jpg"), Prop(Comp.Like, Ident.extension -> "png")))
-    val Success(result2) = sqlite.find(Prop(Comp("~"), Ident.extension -> "jpg;png"))
+    val Success(result2) = sqlite.find(In(Ident.extension, List("jpg", "png")))
     result1.map(lisp.result) should be (result2.map(lisp.result))
   }
 

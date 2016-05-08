@@ -9,8 +9,8 @@ case class QuerySettings(comps: Set[Comp], transform: Transform)
 
 object QuerySettings {
   def apply(now: LocalDateTime, mf: MetadataFile = MetadataFile.empty, colls: Seq[Collection] = Seq.empty): QuerySettings =
-    if (colls.isEmpty) QuerySettings(Comp.all ++ EnumMacro.comps, Transform.makeChain(now, mf))
-    else QuerySettings(Comp.all ++ EnumMacro.comps, Transform.withCollectionMacro(now, colls, mf))
+    if (colls.isEmpty) QuerySettings(Comp.all, Transform.makeChain(now, mf))
+    else QuerySettings(Comp.all, Transform.withCollectionMacro(now, colls, mf))
 }
 
 trait Query {

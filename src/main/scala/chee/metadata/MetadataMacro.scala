@@ -13,7 +13,7 @@ class MetadataMacro(mf: MetadataFile) extends Transform with LazyLogging {
     val ids = mf.findIds(c)
     logger.debug(s"Found ${ids.size} metadata results for condition ${c}")
     if (ids.isEmpty) Not(TrueCondition)
-    else Prop(Comp("~"), Ident.checksum -> ids.mkString(";"))
+    else In(Ident.checksum, ids.toSeq)
   }
 
   def apply(c: Condition): Condition = Condition.mapAll ({

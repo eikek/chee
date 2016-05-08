@@ -13,6 +13,7 @@ case object TrueCondition extends Condition with Leaf
 case class Exists(ident: Ident) extends Condition with Leaf
 case class Junc(op: Junc.Op, nodes: List[Condition]) extends Condition
 case class Not(cond: Condition) extends Condition
+case class In(id: Ident, values: Seq[String]) extends Condition with Leaf
 
 object Junc {
   sealed trait Op
@@ -54,21 +55,6 @@ object Condition {
     case Not(node) => f(Not(mapAll(f)(node)))
   }
 
-  def reduce[B](
-    leaf: Leaf => B,
-    join: Junc.Op => (B, B) => B,
-    junc: Junc.Op => Option[B] => B,
-    neg: B => B)(c: Condition): B =
-    c match {
-      case e: Leaf => leaf(e)
-      case Junc(op, nodes) => junc(op) {
-        Option(nodes).filter(_.nonEmpty) map { ns =>
-          ns.map(reduce(leaf, join, junc, neg)).reduce(join(op))
-        }
-      }
-      case Not(node) => neg(reduce(leaf, join, junc, neg)(node))
-    }
-
   /** Remove empty junctions and double negation. */
   val normalize: Condition => Condition = mapAll {
     case Junc(op, nodes) =>
@@ -91,7 +77,8 @@ object Condition {
       r2: Render[Prop],
       r3: Render[IdentProp],
       r4: Render[Not],
-      r5: Render[Junc]): Render[Condition] =
+      r5: Render[Junc],
+      r6: Render[In]): Render[Condition] =
       chee.util.Render {
         case c@TrueCondition => r0.render(c)
         case c: Exists => r1.render(c)
@@ -99,6 +86,7 @@ object Condition {
         case c: IdentProp => r3.render(c)
         case c: Not => r4.render(c)
         case c: Junc => r5.render(c)
+        case c: In => r6.render(c)
       }
   }
 }
@@ -108,18 +96,18 @@ object ConditionFormat {
 
   implicit val _trueCondition: Render[TrueCondition.type] =
     Render(_ => "true")
-
   implicit val _existsCondition: Render[Exists] = Render {
     case Exists(id) => s"${id.name}?"
   }
-
   implicit val _propCondition: Render[Prop] = Render {
     case Prop(comp, Property(id, value)) =>
       s"""${id.name}${comp.name}'${value.replaceAll("'", "\'")}'"""
   }
-
   implicit val _identPropRender: Render[IdentProp] = Render {
     case IdentProp(comp, id1, id2) => s"${id1.name}${comp.name}'${id2.name}"
+  }
+  implicit val _inRender: Render[In] = Render {
+    case In(id, values) => id.name + "~" + values.mkString(";")
   }
 
   implicit def _juncRender: Render[Junc] = Render {
@@ -130,7 +118,6 @@ object ConditionFormat {
         s"""(${if (op == Junc.Or) "|" else "&"} ${nodes.map(n => r.render(n)).mkString(" ")})"""
       }
   }
-
   implicit def _notRender: Render[Not] = Render {
     case Not(c) =>
       val r = implicitly[Render[Condition]]

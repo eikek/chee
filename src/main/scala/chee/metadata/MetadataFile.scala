@@ -61,7 +61,7 @@ object MetadataFile {
 
   private val queryTransform =
     new PrefixIdentTransform(idents.all.toSet + Ident.checksum) ~>
-    TagValueTransform ~> EnumMacro ~> IdMacro
+    TagValueTransform ~> IdMacro
 
   private val queryParser = Query.create(QuerySettings(Comp.all, queryTransform))
 

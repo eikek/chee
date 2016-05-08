@@ -66,19 +66,15 @@ object SqlFormat {
     case c => c.name
   }
 
-  private def createInCondition(id: Ident, value: String): String = {
-    EnumMacro.EnumParser.parse(value) match {
-      case Right(list) =>
-        val v = list.map(v => sqlValue(Prop(Comp.Eq, id -> v.toLowerCase))).mkString("(", ", ", ")")
-        s"lower(${id.name}) in $v"
-      case Left(msg) => chee.UserError(msg)
-    }
+  implicit val _inCondition: Render[In] = Render {
+    case In(id, values) =>
+      val v = values.map(v => sqlValue(Prop(Comp.Eq, id -> v.toLowerCase))).mkString("(", ", ", ")")
+      s"lower(${id.name}) in $v"
   }
 
   implicit val _propCondition: Render[Prop] = Render {
     case p@Prop(comp, Property(id, value)) =>
-      if (EnumMacro.comps(comp)) createInCondition(id, value)
-      else s"${columnSql(id, comp)} ${operatorSql(comp)} ${sqlValue(p)}"
+      s"${columnSql(id, comp)} ${operatorSql(comp)} ${sqlValue(p)}"
   }
 
   implicit val _identPropRender: Render[IdentProp] = Render {

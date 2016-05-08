@@ -40,6 +40,8 @@ final class PrefixIdentTransform(val idents: Set[Ident]) extends Transform {
       IdentProp(comp, findIdent(id1), findIdent(id2))
     case Exists(ident) =>
       Exists(findIdent(ident))
+    case In(id, values) =>
+      In(findIdent(id), values)
     case n => n
   })(c)
 
@@ -90,31 +92,10 @@ object IdMacro extends Transform {
         if (id2 == ident) Ident.checksum else id2)
     case Exists(`ident`) =>
       Exists(Ident.checksum)
+    case In(`ident`, values) =>
+      chee.UserError("id macro not supported for IN operator")
     case n => n
   })(c)
-}
-
-object EnumMacro extends Transform {
-  private val comp = Comp("~")
-  override val comps = Set(comp)
-
-  def apply(c: Condition) = Condition.mapAll({
-    case p@Prop(`comp`, Property(id, value)) =>
-      EnumParser.parse(value) match {
-        case Right(s) =>
-          Junc(Junc.Or, s.map(v => Prop(Comp.Like, id -> v)).toList)
-        case Left(msg) =>
-          chee.UserError(msg)
-      }
-    case n => n
-  })(c)
-
-  object EnumParser {
-    val item: P[String] = P(CharNotIn(Seq(';')).rep(1).!)
-    val enum: P[Seq[String]] = P(item.rep(1, ";"))
-    def parse(str: String): Either[String, Seq[String]] =
-      enum.parseAll(str)
-  }
 }
 
 class RangeMacro(now: LocalDateTime)  extends Transform {
@@ -153,7 +134,7 @@ final class CollectionMacro(colls: Seq[Collection], mf: MetadataFile) extends Tr
 
   import CollectionMacro._
 
-  val query = Query.create(QuerySettings(Comp.all ++ EnumMacro.comps, Transform.makeChain(LocalDateTime.now, mf) ~> this))
+  val query = Query.create(QuerySettings(Comp.all, Transform.makeChain(LocalDateTime.now, mf) ~> this))
 
   lazy val queryMap = colls.map(c => c.name -> c.query).toMap
 

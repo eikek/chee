@@ -72,6 +72,9 @@ quotation characters can be included using a backslash.
 model:"Nikon \"1*"
 ----------------------------------------------------------------------
 
+Whitespace between condition elemens is optional. So `model : Nikon`
+and `model:Nikon` are the same.
+
 
 ==== Comparators
 
@@ -89,6 +92,31 @@ There are the following comparators.
 `\<`,`>`(lower/greater than)::
     For numeric comparisons. Compares strings alphabetically. Dates/
     Timestamps are converted to a numeric value before being compared.
+`~` (in)::
+    Checks if a value is contained in a predifined set.
+
+
+More about the `~` comparator, others are self explaining. The `~` can
+be used to abbreviate conditions like the following:
+
+----------------------------------------------------------------------
+(| ext:jpg ext:png ext:gif)
+----------------------------------------------------------------------
+
+is
+
+----------------------------------------------------------------------
+ext~jpg;png;gif
+----------------------------------------------------------------------
+
+The value must be an enumeration, where each item is separated by a
+semi-colon `;`. If an item contains a semicolon, it must be escaped
+using a backslash `\`. If items contain whitespace the whole
+enumeration must be enclosed in quotes, as usual.
+
+Values are always compared case insensitive; as with `like` without
+wildcards. The wildcard (`*`) character is not supported (it is not
+treated specially).
 
 
 ==== Special Values
@@ -249,30 +277,6 @@ but it can be encoded using a condition directive:
 ----------------------------------------------------------------------
 
 See xref:_format_patterns[Format Patterns] for details.
-
-
-===== enumeration
-
-The `~` comparator can be used to test whether a property is contained
-in an enumeration of values.
-
-To abbreviate conditions like the following:
-
-----------------------------------------------------------------------
-(| ext:jpg ext:png ext:gif)
-----------------------------------------------------------------------
-
-the `~` macro can be used. The value must be an enumeration, where
-each item is separated by a semi-colon `;`. The wildcard (`*`)
-character is not allowed for an item. The above query can be written
-as:
-
-----------------------------------------------------------------------
-ext~jpg;png;gif
-----------------------------------------------------------------------
-
-Values are always compared case insensitive; as with `like` without
-wildcards.
 
 
 ===== range

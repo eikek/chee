@@ -26,6 +26,17 @@ class QueryParser(comparators: Set[Comp]) {
 
   lazy val exists: P[Exists] = P(ident ~ "?").map(Exists.apply)
 
+  def simpleEnum(stopChars: Seq[Char]): P[Seq[String]] =
+    P(stringEscape('\\', stopChars :+ ';').rep(1, sep = ";"))
+
+  def quotedEnum(quote: Char): P[Seq[String]] = P(
+    quote.toString ~ simpleEnum(Seq(quote)) ~ quote.toString
+  )
+
+  lazy val in: P[In] = P(ident ~ "~" ~/ (quotedEnum(''') | quotedEnum('"') | simpleEnum(")\"' \t"))).map {
+    case (id, values) => In(id, values)
+  }
+
   lazy val juncOp: P[Junc.Op] = P("&" | "|").!.map {
     case "&" => Junc.And
     case _ => Junc.Or
@@ -39,7 +50,7 @@ class QueryParser(comparators: Set[Comp]) {
     }
 
   lazy val condition: P[Condition] =
-    junc | not | idprop | prop | exists
+    junc | not | in | idprop | prop | exists
 
   def parse(in: String): Either[String, Condition] =
     condition.parseAll(in)

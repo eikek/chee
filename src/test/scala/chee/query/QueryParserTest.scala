@@ -59,6 +59,12 @@ class QueryParserTest extends FlatSpec with Matchers {
     parser.exists.parseAll("ext?") should be (Right(Exists(Ident("ext"))))
   }
 
+  "in" should "parse successful" in {
+    parser.in.parseAll("ext~jpg;png;gif") should be (Right(In('ext, Seq("jpg", "png", "gif"))))
+    parser.in.parseAll("ext~j\\;pg;png;gi\\;f") should be (Right(In('ext, Seq("j;pg", "png", "gi;f"))))
+    parser.in.parseAll("ext~'j p g;pn g;g if'") should be (Right(In('ext, Seq("j p g", "pn g", "g if"))))
+  }
+
   "not" should "parse successful" in {
     val tries = Map(
       "!ext:jpg" -> Not(Prop(Comp.Like, Ident("ext") -> "jpg")),
@@ -86,6 +92,7 @@ class QueryParserTest extends FlatSpec with Matchers {
 
   "conditions" should "parse successfully" in {
     val tries = Map(
+      "ext~jpg;png;gif" -> In('ext, Seq("jpg", "png", "gif")),
       "ext:test" -> Prop(Comp.Like, Ident("ext") -> "test"),
       "!ext:test" -> Not(Prop(Comp.Like, Ident("ext") -> "test")),
       "ext?" -> Exists(Ident("ext")),
@@ -102,7 +109,9 @@ class QueryParserTest extends FlatSpec with Matchers {
       "width>'height" -> IdentProp(Comp.Gt, Ident.width, Ident.height),
       "(& !ext:rest !ext:test)" -> Condition.and(
         Not(Prop(Comp.Like, Ident("ext") -> "rest")),
-        Not(Prop(Comp.Like, Ident("ext") -> "test"))))
+        Not(Prop(Comp.Like, Ident("ext") -> "test"))),
+      "(& ext~jpg;png)" -> Condition.and(
+        In('ext, Seq("jpg", "png"))))
 
     for ((str, tree) <- tries) {
       parser.parse(str) should be (Right(tree))

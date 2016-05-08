@@ -27,13 +27,15 @@ object parsing {
     case _ => !CharIn(chars: _*) ~ AnyChar
   }
 
-  def quotedString(quote: Char, escapeChar: Char = '\\'): P[String] = {
+  def stringEscape(escapeChar: Char, stopChars: Seq[Char]): P[String] = {
     val p = P(escapeChar.toString ~ AnyChar.!)
-    val q = P(!CharIn(Seq(escapeChar, quote)) ~ AnyChar.!)
+    val q = P(!CharIn(stopChars :+ escapeChar) ~ AnyChar).rep(1)
+    P(p | q.!).rep.map(_.mkString)
+  }
 
-    val str: P[String] = P((p | q).rep).map(_.mkString)
-
-    P(quote.toString ~ str ~ quote.toString)
+  def quotedString(quote: Char, escapeChar: Char = '\\'): P[String] = {
+    val str = stringEscape(escapeChar, Seq(quote))
+    P(quote.toString ~/ str ~ quote.toString)
   }
 
   final implicit class CustomApi[T](self: P[T]) {
