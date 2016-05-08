@@ -5,6 +5,8 @@ import org.scalatest._
 import chee.properties._
 import chee.properties.Patterns._
 import chee.TestInfo
+import FormatPatterns.lisp
+import scala.util.Success
 
 class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
 
@@ -33,8 +35,6 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "add all properties" in withNewFile { file =>
-    import FormatPatterns.lisp
-
     val sqlite = new SqliteBackend(file, None)
     val map0 = LazyMap.fromFile(TestInfo.images.head, MetadataFile.empty) + (Ident.location -> "./")
     sqlite.insert(Seq(map0), 0, Progress.empty[Boolean, Int]).get
@@ -42,6 +42,13 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
     val maps = sqlite.find(TrueCondition).get.toList
     maps should have size (1)
     lisp.result(maps(0)) should be (lisp.result(map0))
+  }
+
+  it should "expand enum macro" in {
+    val sqlite = new SqliteBackend(TestInfo.sampleDb, None)
+    val Success(result1) = sqlite.find(Condition.or(Prop(Comp.Like, Ident.extension -> "jpg"), Prop(Comp.Like, Ident.extension -> "png")))
+    val Success(result2) = sqlite.find(Prop(Comp("~"), Ident.extension -> "jpg;png"))
+    result1.map(lisp.result) should be (result2.map(lisp.result))
   }
 
   "exists" should "check for existing files" in withNewFile { file =>

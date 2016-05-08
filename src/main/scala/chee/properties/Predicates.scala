@@ -1,6 +1,7 @@
 package chee.properties
 
 import better.files._
+import chee.query.EnumMacro
 import com.typesafe.scalalogging.LazyLogging
 
 object Predicates extends LazyLogging {
@@ -93,5 +94,5 @@ object Predicates extends LazyLogging {
       op => ol => ol.map(x => List(junc(op, x: _*)))
         .getOrElse(sys.error("Invalid tree: Cannot map an empty junction to a predicate.")),
       l => l.map(not)
-    )(c)(0)
+    )(EnumMacro(c))(0)
 }

@@ -25,7 +25,7 @@ class SqliteBackend(dbfile: File, root: Option[File], pageSize: Int = 500) exten
     find(cond, MetadataFile.empty)
 
   final def find(cond: Condition, mf: MetadataFile): Try[Stream[LazyMap]] = {
-    val c = root.map(relativeCond(_)(cond)) getOrElse cond
+    val c = EnumMacro(root.map(relativeCond(_)(cond)) getOrElse cond)
     val sql = (s"""SELECT ${SqlBackend.idents.map(_.name).mkString(",")},coalesce(created,lastmodified) as sorting"""
       + s""" FROM chee_index WHERE ${SqlBackend.whereClause(c)}"""
       + s""" ORDER BY sorting""")

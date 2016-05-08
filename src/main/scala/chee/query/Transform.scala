@@ -21,14 +21,15 @@ object Transform {
     override val comps = Set.empty[Comp]
   }
 
+  def standard(now: LocalDateTime): Transform =
+    new RangeMacro(now) ~> DateMacro ~> IdMacro
+
   def makeChain(now: LocalDateTime, mf: MetadataFile = MetadataFile.empty) = {
-    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~>
-    new RangeMacro(now) ~> EnumMacro ~> DateMacro ~> IdMacro
+    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~> standard(now)
   }
 
-  def withCollectionMacro(colls: Seq[Collection], mf: MetadataFile = MetadataFile.empty): Transform =
-    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~> new CollectionMacro(colls, mf) ~>
-    new RangeMacro(LocalDateTime.now) ~> EnumMacro ~> DateMacro ~> IdMacro
+  def withCollectionMacro(now: LocalDateTime, colls: Seq[Collection], mf: MetadataFile = MetadataFile.empty): Transform =
+    PrefixIdentTransform.default ~> new MetadataMacro(mf) ~> new CollectionMacro(colls, mf) ~> standard(now)
 }
 
 final class PrefixIdentTransform(val idents: Set[Ident]) extends Transform {
@@ -154,7 +155,7 @@ final class CollectionMacro(colls: Seq[Collection], mf: MetadataFile) extends Tr
 
   import CollectionMacro._
 
-  val query = Query.create(QuerySettings(Comp.all, Transform.makeChain(LocalDateTime.now, mf) ~> this))
+  val query = Query.create(QuerySettings(Comp.all ++ EnumMacro.comps, Transform.makeChain(LocalDateTime.now, mf) ~> this))
 
   lazy val queryMap = colls.map(c => c.name -> c.query).toMap
 
