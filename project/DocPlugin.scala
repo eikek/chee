@@ -177,10 +177,7 @@ object DocPlugin extends AutoPlugin {
   def exportHtml(log: Logger, out: File, options: Attr)(doc: File): File = {
     log.info(s"Export html: ${doc.getName}")
     val outHtml = out / "html" / (IO.split(doc.getName)._1 + ".html")
-    val opts = options + ("to_file" -> outHtml.toString) + withAttr(options) {
-      if (doc.getName == "manual.adoc") Map("toc" -> "true", "toc-placement" -> "top")
-      else Map.empty[String, AnyRef]
-    }
+    val opts = options + ("to_file" -> outHtml.toString)
     engine.convertFile(doc, asMutable(opts))
     outHtml
   }

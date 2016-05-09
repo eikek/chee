@@ -2,6 +2,9 @@ Chee- Photo Organizer (<version>)
 ============================
 Eike Kettner
 v<version> (build <commit> at <buildtime>)
+:toc: true
+:toclevels: 3
+:toc-placement: top
 
 Chee is a command line tool for managing and organizing photos.
 
