@@ -95,7 +95,7 @@ object ScriptPlugin extends AutoPlugin {
       dirs match {
         case Nil => result
         case f :: ds if f.isFile =>
-          IO.relativize(dir, f) match {
+          IO.relativize(dir.getParentFile, f) match {
             case Some(name) => loop(ds, (f -> name) :: result)
             case _ => sys.error(s"$f is not parent of $dir")
           }
