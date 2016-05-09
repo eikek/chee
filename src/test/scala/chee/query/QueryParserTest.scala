@@ -1,8 +1,16 @@
 package chee.query
 
 import org.scalatest._
+import org.scalacheck.Properties
+import org.scalacheck.Prop.forAll
+import fastparse.all.P
 import chee.properties._
 import chee.util.parsing._
+import chee.properties.Generators._
+import ConditionFormat._
+import Condition.Render._
+import chee.util.Render.Ops
+import scala.util.Try
 
 class QueryParserTest extends FlatSpec with Matchers {
 
@@ -53,6 +61,9 @@ class QueryParserTest extends FlatSpec with Matchers {
   "prop" should "parse successful" in {
     parser.prop.parseAll("ext:jpg") should be (Right(
       Prop(Comp.Like, Ident("ext") -> "jpg")))
+
+    parser.prop.parseAll("height<'565'") should be (Right(
+      Prop(Comp.Lt, Ident.height -> "565")))
   }
 
   "exists" should "parse successful" in {
@@ -67,6 +78,7 @@ class QueryParserTest extends FlatSpec with Matchers {
 
   "not" should "parse successful" in {
     val tries = Map(
+      "!length='2626'" -> Not(Prop(Comp.Eq, Ident.length -> "2626")),
       "!ext:jpg" -> Not(Prop(Comp.Like, Ident("ext") -> "jpg")),
       "!ext?" -> Not(Exists(Ident("ext"))),
       "!!!!ext:jpg" -> Not(Not(Not(Not(Prop(Comp.Like, Ident("ext") -> "jpg"))))))
@@ -92,6 +104,7 @@ class QueryParserTest extends FlatSpec with Matchers {
 
   "conditions" should "parse successfully" in {
     val tries = Map(
+      "filename~'yc; dnVmu'" -> In('filename, List("yc", " dnVmu")),
       "ext~jpg;png;gif" -> In('ext, Seq("jpg", "png", "gif")),
       "ext:test" -> Prop(Comp.Like, Ident("ext") -> "test"),
       "!ext:test" -> Not(Prop(Comp.Like, Ident("ext") -> "test")),
@@ -123,5 +136,24 @@ class QueryParserTest extends FlatSpec with Matchers {
     tree should be (Right(Condition.and(
       Prop(Comp.Like, Ident.extension -> "jpg"),
       Prop(Comp.Like, Ident.filename -> "bla*"))))
+  }
+}
+
+
+object QueryParserSpec extends Properties("QueryParser") {
+
+  val parser = new QueryParser(Comp.all)
+
+  def parse[T](p: P[T], in: String): T = p.parsePrefix(in) match {
+    case Right(x) => x
+    case Left(m) => sys.error(m)
+  }
+
+  property("parse(property.render) == property") = forAll { (p: Prop) =>
+    parse(parser.prop, p.render) == p
+  }
+
+  property("parse(condition.render) == condition") = forAll(genNonEmptyCond) { (c: Condition) =>
+    parser.parse(c.render) == Right(c)
   }
 }

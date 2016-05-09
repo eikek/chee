@@ -94,6 +94,13 @@ object Condition {
 object ConditionFormat {
   import Condition.Render._
 
+  private def makeValue(escape: Seq[Char])(s: String) = {
+    val str = escape.foldLeft(s) { (str, c) =>
+      str.replace(s"$c", s"\\$c")
+    }
+    s"${str}"
+  }
+
   implicit val _trueCondition: Render[TrueCondition.type] =
     Render(_ => "true")
   implicit val _existsCondition: Render[Exists] = Render {
@@ -101,13 +108,13 @@ object ConditionFormat {
   }
   implicit val _propCondition: Render[Prop] = Render {
     case Prop(comp, Property(id, value)) =>
-      s"""${id.name}${comp.name}'${value.replaceAll("'", "\'")}'"""
+      s"""${id.name}${comp.name}'${makeValue("'")(value)}'"""
   }
   implicit val _identPropRender: Render[IdentProp] = Render {
     case IdentProp(comp, id1, id2) => s"${id1.name}${comp.name}'${id2.name}"
   }
   implicit val _inRender: Render[In] = Render {
-    case In(id, values) => id.name + "~" + values.mkString(";")
+    case In(id, values) => s"""${id.name}~'${values.map(makeValue("';")).mkString(";")}'"""
   }
 
   implicit def _juncRender: Render[Junc] = Render {

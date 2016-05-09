@@ -1,10 +1,11 @@
-package chee
+package chee.properties
 
-import org.scalacheck.{Properties, Gen, Arbitrary}
-import org.scalacheck.Prop.forAll
+import org.scalacheck.{Gen, Arbitrary}
 import chee.properties._
 
-object PropGen {
+object Generators {
+
+  val genComp: Gen[Comp] = Gen.oneOf(Comp.all.toSeq)
 
   val genIdent: Gen[Ident] = Gen.oneOf(Ident.defaults.toList)
 
@@ -16,7 +17,7 @@ object PropGen {
   } yield Property(n, v)
 
   val intProperty = for {
-    v <- Arbitrary.arbitrary[Int]
+    v <- Gen.choose(0, 10000)
     n <- Gen.oneOf(Ident.width, Ident.height, Ident.iso)
   } yield Property(n, v.toString)
 
@@ -49,27 +50,48 @@ object PropGen {
   val genExists: Gen[Exists] = genStringIdent.map(n => Exists(n))
 
   val genProp: Gen[Prop] = for {
-    comp <- Gen.oneOf(Comp.Eq, Comp.Like, Comp.Lt, Comp.Gt)
+    comp <- genComp
     p <- genProperty
   } yield Prop(comp, p)
 
-  val genLeaf: Gen[Leaf] = Gen.oneOf(genExists, genProp)
+  implicit val arbProp: Arbitrary[Prop] = Arbitrary(genProp)
 
 
-  def genNot(sz: Int): Gen[Not] = for (n <- genCond(sz - 1)) yield Not(n)
+  val genIn: Gen[In] = for {
+    id <- genIdent
+    values <- Gen.listOf(Gen.listOf(Gen.frequency(
+      (9, Gen.alphaNumChar),
+      (1, Gen.oneOf(" ;'\"")))).map(_.mkString)).suchThat(_.size > 1)
+  } yield In(id, values)
 
-  def genJunc(sz: Int): Gen[Junc] = for {
+  val genLeaf: Gen[Leaf] = Gen.oneOf(genExists, genProp, genIn)
+
+  def genNot(sz: Int, nonEmpty: Boolean): Gen[Not] = for (n <- genCond(sz - 1, nonEmpty)) yield Not(n)
+
+  def genJunc(sz: Int, nonEmpty: Boolean): Gen[Junc] = for {
     op <- Gen.oneOf(Junc.Or, Junc.And)
     len <- Gen.choose(sz/3, sz/2)
-    nodes <- Gen.listOfN(len, genCond(sz/2))
+    nodes <- Gen.listOfN(if (nonEmpty && len == 0) 1 else len, genCond(sz/2, nonEmpty))
   } yield Junc(op, nodes)
 
-  def genCond(sz: Int): Gen[Condition] = {
-    if (sz == 0) Gen.oneOf(genExists, genProp)
-    else Gen.frequency((1, genLeaf), (1, genNot(sz)), (2, genJunc(sz)))
+  def genCond(sz: Int, nonEmpty: Boolean): Gen[Condition] = {
+    if (sz < 2) Gen.oneOf(genExists, genProp)
+    else Gen.frequency((1, genLeaf), (1, genNot(sz, nonEmpty)), (2, genJunc(sz, nonEmpty)))
   }
 
-  implicit def arbCondition: Arbitrary[Condition] = Arbitrary(Gen.sized(sz => genCond(sz)))
+  def genNonEmptyCond: Gen[Condition] = {
+    for {
+      n <- Gen.choose(1, 30)
+      cond <- genCond(n, true)
+    } yield cond
+  }
+
+  implicit def arbCondition: Arbitrary[Condition] = Arbitrary {
+    for {
+      n <- Gen.choose(0, 30)
+      cond <- genCond(n, false)
+    } yield cond
+  }
 
   implicit def arbDateTime: Arbitrary[DateTime] = Arbitrary {
     for (l <- Arbitrary.arbitrary[Long]) yield DateTime(l)
@@ -85,4 +107,5 @@ object PropGen {
       sec <- Gen.choose(0, 59)
     } yield LocalDateTime(year, month, day, hour, min, sec)
   }
+
 }

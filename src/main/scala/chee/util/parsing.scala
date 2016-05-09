@@ -8,7 +8,7 @@ object parsing {
   lazy val digit: P0 = CharIn('0' to '9')
 
   lazy val identString: P0 =
-    CharIn('a' to 'z', 'A' to 'Z', '0' to '9', "_-").rep(1)
+    (alphaPlus() ~ alphanumPlus("_").rep)
 
   lazy val WS = CharIn("\n\t ")
 

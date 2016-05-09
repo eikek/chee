@@ -2,10 +2,10 @@ package chee.properties
 
 import org.scalacheck.{Properties, Gen, Arbitrary}
 import org.scalacheck.Prop.{forAll, BooleanOperators}
+import Generators._
+import scala.language.implicitConversions
 
 object PropPredicateSpec extends Properties("PropPredicate") {
-  import chee.PropGen._
-  import scala.language.implicitConversions
 
   property("string compare <") = forAll { (s1: String, s2: String) =>
     (s1 < s2) ==> (Ident.filename ~ '< ~ s2)(LazyMap(Ident.filename -> s1))

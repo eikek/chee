@@ -2,7 +2,7 @@ package chee.properties
 
 import org.scalacheck.Properties
 import org.scalacheck.Prop.forAll
-import chee.PropGen._
+import Generators._
 
 object ConditionSpec extends Properties("Condition") {
 

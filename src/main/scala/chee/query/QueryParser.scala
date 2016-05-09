@@ -4,11 +4,11 @@ import chee.util.parsing._
 import chee.properties._
 
 class QueryParser(comparators: Set[Comp]) {
-  import fastparse.noApi._
-  import IgnoreWhitespace._
+  import fastparse.all._
+//  import IgnoreWhitespace._
 
   lazy val comp: P[Comp] =
-    P(comparators.map(c => ic(c.name).!).reduce(_ | _)).map(Comp.apply)
+    P(StringIn(comparators.map(_.name).toSeq: _*).!.map(Comp.apply))
 
   lazy val ident: P[Ident] = identString.!.map(Ident.apply)
 
@@ -16,15 +16,15 @@ class QueryParser(comparators: Set[Comp]) {
     QueryParser.quotedValue | QueryParser.simpleValue
   )
 
-  lazy val prop: P[Prop] = P(ident ~ comp ~ propValue).map {
+  lazy val prop: P[Prop] = P(ident ~ WS.rep ~ comp ~/ WS.rep ~ propValue).map {
     case (id, c, v) => Prop(c, id -> v)
   }
 
-  lazy val idprop: P[IdentProp] = P(ident ~ comp ~ ("'" ~ ident)).map {
+  lazy val idprop: P[IdentProp] = P(ident ~ WS.rep ~ comp ~ WS.rep ~ "'" ~ ident ~ !"'").map {
     case (id1, c, id2) => IdentProp(c, id1, id2)
   }
 
-  lazy val exists: P[Exists] = P(ident ~ "?").map(Exists.apply)
+  lazy val exists: P[Exists] = P(ident ~ WS.rep ~ "?").map(Exists.apply)
 
   def simpleEnum(stopChars: Seq[Char]): P[Seq[String]] =
     P(stringEscape('\\', stopChars :+ ';').rep(1, sep = ";"))
@@ -33,7 +33,7 @@ class QueryParser(comparators: Set[Comp]) {
     quote.toString ~ simpleEnum(Seq(quote)) ~ quote.toString
   )
 
-  lazy val in: P[In] = P(ident ~ "~" ~/ (quotedEnum(''') | quotedEnum('"') | simpleEnum(")\"' \t"))).map {
+  lazy val in: P[In] = P(ident ~ WS.rep ~ "~" ~ WS.rep ~/ (quotedEnum(''') | quotedEnum('"') | simpleEnum(")\"' \t"))).map {
     case (id, values) => In(id, values)
   }
 
@@ -42,15 +42,15 @@ class QueryParser(comparators: Set[Comp]) {
     case _ => Junc.Or
   }
 
-  lazy val not: P[Not] = P("!" ~ condition).map(Not.apply)
+  lazy val not: P[Not] = P("!" ~ WS.rep ~ condition).map(Not.apply)
 
   lazy val junc: P[Junc] =
-    P("(" ~ juncOp ~ condition.rep(1) ~ ")").map {
+    P("(" ~ WS.rep ~ juncOp ~/ WS.rep ~ condition.rep(1) ~ ")").map {
       case (op, conds) => Junc(op, conds.toList)
     }
 
   lazy val condition: P[Condition] =
-    junc | not | in | idprop | prop | exists
+    P(WS.rep ~ (junc | not | in | idprop | prop | exists) ~ WS.rep)
 
   def parse(in: String): Either[String, Condition] =
     condition.parseAll(in)

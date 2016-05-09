@@ -2,9 +2,9 @@ package chee.properties
 
 import org.scalacheck.{Properties, Gen, Arbitrary}
 import org.scalacheck.Prop.forAll
+import Generators._
 
-object PropertyMapSpec extends  Properties("PropertyMap") {
-  import chee.PropGen._
+object PropertyMapSpec extends Properties("PropertyMap") {
 
   property("++") = forAll { (map: PropertyMap) => (map ++ map) == map }
 

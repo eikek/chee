@@ -50,4 +50,14 @@ class TransformTest extends FlatSpec with Matchers {
       Prop(Comp.Like, Ident.checksum -> "abc*"),
       Prop(Comp.Gt, Ident.width -> "2000")))
   }
+
+  "range macro" must "recoginze simple ranges" in {
+    val tree = Prop(Comp("/"), 'len -> "100--500")
+    val trans = new RangeMacro(now)
+    trans(tree) should be (
+      Condition.and(
+        Prop(Comp.Gt, 'len -> "100"),
+        Prop(Comp.Lt, 'len -> "500"))
+    )
+  }
 }
