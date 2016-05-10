@@ -164,7 +164,5 @@ navigating to a record."
   (add-to-list 'rec-mode-hooks 'chee-minor-rec-mode-hook))
 
 
-(chee-minor-rec-setup)
-
 (provide 'chee-minor)
 ;;; chee-minor.el ends here
