@@ -3,6 +3,7 @@ package chee.query
 import org.scalatest._
 import chee.properties._
 import chee.Collection
+import chee.metadata._
 
 class TransformTest extends FlatSpec with Matchers {
 
@@ -51,7 +52,7 @@ class TransformTest extends FlatSpec with Matchers {
       Prop(Comp.Gt, Ident.width -> "2000")))
   }
 
-  "range macro" must "recoginze simple ranges" in {
+  "range macro" should "recoginze simple ranges" in {
     val tree = Prop(Comp("/"), 'len -> "100--500")
     val trans = new RangeMacro(now)
     trans(tree) should be (
@@ -59,5 +60,39 @@ class TransformTest extends FlatSpec with Matchers {
         Prop(Comp.Gt, 'len -> "100"),
         Prop(Comp.Lt, 'len -> "500"))
     )
+  }
+
+  "id macro" should "replace id idents" in {
+    IdMacro(Prop(Comp.Like, 'id -> "abe")) should be (
+      Prop(Comp.Like, Ident.checksum -> "abe*"))
+  }
+
+  "metadata macro" should "replace non existing tags and comment props into false cond" in {
+    val q = new MetadataMacro(_ => Nil)
+    q(Prop(Comp.Like, 'tag -> "x")) should be (
+      Not(TrueCondition))
+    q(Prop(Comp.Like, 'comment -> "y")) should be (
+      Not(TrueCondition))
+  }
+
+  it should "replace existing tags and comment props with in condition" in {
+    val q = new MetadataMacro(_ => Seq("abc", "123", "xyz"))
+
+    q(Prop(Comp.Like, 'tag -> "x")) should be (
+      In(Ident.checksum, Seq("abc", "123", "xyz")))
+
+    q(Prop(Comp.Like, 'comment -> "x")) should be (q(Prop(Comp.Like, 'tag -> "x")))
+  }
+
+  it should "replace existing tags/comments in exists" in {
+    val q = new MetadataMacro(_ => Seq("abc"))
+    q(Exists('tag)) should be (
+      In(Ident.checksum, Seq("abc")))
+  }
+
+  it should "replace existing tags/comments in IN cond" in {
+    val q = new MetadataMacro(_ => Seq("123", "abc"))
+    q(In('tag, Seq("1", "x"))) should be (
+      In(Ident.checksum, Seq("123", "abc")))
   }
 }
