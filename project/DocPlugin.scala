@@ -52,6 +52,7 @@ object DocPlugin extends AutoPlugin {
       "commit" -> findCurrentCommit((baseDirectory in Compile).value),
       "version" -> version.value,
       "projectName" -> name.value,
+      "homepage" -> homepage.value.getOrElse(""),
       "buildtime" -> buildTime,
       "icons" -> "font",
       "data-uri" -> "true",
@@ -120,6 +121,7 @@ object DocPlugin extends AutoPlugin {
       |  val buildTime = "<buildtime>"
       |  val commit = "<commit>"
       |  val projectName = "<projectName>"
+      |  val homepage = "<homepage>"
       |  val docFiles = List(${docDir.listFiles.map(f => f.getName).mkString("\"", "\",\"", "\"")})
       |}""".stripMargin
     val target = dir / "chee" / "doc" / "CheeDocInfo.scala"

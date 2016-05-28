@@ -1,5 +1,6 @@
 package chee.cli
 
+import better.files.File
 import chee.conf._
 import chee.Processing
 import chee.cli.CryptOptions.{Opts => CryptOpts}
@@ -58,18 +59,20 @@ object Scale extends ScoptCommand with AbstractLs with TransparentDecrypt with P
     exec(cfg, opts, findDecrypt(cfg, lsOpts, opts.cryptOpts))
   }
 
-  def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =
-    (opts.factor, opts.maxLen) match {
+  def scaleAction(cfg: Config, procOpts: ProcOpts, factor: Option[Double], maxLen: Option[Int]): MapGet[Option[File]] =
+    (factor, maxLen) match {
       case (Some(f), _) =>
-        Processing.scaleByFactor(f, makeOutFile(cfg, "scale", opts.procOpts),
+        Processing.scaleByFactor(f, makeOutFile(cfg, "scale", procOpts),
           cfg.getScaleMethod("chee.scalemethod.scale"))
       case (_, Some(n)) =>
-        Processing.scaleMaxLen(n, makeOutFile(cfg, "scale", opts.procOpts),
+        Processing.scaleMaxLen(n, makeOutFile(cfg, "scale", procOpts),
           cfg.getScaleMethod("chee.scalemethod.scale"))
       case _ =>
         sys.error("Invalid input. Option parser should have handled this case")
     }
 
+  def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =
+    scaleAction(cfg, opts.procOpts, opts.factor, opts.maxLen).flatMap(Processing.imageOverlay)
 
   def procOpts(opts: Opts) = opts.procOpts
 }

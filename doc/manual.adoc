@@ -72,6 +72,8 @@ include::cmd-find.adoc[]
 
 include::cmd-view.adoc[]
 
+include::cmd-gallery.adoc[]
+
 include::cmd-location.adoc[]
 
 include::cmd-meta.adoc[]

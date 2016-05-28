@@ -1,5 +1,6 @@
 package chee.cli
 
+import better.files.File
 import chee.{Processing, Size}
 import chee.conf._
 import chee.cli.CryptOptions.{Opts => CryptOpts}
@@ -44,9 +45,12 @@ object Thumb extends ScoptCommand with AbstractLs with TransparentDecrypt with P
     exec(cfg, opts, findDecrypt(cfg, lsOpts, opts.cryptOpts))
   }
 
-  def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =
-    Processing.cover(opts.size, makeOutFile(cfg, "cover", opts.procOpts),
+  def thumbAction(cfg: Config, procOpts: ProcOpts, size: Size): MapGet[Option[File]] =
+    Processing.cover(size, makeOutFile(cfg, "cover", procOpts),
       cfg.getScaleMethod("chee.scalemethod.thumb"))
+
+  def processingAction(cfg: Config, opts: Opts): MapGet[Boolean] =
+    thumbAction(cfg, opts.procOpts, opts.size).flatMap(Processing.imageOverlay)
 
   def procOpts(opts: Opts) = opts.procOpts
 }

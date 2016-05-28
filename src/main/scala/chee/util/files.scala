@@ -1,5 +1,9 @@
 package chee.util
 
+import java.io.{InputStream, OutputStream}
+import java.net.URL
+import java.nio.file.{Files, Paths}
+import java.util.zip.{ZipOutputStream, ZipEntry}
 import better.files._
 import better.files.File.LinkOptions
 import scala.io.Codec
@@ -14,6 +18,57 @@ object files {
     def unapply(f: File): Option[File] =
       if (f.isRegularFile(LinkOptions.follow)) Some(f) else None
   }
+
+  final class ZipArchive(zip: ZipOutputStream) {
+    def add(f: File, name: String): ZipArchive = synchronized {
+      val fin = f.newInputStream()
+      add(fin, name)
+      fin.close()
+      this
+    }
+
+    def add(url: URL, name: String): ZipArchive = synchronized {
+      val conn = url.openConnection
+      conn.connect()
+      val in = conn.getInputStream
+      add(in, name)
+      in.close()
+      this
+    }
+
+    def add(in: InputStream, name: String): ZipArchive = synchronized {
+      val entry = new ZipEntry(name)
+      zip.putNextEntry(entry)
+      transfer(in, zip)
+      zip.closeEntry()
+      this
+    }
+
+    def + (e: (File, String)) = add(e._1, e._2)
+
+    private def transfer(in: InputStream, out: OutputStream): Int = {
+      val buf = new Array[Byte](8192)
+      def loop(n: Int): Int = in.read(buf) match {
+        case -1 => n
+        case len =>
+          out.write(buf, 0, len)
+          loop(n + len)
+      }
+      loop(0)
+    }
+
+    def close(): Unit = zip.close()
+  }
+
+  object ZipArchive {
+    def uniqueEntry(name: String, entries: Set[String]): String = {
+      val cwd = File("")
+      val toName = (f: File) => (cwd relativize f).toString
+      val unique = File(name).makeNonExisting(exists = f => entries(toName(f))).map(toName)
+      unique getOrElse sys.error("Cannot create unique zip entry. Rename limit exceeded.")
+    }
+  }
+
 
   implicit class FileExt(f: File) {
 
@@ -114,5 +169,44 @@ object files {
       temp.moveTo(f, overwrite = true)
     }
     def ==>>:(text: String) = writeMove(text)
+
+    /** Append a number to the file until it does not exist. */
+    def makeNonExisting(max: Int = 900, exists: File => Boolean = _.exists): Option[File] = {
+      @annotation.tailrec
+      def asNonExistent(f: File, n: Int = 1): Option[File] = f match {
+        case _ if n >= max =>
+          None
+        case _ if exists(f) =>
+          asNonExistent(f.mapBaseName(_ +"-"+ n), n+1)
+        case _ => Some(f)
+      }
+      asNonExistent(f)
+    }
+  }
+
+  implicit class UrlOpts(url: URL) {
+    def downloadIn(dir: File, overwrite: Boolean = false): File = {
+      val targetFile = Paths.get(url.getPath).getFileName
+      val target = dir / targetFile.toString
+      if (target.exists && overwrite) {
+        target.delete()
+      }
+      if (!target.exists) {
+        val conn = url.openConnection()
+        conn.connect()
+        val in = conn.getInputStream
+        Files.copy(in, target.path)
+        in.close()
+      }
+      target
+    }
+
+    def contentAsString: String = {
+      io.Source.fromURL(url).getLines.mkString("\n")
+    }
+
+    def fileName: String =
+      Paths.get(url.getPath).getFileName.toString
+
   }
 }

@@ -36,8 +36,7 @@ trait ProcessingCommand extends ScoptCommand {
     }
   )
 
-  def makeOutFile(cfg: Config, prefix: String, opts: ProcessingOptions.Opts): MapGet[File] = {
-    import chee.properties.Patterns._
+  def makeOutFile(cfg: Config, prefix: String, opts: ProcOpts): MapGet[File] = {
     val dir = opts.outdir getOrElse cfg.getFile("chee.scaleddir")
     val format = opts.nameformat match {
       case Some(_) => cfg.getFormat(opts.nameformat, "") match {
@@ -56,7 +55,7 @@ trait ProcessingCommand extends ScoptCommand {
 
   def processingAction(cfg: Config, opts: T): MapGet[Boolean]
 
-  def procOpts(opts: T): ProcessingOptions.Opts
+  def procOpts(opts: T): ProcOpts
 
   def exec(cfg: Config, opts: T, props: Stream[LazyMap]): Unit = {
     val format = cfg.getFormat(procOpts(opts).pattern, s"chee.formats.default-${name}-format")

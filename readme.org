@@ -11,10 +11,7 @@ Some features are:
 
 - No “application lock-in”; chee uses open formats for storing data so
   that it can be easily accessed using other (free or open-source)
-  tools. For example, OpenPGP is used for encryption so the data
-  remains accessible using tools like gnupg. The metadata derived from
-  files is stored in an sqlite db for which many tools exists to
-  access its data.
+  tools.
 - search photos using a simple query language by file and image
   properties (resolution, created-time, etc)
 - manages collections (created from queries and can be used in
@@ -29,6 +26,7 @@ Some features are:
 - tag and comment photos: user metadata (tags and comments) is stored
   in a [[https://www.gnu.org/software/recutils/][rec]] plain text file. That allow to edit it manually or use the
   [[https://www.gnu.org/software/recutils/][rec utilities]] to access the data.
+- create static html photo gallery
 
 It is a simple program: the metadata of image (and other) files are
 put in a database which can then be queried more conveniently. But
@@ -125,6 +123,7 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
   corresponding file system commands. Drop ~location delete~ and
   ~location mv~.
 - new metadata feature to attach tags and comments to files
+- new ~gallery~ command for creating static html photo galleries
 
 ** 0.1.0
 

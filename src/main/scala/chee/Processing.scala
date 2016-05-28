@@ -1,9 +1,8 @@
 package chee
 
 import chee.crypto.{ Algorithm, CheeCrypt, FileProcessor }
-import chee.properties.BasicExtract
 import chee.query.SqliteBackend
-import org.bouncycastle.openpgp.{ PGPPrivateKey, PGPPublicKey }
+import org.bouncycastle.openpgp.PGPPublicKey
 import scala.util.Try
 import chee.properties._
 import chee.properties.MapGet._
@@ -43,17 +42,21 @@ object Processing {
 
   def originMapping: Ident => Ident = id => id.in("origin")
 
-  private def result(out: File): MapGet[Unit] =
-    modify { omap =>
-      val map = originProps.foldLeft(LazyMap.fromFile(out)) { (m, id) =>
-        m addVirtual(VirtualProperty.defaults.alias(id -> originMapping(id)))
+  def imageOverlay(outFile: Option[File]): MapGet[Boolean] = outFile match {
+    case None => set(LazyMap()).map(_ => false)
+    case Some(out) =>
+      val mod = modify { omap =>
+        val map = originProps.foldLeft(LazyMap.fromFile(out)) { (m, id) =>
+          m addVirtual(VirtualProperty.defaults.alias(id -> originMapping(id)))
+        }
+        map ++ omap.mapIdents(originMapping)
       }
-      map ++ omap.mapIdents(originMapping)
-    }
+      mod.map(_ => true)
+  }
 
-  private def processImage(outFile: MapGet[File])(p: Image => Image): MapGet[Boolean] =
+  private def processImage(outFile: MapGet[File])(p: Image => Image): MapGet[Option[File]] =
     outFile.flatMap { out =>
-      val success = result(out).map(_ => true)
+      val success = unit(Some(out))
       if (out.exists) success
       else image.flatMap {
         case Some(img) =>
@@ -61,39 +64,39 @@ object Processing {
           p(img).output(out.path)(JpegWriter())
           success
         case None =>
-          set(LazyMap()).map(_ => false)
+          unit(None)
       }
     }
 
-  def cover(size: Size, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.FastScale): MapGet[Boolean] =
+  def cover(size: Size, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.FastScale): MapGet[Option[File]] =
     processImage(makeOut(size, outFile)) { img =>
       img.cover(size.width, size.height)
     }
 
-  def scaleTo(size: Size, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Boolean] =
+  def scaleTo(size: Size, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Option[File]] =
     processImage(makeOut(size, outFile)) { img =>
       img.scaleTo(size.width, size.height, method)
     }
 
-  def scaleByFactor(factor: Double, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Boolean] =
+  def scaleByFactor(factor: Double, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Option[File]] =
     pair(value(Ident.width), value(Ident.height)).flatMap {
       case (Some(w), Some(h)) =>
         scaleTo(Size((w.toInt * factor).toInt, (h.toInt * factor).toInt), outFile, method)
       case _ =>
-        unit(false)
+        unit(None)
     }
 
-  def scaleMaxLen(maxlen: Int, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Boolean] =
+  def scaleMaxLen(maxlen: Int, outFile: MapGet[File], method: ScaleMethod = ScaleMethod.Bicubic): MapGet[Option[File]] =
     pair(value(Ident.width), value(Ident.height)).flatMap {
       case (Some(w), Some(h)) =>
         val max = math.max(w.toInt, h.toInt)
-        if (max <= maxlen) unit(true)
+        if (max <= maxlen) MapGet.path.map(Some(_))
         else {
           val factor = maxlen.toDouble / max
           scaleTo(Size((w.toInt * factor).toInt, (h.toInt * factor).toInt), outFile, method)
         }
       case _ =>
-        unit(false)
+        unit(None)
     }
 
 

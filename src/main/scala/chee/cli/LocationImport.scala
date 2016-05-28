@@ -71,16 +71,11 @@ class LocationImport extends ScoptCommand with AbstractLs with LockSupport {
     opts.lsOpts.directory.getOrElse(sys.error("source dir is required"))
 
   def makeTarget(src: File, opts: Opts): File = {
-    @annotation.tailrec
-    def asNonExistent(f: File, n: Int = 1, max: Int = 500): File = f match {
-      case _ if n >= max =>
-        userError(s"Cannot find non-existing target to copy `${src.path}'. Tried to rename $max times.")
-      case _ if f.exists =>
-        asNonExistent(f.mapBaseName(_ +"-"+ n), n+1)
-      case _ => f
-    }
     val sub = getSource(opts) relativize src
-    asNonExistent(opts.location / sub.toString)
+    (opts.location / sub.toString).makeNonExisting() match {
+      case Some(f) => f
+      case None => userError(s"Cannot find non-existing target to copy `${src.path}'. Rename limit exceeded.")
+    }
   }
 
   def insertIndex(sqlite: SqliteBackend): MapGet[Result] = MapGet { lm =>

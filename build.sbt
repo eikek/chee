@@ -1,6 +1,9 @@
+import java.nio.file.{Files, Paths, StandardCopyOption}
+
 lazy val commonSettings = Seq(
   name := "chee",
   version := "0.2.0",
+  homepage := Some(url("https://github.com/eikek/chee")),
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 )
@@ -66,10 +69,49 @@ lazy val testSettings = Defaults.itSettings ++ Seq(
   sourceGenerators in IntegrationTest += writeTestInfo.taskValue
 )
 
+lazy val bootstrapVersion = "3.3.6"
+lazy val galleryVersion = "2.21.2"
+lazy val bootstrapGalleryVersion = "3.4.2"
+lazy val jqueryVersion = "2.2.4"
+lazy val fontAwesomeVersion = "4.6.3"
+lazy val markedVersion = "0.3.5"
+
+lazy val themes = List("cerulean", "cosmo", "cyborg", "darkly", "flatly", "journal", "lumen",
+  "paper", "readable", "sandstone", "simplex", "slate", "spacelab", "superhero", "united", "yeti")
+
 lazy val buildSettings = Seq(
   libraryDependencies := dependencies,
+  resourceLibs in Compile ++= Seq(
+    // js
+    Lib.js(jqueryVersion, "http://code.jquery.com/jquery-<version>.min.js"),
+    Lib.js(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/js/jquery.blueimp-gallery.min.js"),
+    Lib.js(bootstrapGalleryVersion, "https://github.com/blueimp/Bootstrap-Image-Gallery/raw/v<version>/js/bootstrap-image-gallery.min.js"),
+    Lib.js(markedVersion, "https://github.com/chjj/marked/raw/v<version>/marked.min.js"),
+    //css
+    Lib.css(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/css/font-awesome.min.css"),
+    Lib.css(bootstrapVersion, "http://netdna.bootstrapcdn.com/bootstrap/<version>/css/bootstrap.min.css").in("bootstrap"),
+    Lib.css(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/css/blueimp-gallery.min.css"),
+    Lib.css(bootstrapGalleryVersion, "https://github.com/blueimp/Bootstrap-Image-Gallery/raw/v<version>/css/bootstrap-image-gallery.min.css"),
+    // fonts
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/FontAwesome.otf"),
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.eot"),
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.svg"),
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.ttf"),
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.woff"),
+    Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.woff2"),
+    // img
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/error.png"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/error.svg"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/play-pause.png"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/play-pause.svg"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/loading.gif"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/video-play.png"),
+    Lib.img(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/img/video-play.svg")
+  ) ++ themes.map(theme => Lib.css(bootstrapVersion, s"https://maxcdn.bootstrapcdn.com/bootswatch/<version>/${theme}/bootstrap.min.css").in(theme)),
   resourceGenerators in Compile += (listDocResources in CheeDoc).taskValue,
-  sourceGenerators in Compile += (genDocInfo in CheeDoc).taskValue
+  resourceGenerators in Compile += (fetchResources in Compile).taskValue,
+  sourceGenerators in Compile += (genDocInfo in CheeDoc).taskValue,
+  sourceGenerators in Compile += (resourceInfo in Compile).taskValue.map(f => Seq(f))
 )
 
 addCommandAlias("make-chee", ";genDocResources;gen-chee")
