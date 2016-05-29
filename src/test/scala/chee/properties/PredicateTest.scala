@@ -46,8 +46,8 @@ class PredicateTest extends FlatSpec with Matchers {
   }
 
   "NotPredicate" should "inverse" in {
-    Predicates.not(Predicates.True).result(LazyMap()) should be(false)
-    Predicates.not(Predicates.False).result(LazyMap()) should be(true)
+    MapGet.not(Predicates.True).result(LazyMap()) should be(false)
+    MapGet.not(Predicates.False).result(LazyMap()) should be(true)
   }
 
   "ExistsPredicate" should "check for existing keys" in {

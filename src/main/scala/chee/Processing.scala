@@ -171,8 +171,8 @@ object Processing {
     * Deletes the old file. If the old file is indexed, its path
     * property is updated to reflect the new existing file. */
   def cryptInplacePostProcess(sqlite: SqliteBackend): MapGet[Boolean] =
-    pair(pair(path, originFile), originPathIndexed(sqlite)).flatMap {
-      case ((newFile, oldFile), indexed) if newFile.exists =>
+    tuple3(path, originFile, originPathIndexed(sqlite)).flatMap {
+      case (newFile, oldFile, indexed) if newFile.exists =>
         if (indexed) {
           modify { m =>
             val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), IdentProp(Comp.Eq, Ident.path, originPath)).get

@@ -1,5 +1,7 @@
 package chee.util
 
+import state.State
+
 /** A mustache template parser and renderer.
   *
   * To make it compatible to {{{LazyMap}}} that can updates itself
@@ -50,45 +52,26 @@ object mustache {
       def find(key: String) = (this, f(key))
     }
   }
-  case class ContextGet[V](run: Context => (Context, V)) {
-    def flatMap[B](f: V => ContextGet[B]): ContextGet[B] = ContextGet { ctx =>
-      val (next, v) = run(ctx)
-      f(v).run(next)
-    }
-    def map[B](f: V => B): ContextGet[B] =
-      flatMap(v => ContextGet.unit(f(v)))
-
-    def result(c: Context): V = {
-      val (_, v) = run(c)
-      v
-    }
-
+  type ContextGet[V] = State[Context, V]
+  implicit class ContextGetOps[V](g: ContextGet[V]) {
     def andThen(next: ContextGet[_]): ContextGet[Unit] =
       for {
-        _ <- this
+        _ <- g
         _ <- next
       } yield ()
 
     def stacked(c: Context): ContextGet[V] =
       for {
         _ <- ContextGet.stack(c)
-        v <- this
+        v <- g
         _ <- ContextGet.pop
       } yield v
   }
 
-  object ContextGet {
-    def unit[V](v: V): ContextGet[V] = ContextGet(c => (c, v))
+  object ContextGet extends state.States[Context] {
     def find(key: String): ContextGet[Option[Value]] = ContextGet(_.find(key))
     def findOrEmpty(key: String): ContextGet[Value] =
       find(key).map(_.getOrElse(Value.of(false)))
-    def set(c: Context): ContextGet[Unit] = ContextGet(_ => (c, ()))
-    def get: ContextGet[Context] = ContextGet(c => (c, c))
-    def modify(f: Context => Context): ContextGet[Unit] =
-      for {
-        c <- get
-        _ <- set(f(c))
-      } yield ()
     def stack(head: Context): ContextGet[Unit] =
       modify(c => head :: c)
     def pop: ContextGet[Unit] =

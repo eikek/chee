@@ -2,15 +2,14 @@ package chee.cli
 
 import LocationSync.Opts
 import better.files._
+import chee.conf._
 import chee.LocationConf
 import chee.LocationConf.Entry
 import chee.properties._
 import chee.properties.MapGet._
 import chee.properties.Predicates._
 import chee.query._
-import chee.conf._
 import com.typesafe.config.Config
-
 class LocationSync extends ScoptCommand with LockSupport {
 
   type T = Opts

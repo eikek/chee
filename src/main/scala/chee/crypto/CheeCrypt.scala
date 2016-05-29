@@ -35,8 +35,8 @@ object CheeCrypt {
   }
 
   val isEncrypted: MapGet[Boolean] =
-    Predicates.or(List(isPasswordEncrypted, isPublicKeyEncrypted))
+    or(List(isPasswordEncrypted, isPublicKeyEncrypted))
 
   val isNotEncrypted: MapGet[Boolean] =
-    Predicates.not(isEncrypted)
+    not(isEncrypted)
 }

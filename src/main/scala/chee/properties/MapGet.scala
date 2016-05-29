@@ -2,54 +2,14 @@ package chee.properties
 
 import better.files._
 import java.time.Duration
+import chee.util.state._
+import chee.util.state.States
 
-case class MapGet[+A](run: LazyMap => (LazyMap, A)) { self =>
-
-  def map[B](f: A => B): MapGet[B] = MapGet { map =>
-    val (next, a) = run(map)
-    (next, f(a))
-  }
-
-  def flatMap[B](f: A => MapGet[B]): MapGet[B] = MapGet { map =>
-    val (next, va) = run(map)
-    f(va).run(next)
-  }
-
-  def when(f: MapGet[Boolean]): MapGet[Option[A]] = f.flatMap {
-    case true => self.map(Some(_))
-    case _ => MapGet.unit(None)
-  }
-
-  def whenNot(f: MapGet[Boolean]): MapGet[Option[A]] =
-    when(Predicates.not(f))
-
-  def combine[B, C](h: MapGet[B])(f: (A, B) => C): MapGet[C] = MapGet { map =>
-    val (nexta, a) = run(map)
-    val (nextb, b) = h.run(nexta)
-    (nextb, f(a, b))
-  }
-
-  def result(lmap: LazyMap): A = run(lmap)._2
-
-  def toMap: MapGet[LazyMap] = self.flatMap(_ => MapGet.get)
-
-  def modify(f: LazyMap => LazyMap): MapGet[A] =
-    flatMap(a => MapGet.modify(f).map(_ => a))
-
-  def timed: MapGet[(A, Duration)] = MapGet { m =>
-    val ((nextm, a), dur) = chee.Timing.timedResult(run(m))
-    (nextm, (a, dur))
-  }
-
-  def around[B](before: MapGet[Unit], after: (A, Duration) => MapGet[B]): MapGet[B]
-    = MapGet.aroundEffect(before, after)(this)
-}
-
-object MapGet {
+object MapGet extends States[LazyMap] {
 
   val virtualKeys: MapGet[Set[Ident]] = get.map(_.virtualKeys)
   val propertyKeys: MapGet[Set[Ident]] = get.map(_.propertyKeys)
-  val allKeys: MapGet[Set[Ident]] = propertyKeys.combine(virtualKeys){ _ ++ _ }
+  val allKeys: MapGet[Set[Ident]] = combine(propertyKeys, virtualKeys){ _ ++ _ }
 
   def idents(includeVirtual: Boolean): MapGet[Seq[Ident]] = {
     if (includeVirtual) allKeys.map(Ident.sort)
@@ -57,7 +17,7 @@ object MapGet {
   }
 
   def find(id: Ident): MapGet[Option[Property]] =
-    MapGet(map => map(id))
+    State(map => map(id))
 
   def value(id: Ident): MapGet[Option[String]] =
     find(id).map(_.map(_.value))
@@ -90,44 +50,21 @@ object MapGet {
 
   def intValue(id: Ident) = convert(id, IntConverter)
 
-  def unit[A](a: A): MapGet[A] = MapGet(map => (map, a))
-
-  def pair[A, B](a: MapGet[A], b: MapGet[B]): MapGet[(A, B)] =
-    a.combine(b)((av, bv) => (av, bv))
-
-  def seq[A](gs: Seq[MapGet[A]]): MapGet[List[A]] =
-    gs.foldRight(unit(List[A]())){ (e, acc) =>
-      e.combine(acc)(_ :: _)
-    }
-
-  def seq[A](g: MapGet[A], gs: MapGet[A]*): MapGet[List[A]] =
-    seq(g +: gs)
-
   def concat(ds: Seq[MapGet[String]]): MapGet[String] =
     ds.foldLeft(unit("")) { (acc, e) =>
-      acc.combine(e){ (last, s) => last + s }
+      combine(acc, e){ (last, s) => last + s }
     }
 
   def joinEitherBiased[A, B](a: Seq[MapGet[Either[A, B]]]): MapGet[Either[A, List[B]]] = {
     val zero: Either[A, List[B]] = Right(Nil)
     a.toStream.foldRight(unit(zero)) { (e, acc) =>
-      e.combine(acc) { (ev, accv) =>
+      combine(e, acc) { (ev, accv) =>
         if (accv.isLeft) accv
         else if (ev.isLeft) Left(ev.left.get)
         else Right(ev.right.get :: accv.right.get)
       }
     }
   }
-
-  def set(lm: LazyMap): MapGet[Unit] = MapGet(_ => (lm, ()))
-
-  def get: MapGet[LazyMap] = MapGet(m => (m, m))
-
-  def modify(f: LazyMap => LazyMap): MapGet[Unit] =
-    for {
-      m <- get
-      _ <- set(f(m))
-    } yield ()
 
   def filter(iter: Traversable[LazyMap], pred: MapGet[Boolean]): Traversable[LazyMap] =
     iter.map(pred.run).collect {
@@ -195,4 +132,16 @@ object MapGet {
   def foreach[T](maps: Iterable[LazyMap], action: MapGet[T]): Int =
     foreach(maps, _ => action)
 
+}
+
+case class MapGetOps[A](self: MapGet[A]) {
+  def toMap: MapGet[LazyMap] = self.flatMap(_ => MapGet.get)
+
+  def timed: MapGet[(A, Duration)] = State { m =>
+    val ((nextm, a), dur) = chee.Timing.timedResult(self.run(m))
+    (nextm, (a, dur))
+  }
+
+  def around[B](before: MapGet[Unit], after: (A, Duration) => MapGet[B]): MapGet[B]
+  = MapGet.aroundEffect(before, after)(self)
 }

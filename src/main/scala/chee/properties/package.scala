@@ -1,8 +1,12 @@
 package chee
 
+import scala.language.implicitConversions
 import scala.util.{Try, Success, Failure}
+import chee.util.state.State
 
 package object properties {
+  type MapGet[A] = State[LazyMap, A]
+  implicit def mapgetOps[A](m: MapGet[A]) = MapGetOps(m)
 
   implicit class TryOps[A](t: Try[A]) {
     def toEither(msg: String): Either[String, A] = t match {

@@ -3,7 +3,7 @@ package chee.query
 import better.files._
 import chee.metadata.MetadataFile
 import chee.properties._
-import Predicates._
+import MapGet.Predicate
 
 object FileBackend {
 

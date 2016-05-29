@@ -22,7 +22,7 @@ final class PatternParser(idents: Traversable[Ident]) {
   val noTilde: P[String] = P(CharsWhile(_ != '~').!)
 
   val rawValue: P[Pattern] = P((tilde | noTilde).rep(1)).map {
-    list => seqq(list.map(raw(_)))
+    list => seq(list.map(raw(_)))
   }
 
   val lookupValue: P[Ident => Pattern] =
@@ -51,7 +51,7 @@ final class PatternParser(idents: Traversable[Ident]) {
 
   def sequence: P[Ident => Pattern] =
     P("~{" ~ directive.rep(1) ~ "~}").map {
-      case ds => id => seqq(ds.map(_(id)))
+      case ds => id => seq(ds.map(_(id)))
     }
 
   def existsPred: P[Ident => MapGet[Either[String, Boolean]]] =
@@ -78,7 +78,7 @@ final class PatternParser(idents: Traversable[Ident]) {
     simpleDirective | quotedValue | sequence | conditional | length
 
   def combine(l: Seq[Ident => Pattern]): Ident => Pattern =
-    id => seqq(l.map(_(id)))
+    id => seq(l.map(_(id)))
 
   def loopBody: P[(Ident => Pattern, Ident => Pattern)] =
     P(loopBodySimple.rep(1) ~ ("~^" ~ loopBodySimple.rep(1)).?).map {
@@ -97,7 +97,7 @@ final class PatternParser(idents: Traversable[Ident]) {
     simpleDirective | quotedValue | sequence | conditional | length | loopDirective
 
   def controlString: P[Pattern] =
-    P(directive.rep(1)).map { list => seqq(list.map(_('value))) }
+    P(directive.rep(1)).map { list => seq(list.map(_('value))) }
 
   def parsePattern(str: String): Either[String, Pattern] =
     Try(controlString.parseAll(str)) match {

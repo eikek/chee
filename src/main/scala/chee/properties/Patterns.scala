@@ -1,7 +1,8 @@
 package chee.properties
 
+import MapGet._
+
 object Patterns {
-  import MapGet._
 
   type Pattern = MapGet[Either[String, String]]
   type PatternPred = MapGet[Either[String, Boolean]]
@@ -117,13 +118,13 @@ object Patterns {
       cond(existsIdent(id), lookup(id, format), pat)
     }
 
-  def seqq(ps: Seq[Pattern]): Pattern =
+  def seq(ps: Seq[Pattern]): Pattern =
     MapGet.joinEitherBiased(ps).map {
       case Right(xs) => Right(xs.mkString)
       case Left(err) => Left(err)
     }
 
-  def seq(ps: Pattern*): Pattern = seqq(ps)
+  def seq(p: Pattern, ps: Pattern*): Pattern = seq(p +: ps)
 
   def loop(main: Ident => Pattern, stop: Ident => Pattern, idents: MapGet[Seq[Ident]], includeEmpty: Boolean = true): Pattern = {
     type Result = Either[String, String]

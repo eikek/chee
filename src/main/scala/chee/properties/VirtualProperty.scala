@@ -1,5 +1,8 @@
 package chee.properties
 
+import chee.crypto.CheeCrypt
+import MapGet._
+
 case class VirtualProperty(ident: Ident, value: VirtualValue) {
   def map(f: Ident => Ident) = VirtualProperty(f(ident), value.map(f))
 }
@@ -10,8 +13,6 @@ trait VirtualValue {
 }
 
 object VirtualProperty {
-  import MapGet._
-  import chee.crypto.CheeCrypt
 
   object idents {
     val pixel: Ident = 'pixel
