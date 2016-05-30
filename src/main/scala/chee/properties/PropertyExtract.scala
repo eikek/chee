@@ -1,5 +1,6 @@
 package chee.properties
 
+import scala.util.{Try, Success, Failure}
 import better.files._
 import chee.metadata.{ MetadataExtract, MetadataFile }
 import java.time.Duration
@@ -24,6 +25,7 @@ object Extraction {
   def all(mf: MetadataFile) = List(
     new BasicExtract(),
     new ImageExtract(),
+    new WidthHeightExtract(),
     new ChecksumExtract(),
     new MetadataExtract(mf))
 }
@@ -59,9 +61,8 @@ final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction 
 final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
   import com.drew.imaging.ImageMetadataReader
   import com.sksamuel.scrimage.{ImageMetadata, Image}
-  import scala.util.{Try, Success, Failure}
 
-  val idents = Ident.imageProperties.toSet.map(mapping)
+  val idents = (Ident.imageProperties.toSet - Ident.width - Ident.height).map(mapping)
 
   val exifTags = Map(
     0x0112 -> mapping(Ident.orientation),
@@ -77,10 +78,6 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
 
   def mapIdents(f: Ident => Ident) = new ImageExtract(mapping andThen f)
 
-  // note: width/height may not be correct in the header
-  // could be retrieved using: Image.fromPath(f.path).width/height
-  // but it is expensive
-
   def extractM(f: File): MapGet[PropertyMap] = Extraction.assertExists(f) {
     def logTime(m: Try[PropertyMap], d: Duration): Unit = m match {
       case Success(_) =>
@@ -94,18 +91,6 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
       Try(ImageMetadataReader.readMetadata(f.toJava))
         .map(ImageMetadata.fromMetadata)
         .map(fromMetadata)
-        .map(pm => {
-          (pm.get(mapping(Ident.width)), pm.get(mapping(Ident.height))) match {
-            case (Some(_), Some(_)) => pm
-            case _ =>
-              Try(Image.fromPath(f.path)) match {
-                case Success(img) =>
-                  pm + (mapping(Ident.width) -> img.width.toString) + (mapping(Ident.height) -> img.height.toString)
-                case _ =>
-                  pm
-              }
-          }
-        })
     }
 
     unit(props.toOption.getOrElse(PropertyMap.empty))
@@ -123,6 +108,29 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
       } else {
         pm + (ident -> tag.rawValue.trim)
       }
+    }
+  }
+}
+
+final class WidthHeightExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
+  import com.sksamuel.scrimage.Image
+
+  val idents = Set(Ident.width, Ident.height).map(mapping)
+  def mapIdents(f: Ident => Ident) = new WidthHeightExtract(f)
+  def extractM(file: File): MapGet[PropertyMap] = {
+    MapGet.value(mapping(Ident.mimetype)).map {
+      case Some(m) if m startsWith "image/" =>
+        Try(Image.fromPath(file.path)) match {
+          case Success(img) =>
+            PropertyMap(
+              (mapping(Ident.width) -> img.width.toString),
+              (mapping(Ident.height) -> img.height.toString))
+          case Failure(ex) =>
+            logger.warn(s"Cannot load image: ${file.path}", ex)
+            PropertyMap.empty
+        }
+      case _ =>
+        PropertyMap.empty
     }
   }
 }

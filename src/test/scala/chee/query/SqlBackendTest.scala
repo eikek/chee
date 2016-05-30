@@ -89,7 +89,7 @@ class SqlBackendTest extends FlatSpec with Matchers {
         "mimetype = 'image/jpeg', extension = 'JPG', "+
         "checksum = '95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b', "+
         "location = './', make = 'CASIO COMPUTER CO.,LTD', "+
-        "model = 'EX-Z750', width = 2048, height = 1536, iso = null, " +
+        "model = 'EX-Z750', width = 100, height = 75, iso = null, " +
         "orientation = 1, created = '2012-11-26 13:50:19' " +
         s"WHERE path = '$path'")
   }

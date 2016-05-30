@@ -1,5 +1,6 @@
 package chee.properties
 
+import chee.metadata.MetadataFile
 import scala.util._
 import org.scalatest._
 import better.files._
@@ -91,15 +92,14 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
 
   "width, height and iso" should "be numeric values" in {
     for (img <- TestInfo.images) {
-      val props = new ImageExtract().extract(img)
-      props.get(Ident.height) match {
-        case Some(h) => h should fullyMatch regex ("[0-9]+".r)
-        case _ =>
-      }
-      props.get(Ident.width) match {
-        case Some(w) => w should fullyMatch regex ("[0-9]+".r)
-        case _ =>
-      }
+      val props = new WidthHeightExtract().extractM(img).result(LazyMap(Ident.mimetype -> "image/jpg"))
+      props.get(Ident.height).get should fullyMatch regex ("[0-9]+".r)
+      props.get(Ident.width).get should fullyMatch regex ("[0-9]+".r)
+    }
+    for (img <- TestInfo.images) {
+      val m = LazyMap.fromFile(img)
+      MapGet.valueForce(Ident.height).result(m) should fullyMatch regex ("[0-9]+".r)
+      MapGet.valueForce(Ident.width).result(m) should fullyMatch regex ("[0-9]+".r)
     }
   }
 

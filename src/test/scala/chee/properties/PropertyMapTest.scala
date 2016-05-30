@@ -91,11 +91,11 @@ class PropertyMapTest extends FlatSpec with Matchers with FileLoan {
   it should "apply mapIdents" in {
     val m1 = LazyMap.fromFile(image("CIMG2590_s.JPG")).mapIdents(id => id.in("old"))
     m1.getVirtual(Ident("old-pixel")) should not be (None)
-    MapGet.valueForce(Ident("old-height")).result(m1) should be ("1536")
-    MapGet.valueForce(Ident("old-width")).result(m1) should be ("2048")
+    MapGet.valueForce(Ident("old-height")).result(m1) should be ("75")
+    MapGet.valueForce(Ident("old-width")).result(m1) should be ("100")
 
     MapGet.value(VirtualProperty.idents.pixel).result(m1) should be (None)
-    MapGet.valueForce(Ident("old-pixel")).result(m1) should be ("3145728")
+    MapGet.valueForce(Ident("old-pixel")).result(m1) should be ("7500")
   }
 
   it should "not overwrite existing properties by extractors" in {

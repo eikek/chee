@@ -68,7 +68,11 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   }
 
   it should "not add same thumbnails (2)" in bothChee(duplicateImagesName) { setup =>
-    testGallery(4, 5, 8, setup)
+    testGallery(4, 7, 8, setup)
+    // 7 is because only one image needs to be scaled (and is reused)
+    // images/nixos_logo_1.png, images/CIMG2590_s.JPG, images/IMG_7437_s.JPG,
+    // images/b6bdc5b62c489ebfa55738fb4-scale-1400x933.jpg, images/IMG_7437_s_1.JPG, images/CIMG2590_s_1.JPG,
+    // images/nixos_logo.png
   }
 
   it should "render format patterns" in bothChee(addImages) { setup =>
