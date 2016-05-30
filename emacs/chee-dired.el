@@ -76,7 +76,7 @@ inside `chee-dired' function."
     (define-key lmap (kbd "M-p") (lambda ()
                                    (interactive)
                                    (funcall chee--dired-prev-page-fn)))
-
+    (define-key lmap (kbd "D") 'chee-dired-rm)
     (use-local-map lmap)))
 
 (defun chee-dired (query &optional concurrent dir rec page decrypt method repodir)
@@ -89,19 +89,19 @@ inside `chee-dired' function."
         (chee--dired-bind-paging-keys)
         (erase-buffer)))
     (kill-all-local-variables)
-    (setq default-directory (or dir "/"))
+    (setq default-directory (or dir repodir "/"))
     (setq buffer-read-only t)
-    (set (make-local-variable 'dired-sort-inhibit) t)
-    (set (make-local-variable 'revert-buffer-function)
-         `(lambda (ignore-auto noconfirm)
-            (chee-dired ,query ,concurrent ,dir ,rec ,page ,decrypt ,method ,repodir)))
-    (set (make-local-variable 'dired-subdir-alist)
-         (list (cons (or dir "/") (point-min-marker))))
     (let* ((pos (point))
            (inhibit-read-only t)
            (ls-switches (chee-dired-get-ls-switches))
            (cmd (chee--thumb-command query concurrent dir rec page decrypt method)))
       (dired-mode (or dir "/") ls-switches)
+      (set (make-local-variable 'dired-sort-inhibit) t)
+      (set (make-local-variable 'dired-subdir-alist)
+           (list (cons (or dir "/") (point-min-marker))))
+      (set (make-local-variable 'revert-buffer-function)
+           `(lambda (ignore-auto noconfirm)
+              (chee-dired ,query ,concurrent ,dir ,rec ,page ,decrypt ,method ,repodir)))
       (chee--dired-bind-paging-keys)
       (insert "  " (or dir "/") ":\n")
       (insert "  chee " (mapconcat 'identity cmd " ") "\n")
@@ -213,6 +213,20 @@ specifiers with `image-dired-display-properties-format':
     origres))
 
 (advice-add 'image-dired-display-thumbnail-original-image :around #'chee-dired--display-info)
+
+
+(defun chee-dired-rm (&optional arg)
+  "Remove current or marked files from disk and index."
+  (interactive "P")
+  (let ((files (dired-map-over-marks
+                (dired-get-filename)
+                arg)))
+    (dired-do-delete arg)
+    (let ((lines (chee-proc-sync-lines
+                  (append (list "rm" "--index") files)
+                  default-directory)))
+      (message "%s" (mapconcat 'identity lines "\n")))))
+
 
 (provide 'chee-dired)
 ;;; chee-dired.el ends here

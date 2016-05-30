@@ -138,8 +138,10 @@ it."
     (setq default-directory (or (and (stringp cwd) cwd) (f-root)))
     (insert "(")
     (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
-      (insert ")")
-      (car (read-from-string (buffer-substring-no-properties (point-min) (point-max)))))))
+      (if (not (= rc 0))
+          (error (buffer-string))
+        (insert ")")
+        (car (read-from-string (buffer-string)))))))
 
 (defun chee-proc-sync-lines (cmd &optional cwd)
   "Synchronously execute CMD which is a list of arguments to the
@@ -148,7 +150,9 @@ returned as list of strings."
   (with-temp-buffer
     (setq default-directory (or (and (stringp cwd) cwd) (f-root)))
     (let ((rc (apply 'call-process chee-executable nil t nil cmd)))
-      (split-string (buffer-string) "\r?\n" t))))
+      (if (not (= rc 0))
+          (error (buffer-string))
+        (split-string (buffer-string) "\r?\n" t)))))
 
 
 (provide 'chee-proc)
