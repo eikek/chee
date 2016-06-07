@@ -91,14 +91,14 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
     }
   }
 
-  def processingAction(cfg: Config, opts: Opts, zip: Option[ZipArchive]): MapGet[Boolean] =
+  def processingAction(cfg: Config, opts: Opts, zip: Option[ZipArchive], entries: AtomicReference[Set[String]]): MapGet[Boolean] =
     opts.out match {
       case None => scaleAction(cfg, opts)
       case Some(dir) =>
         def moveFiles(id: Ident, subdir: String, unique: Boolean): MapGet[Boolean] =
           zip match {
             case None => copyAction(id, subdir, dir, unique = false)
-            case Some(z) => zipAction(id, subdir, z, unique = false)
+            case Some(z) => zipAction(id, subdir, z, unique = false, entries)
           }
         scaleAction(cfg, opts).flatMap {
           case true =>
@@ -128,12 +128,12 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
     outln(s"Template written: ${file.path}.")
   }
 
-  def findFiles(cfg: Config, opts: Opts, zip: Option[ZipArchive]): Stream[LazyMap] = {
+  def findFiles(cfg: Config, opts: Opts, zip: Option[ZipArchive], entries: AtomicReference[Set[String]]): Stream[LazyMap] = {
     val progress: MapGet[Unit] = valueForce(Ident.filename).map { name =>
       if (opts.concurrent) out(".")
       else outln(s"Processing $name …")
     }
-    val action = progress.flatMap(_ => processingAction(cfg, opts, zip))
+    val action = progress.flatMap(_ => processingAction(cfg, opts, zip, entries))
 
     val lsOpts = opts.lsOpts.appendQuery(cfg.getString("chee.queries.gallery-default"))
     val files = findDecrypt(cfg, lsOpts, opts.cryptOpts)
@@ -142,6 +142,7 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
   }
 
   def exec(cfg: Config, opts: Opts): Unit = {
+    val entries = new AtomicReference[Set[String]](Set.empty)
     if (opts.writeTemplate) writeTemplate(opts)
     else {
       val out: Either[ZipArchive, Option[File]] = opts.out match {
@@ -154,7 +155,7 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
       val assets = installAssets(cfg, opts.theme, out)
 
       outln("Create thumbnails and scale images…")
-      val files = findFiles(cfg, opts, out.left.toOption)
+      val files = findFiles(cfg, opts, out.left.toOption, entries)
       val context = assets :: Context(
         "files" -> ListValue(files.map(makeContext.result)),
         "title" -> Value.of(opts.title),
@@ -231,6 +232,7 @@ object Gallery {
 
   def generateHtml(cfg: Config, opts: Opts, context: Context): File = {
     val dir = opts.out.filter(_.getExtension != Some("zip")) getOrElse (cfg.getFile("chee.tmpdir") / "gallery")
+    dir.createDirectories()
     val template = opts.template.getOrElse {
       Template.parse(ResourceInfo.galleryTemplate.contentAsString) match {
         case Right(t) => t
@@ -275,9 +277,7 @@ object Gallery {
     }
   }
 
-  def zipAction(id: Ident, subdir: String, out: ZipArchive, unique: Boolean): MapGet[Boolean] = {
-    val entries = new AtomicReference[Set[String]](Set.empty)
-
+  def zipAction(id: Ident, subdir: String, out: ZipArchive, unique: Boolean,  entries: AtomicReference[Set[String]]): MapGet[Boolean] = {
     @annotation.tailrec
     def addToZip(f: File, n: Int = 0, max: Int = 9000): String = {
       if (n >= max) sys.error(s"Unable to add ${f.path} to zip file")
@@ -285,13 +285,17 @@ object Gallery {
       val entryName =
         if (unique) ZipArchive.uniqueEntry(subdir +"/"+ f.name, current)
         else subdir +"/"+ f.name
-      val next = current + entryName
-      if (entries.compareAndSet(current, next)) {
-        out + (f -> entryName)
-        entryName
+      if (!current(entryName)) {
+        val next = current + entryName
+        if (entries.compareAndSet(current, next)) {
+          out + (f -> entryName)
+          entryName
+        } else {
+          println("try again…")
+          addToZip(f, n + 1, max)
+        }
       } else {
-        println("try again…")
-        addToZip(f, n + 1, max)
+        entryName
       }
     }
     valueForce(id).map(File(_)).flatMap { file =>
@@ -311,10 +315,10 @@ object Gallery {
               case Right(p) =>
                 val (next, v) = p.run(lm)
                 ContextGet.setHead(LazyMapContext(next)).map(_ =>
-                  v.fold(identity, { msg =>
+                  v.fold({ msg =>
                     logger.warn(s"Error evaluating pattern '$pattern': $msg")
                     ""
-                  }))
+                  }, identity))
               case Left(msg) =>
                 logger.warn(s"Invalid format pattern '$pattern': $msg")
                 ContextGet.unit("")

@@ -76,5 +76,12 @@ edit. The template is supplied the following object:
    - `version` chee version
    - `homepage` url to the homepage of chee
 
+The default template renders a simple photo gallery: a list of
+thumbnails and a detail view for each picture. When on detail view,
+the image description can be turned on and off by clicking into the
+image or by pressing ENTER. Custom metadata (tags and comments) are
+rendered in the detail view. The comment is treated as markdown and
+converted into html.
+
 Please see the http://mustache.github.io/mustache.5.html[mustache syntax
 documentation] for an explanation of its syntax.

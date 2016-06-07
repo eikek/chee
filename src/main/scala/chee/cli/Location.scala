@@ -6,7 +6,6 @@ import chee.properties._
 import chee.query._
 import chee.util.files._
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 
 object Location {
   val root = HubCommand("location", List(

@@ -30,6 +30,11 @@ trait CommandSetup {
     dirs
   }
 
+  def withSetup(f: Setup => Any): Setup => Setup = { setup =>
+    f(setup)
+    setup
+  }
+
   val addImages: Setup => Setup = { setup =>
     addLocation(setup.files, setup)
     setup
@@ -49,10 +54,14 @@ trait CommandSetup {
     addCmd.indexDirs(setupVals.cfg, addOpts, sqlite)
   }
 
-  def cheeSetup(before: File => Setup)(code: Setup => Any): Unit = {
-    val setupVals = before(mkDir)
+  private def createTemp(setupVals: Setup): Setup = {
     // assume the tmpdir exists; this is ensured in Main
     setupVals.cfg.getFile("chee.tmpdir").createDirectories()
+    setupVals
+  }
+
+  def cheeSetup(before: File => Setup)(code: Setup => Any): Unit = {
+    val setupVals = before(mkDir)
     val test = Try(code(setupVals))
     teardown(setupVals)
     test match {
@@ -62,11 +71,11 @@ trait CommandSetup {
   }
 
   def globalChee(before: Setup => Setup = identity)(code: Setup => Any): Unit = {
-    cheeSetup(globalSetup andThen Setup.apply andThen before)(code)
+    cheeSetup(globalSetup andThen Setup.apply andThen createTemp andThen before)(code)
   }
 
   def repoChee(before: Setup => Setup = identity)(code: Setup => Any): Unit =
-    cheeSetup(repoSetup andThen Setup.apply andThen before)(code)
+    cheeSetup(repoSetup andThen Setup.apply andThen createTemp andThen before)(code)
 
   def bothChee(before: Setup => Setup = identity)(code: Setup => Any): Unit = {
     globalChee(before)(code)

@@ -6,7 +6,7 @@ import better.files._
 import chee.query._
 import LocationUpdate._
 
-class LocationUpdate extends ScoptCommand with LockSupport {
+class LocationUpdate(add: LocationAdd = new LocationAdd()) extends ScoptCommand with LockSupport {
 
   type T = Opts
 
@@ -47,7 +47,7 @@ class LocationUpdate extends ScoptCommand with LockSupport {
         recursive = locEntry.recursive,
         all = locEntry.all,
         query = locEntry.query)
-      new LocationAdd().indexDirs(cfg, addOpts, sqlite)
+      add.indexDirs(cfg, addOpts, sqlite)
     }
   }
 
