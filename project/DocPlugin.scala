@@ -43,11 +43,11 @@ object DocPlugin extends AutoPlugin {
   }
 
   import autoImport._
+  import ScriptPlugin.autoImport.{javaBin, script}
 
   lazy val docSettings = Seq(
     docSources in CheeDoc := (baseDirectory in Compile).value / "doc",
     stylesheet in CheeDoc := "golo.css",
-
     attributes in CheeDoc := Map(
       "commit" -> findCurrentCommit((baseDirectory in Compile).value),
       "version" -> version.value,
@@ -94,7 +94,7 @@ object DocPlugin extends AutoPlugin {
     genUsageInfo in CheeDoc := generateUsageInfo(
       streams.value.log,
       cheeDocOpts.value,
-      "java", //todo find a key that provides this
+      (javaBin in script).value,
       (fullClasspath in Runtime).value
     )
   )
@@ -133,7 +133,8 @@ object DocPlugin extends AutoPlugin {
   def findDocResources(in: File, out: File): Seq[File] = {
     val files: Seq[Seq[File]] = for (file <- IO.listFiles(in, (n: String) => n.matches("^[^_].*?.adoc$"))) yield {
       val outAdoc = out / "adoc" / file.getName
-      val outHtml = out / "html" / (IO.split(file.getName)._1 + ".html")
+      val (baseName, _) = IO.split(file.getName)
+      val outHtml = out / "html" / s"${baseName}.html"
       Seq(outAdoc, outHtml)
     }
     files.flatten
@@ -190,7 +191,9 @@ object DocPlugin extends AutoPlugin {
     else {
       val out = new StringBuilder
       Process(javaBin, opts) ! (ProcessLogger(_ => (), out append _ append "\n"))
-      out.toString.trim
+      val result = out.toString.trim
+      if (result startsWith "Exception") sys.error(s"""EXEC: $javaBin ${opts.mkString(" ")}; $result""")
+      else result
     }
   }
 

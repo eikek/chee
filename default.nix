@@ -1,37 +1,31 @@
 { pkgs ? import <nixpkgs> {} }:
 
-with pkgs;
-with lib;
+with pkgs.lib;
 
 let
-  buildsbt = map (splitString " := ") (splitString "\n\n" (builtins.readFile ./build.sbt));
-  version = builtins.replaceStrings ["\""] [""] (last (findFirst (p: (builtins.head p) == "version") "" buildsbt));
-  sbtVersion = last (splitString "=" (builtins.readFile ./project/build.properties));
-  sbt = fetchurl {
-    url = "http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/${sbtVersion}/sbt-launch.jar";
-    sha256 = "1h8b23v891dqzb36pgzs7h44bc3rrr9j6z6w7f70vam7lwsxwfn6";
-  };
-  cask = stdenv.mkDerivation rec {
+  versionsbt =  last (splitString ":=" (builtins.readFile ./version.sbt));
+  version = builtins.replaceStrings [" " "\n" ''"'' ] ["" "" ""] versionsbt;
+  cask = pkgs.stdenv.mkDerivation rec {
     version = "0.7.4";
     name = "cask-${version}";
-    src = fetchurl {
+    src = pkgs.fetchurl {
       url = "https://github.com/cask/cask/archive/v${version}.tar.gz";
       name = "cask-src-git-${version}.tar.gz";
       sha256 = "0za3in46qf02fd5gsficphgr0df3xicbf0pl8285q8gwa0ffm0xi";
     };
     buildPhase = "true";
     patchPhase = ''
-      sed -i 's,/usr/bin/env python,${python}/bin/python,g' bin/cask
+      sed -i 's,/usr/bin/env python,${pkgs.python}/bin/python,g' bin/cask
     '';
     installPhase = ''
       mkdir -p $out
       cp -r * $out/
       mv $out/bin/cask $out/bin/_cask
       cat > $out/bin/cask <<-"EOF"
-      #!${bash}/bin/bash
-      if ! ${which}/bin/which emacs > /dev/null 2>&1 && [ -z "$EMACS" ];
+      #!${pkgs.bash}/bin/bash
+      if ! ${pkgs.which}/bin/which emacs > /dev/null 2>&1 && [ -z "$EMACS" ];
       then
-          export EMACS=${emacs}/bin/emacs
+          export EMACS=${pkgs.emacs}/bin/emacs
       fi
       $(dirname $0)/_cask "$@"
       EOF
@@ -40,28 +34,28 @@ let
   };
 in
 
-stdenv.mkDerivation rec {
+pkgs.stdenv.mkDerivation rec {
   name = "chee-${version}";
 
   src = ./.;
 
-  buildInputs = [ jdk git cask ];
+  buildInputs = with pkgs; [ jdk git cask ];
 
   patchPhase = ''
     echo "" >> build.sbt
-    echo "javaBin in script := \"${jdk}/bin/java\"" >> build.sbt
-    echo "" >> build.sbt
-    echo "assemblyDir in script := \"program\"" >> build.sbt
+    echo "javaBin in script := \"${pkgs.jre}/bin/java\"" >> build.sbt
   '';
 
   buildPhase = ''
-    mkdir {_tmp,_home}
-    export SBT_OPTS="-XX:PermSize=190m -Dsbt.boot.directory=_sbt/boot/ -Dsbt.ivy.home=_sbt/ivy2/ -Dsbt.global.base=_sbt/"
-    export CHEE_OPTS="-Dchee.workingdir=_home/chee -Dchee.configdir=_home/chee"
-    ${jdk}/bin/java $SBT_OPTS $CHEE_OPTS -Duser.home=_home -jar ${sbt} make-zip
-    cd emacs
     export HOME=.
-    ${cask}/bin/cask build
+    mkdir -p {_tmp,_home,_sbt}
+    CHEE_OPTS="-Dchee.workingdir=$(pwd)/_home/chee -Dchee.configdir=$(pwd)/_home/chee"
+    export SBT_OPTS="-Dfile.encoding=UTF-8 -Dsbt.boot.directory=$(pwd)/_sbt/boot/ -Dsbt.ivy.home=$(pwd)/_sbt/ivy2/ -Dsbt.global.base=$(pwd)/_sbt/ $CHEE_OPTS"
+    ${pkgs.sbt}/bin/sbt make-zip
+
+    cd emacs
+    ./run-tests.sh
+    cask build
     cd ..
   '';
 
@@ -74,7 +68,7 @@ stdenv.mkDerivation rec {
     cp -R emacs/{*.el,*.elc} $out/share/emacs/site-lisp/
   '';
 
-  meta = with stdenv.lib; {
+  meta = {
     description = "Chee is a command line tool for managing photos.";
     homepage = https://github.com/eikek/chee;
     license = licenses.gpl3;

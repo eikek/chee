@@ -2,7 +2,6 @@ import java.nio.file.{Files, Paths, StandardCopyOption}
 
 lazy val commonSettings = Seq(
   name := "chee",
-  version := "0.2.0",
   homepage := Some(url("https://github.com/eikek/chee")),
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")

@@ -42,6 +42,7 @@ object CheeDoc {
 
   /** Return the first paragraph of the command help page. */
   def commandSummaryLine(cmd: String, subcmd: Option[String] = None): Option[String] = {
+    implicit val codec = io.Codec.UTF8
     def advance(lines: Iterator[String]): Option[Iterator[String]] = subcmd match {
       case None => Some(lines)
       case Some(sub) =>
