@@ -54,8 +54,9 @@ pkgs.stdenv.mkDerivation rec {
     ${pkgs.sbt}/bin/sbt make-zip
 
     cd emacs
-    ./run-tests.sh
+    cask
     cask build
+    ./run-tests.sh
     cd ..
   '';
 
