@@ -60,6 +60,9 @@ assembles chee's `thumb' subcommand."
 (defun chee-dired-get-buffer ()
   (get-buffer-create chee-dired-buffer-name))
 
+(defvar chee--dired-next-page-fn)
+(defvar chee--dired-prev-page-fn)
+
 (defun chee--dired-bind-paging-keys ()
   "Sets up a key map for navigating pages. Must be evaluated
 inside `chee-dired' function."
@@ -79,6 +82,9 @@ inside `chee-dired' function."
     (define-key lmap (kbd "D") 'chee-dired-rm)
     (use-local-map lmap)))
 
+(defvar chee-dired--search-dir-recursive)
+(defvar chee-dired--search-dir)
+
 (defun chee-dired (query &optional concurrent dir rec page decrypt method repodir)
   (message "Showing page %s" (or page 1))
   (with-current-buffer (chee-dired-get-buffer)
@@ -95,15 +101,17 @@ inside `chee-dired' function."
            (inhibit-read-only t)
            (ls-switches (chee-dired-get-ls-switches))
            (cmd (chee--thumb-command query concurrent dir rec page decrypt method)))
-      (dired-mode (or dir "/") ls-switches)
+      (dired-mode default-directory ls-switches)
+      (set (make-local-variable 'chee-dired--search-dir) dir)
+      (set (make-local-variable 'chee-dired--search-dir-recursive) rec)
       (set (make-local-variable 'dired-sort-inhibit) t)
       (set (make-local-variable 'dired-subdir-alist)
-           (list (cons (or dir "/") (point-min-marker))))
+           (list (cons default-directory (point-min-marker))))
       (set (make-local-variable 'revert-buffer-function)
            `(lambda (ignore-auto noconfirm)
               (chee-dired ,query ,concurrent ,dir ,rec ,page ,decrypt ,method ,repodir)))
       (chee--dired-bind-paging-keys)
-      (insert "  " (or dir "/") ":\n")
+      (insert "  " default-directory ":\n")
       (insert "  chee " (mapconcat 'identity cmd " ") "\n")
       (dired-insert-set-properties pos (point))
       (let ((proc (chee-proc-async-sexp cmd (function chee--dired-callback) repodir)))
@@ -160,14 +168,6 @@ inside `chee-dired' function."
       (use-local-map map))))
 
 
-(defun chee-dired-make-info-string (plist)
-  (format "%s, %s (%s %s)"
-          (or (plist-get plist :origin-created)
-              (format-time-string "%Y-%m-%d %H:%M:%S" (seconds-to-time (/ (plist-get plist :origin-lastmodified) 1000))))
-          (file-size-human-readable (plist-get plist :origin-length))
-          (or (plist-get plist :origin-make) "")
-          (or (plist-get plist :origin-model) "")))
-
 (defun chee-dired--format-info (fmt plist)
   (format-spec fmt
                (list (cons ?a (or (plist-get plist :origin-created)
@@ -179,6 +179,8 @@ inside `chee-dired' function."
                      (cons ?o (or (plist-get plist :origin-model) ""))
                      (cons ?w (or (plist-get plist :origin-width) ""))
                      (cons ?h (or (plist-get plist :origin-height) ""))
+                     (cons ?T (or (plist-get plist :origin-tag) ""))
+                     (cons ?C (or (plist-get plist :origin-comment) ""))
                      (cons ?f (or (plist-get plist :origin-filename) "<unkwown-file>")))))
 
 (defun chee-dired--modify-info (origfn &rest args)
@@ -189,7 +191,9 @@ specifiers with `image-dired-display-properties-format':
 - s  file size
 - a  created or lastmodified time
 - m  camera make
-- o  camera model"
+- o  camera model
+- T  chee tags
+- C  chee comment"
   (let ((res (apply origfn args))
         (plist (get-text-property (point) :chee-data)))
     (if plist
@@ -218,15 +222,63 @@ specifiers with `image-dired-display-properties-format':
 (defun chee-dired-rm (&optional arg)
   "Remove current or marked files from disk and index."
   (interactive "P")
-  (let ((files (dired-map-over-marks
-                (dired-get-filename)
-                arg)))
+  (let ((files (dired-map-over-marks (dired-get-filename) arg)))
     (dired-do-delete arg)
     (let ((lines (chee-proc-sync-lines
                   (append (list "rm" "--index") files)
                   default-directory)))
       (message "%s" (mapconcat 'identity lines "\n")))))
 
+
+(defun chee-dired--run-on-files (cmd &rest args)
+  (let* ((files (dired-map-over-marks (dired-get-filename) nil))
+         (query (concat "path~\"" (mapconcat 'identity files ";") "\""))
+         (lines (chee-proc-sync-lines (append
+                                       (list cmd)
+                                       args
+                                       (if chee-dired--search-dir-recursive (list "-r"))
+                                       (if chee-dired--search-dir (list "-f" chee-dired--search-dir))
+                                       (list query))
+                 default-directory)))
+    (message "%s" (mapconcat 'identity lines "\n"))))
+
+(defun chee-dired--meta-attach (action &optional tags-or-comment)
+  (if tags-or-comment
+      (chee-dired--run-on-files "meta" "attach" action tags-or-comment)
+    (chee-dired--run-on-files "meta" "attach" action)))
+
+(defun chee-dired-add-tags (tags)
+  "Add new TAGS to the marked files. TAGS is a comma-separated
+list of tag names."
+  (interactive "MAdd tags: ")
+  (chee-dired--meta-attach "--add-tags" tags))
+
+(defun chee-dired-remove-tags (tags)
+  "Remove TAGS from existing tag list of marked files. TAGS is a
+comma-separated list of tag names."
+  (interactive "MRemove tags: ")
+  (chee-dired--meta-attach "--remove-tags" tags))
+
+(defun chee-dired-set-tags (tags)
+  "Sets TAGS overwriting all existing tags of marked files. TAGS
+is a comma-separated list of tag names."
+  (interactive "MSet tags: ")
+  (chee-dired--meta-attach "--tags" tags))
+
+(defun chee-dired-drop-tags ()
+  "Drop all tags from marked files."
+  (interactive)
+  (chee-dired--meta-attach "--drop-tags"))
+
+(defun chee-dired-set-comment (comment)
+  "Set a new COMMENT to all marked files."
+  (interactive "MComment: ")
+  (chee-dired--meta-attach "--comment" comment))
+
+(defun chee-dired-drop-comment ()
+  "Remove comment from all marked files."
+  (interactive)
+  (chee-dired--meta-attach "--drop-comment"))
 
 (provide 'chee-dired)
 ;;; chee-dired.el ends here
