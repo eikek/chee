@@ -165,12 +165,12 @@ class RecParserTest extends FlatSpec with Matchers {
 
     val r1 = lm1.toList.apply(0)
     MapGet.valueForce('checksum).result(r1) should be ("f3f")
-    MapGet.valueForce('tag).result(r1) should be ("|summer|holidays|")
+    MapGet.valueForce('tag).result(r1) should be ("|holidays|summer|")
     MapGet.valueForce('comment).result(r1) should be ("A comment to the image.")
 
     val r2 = lm1.toList.apply(1)
     MapGet.valueForce('checksum).result(r2) should be ("e53")
-    MapGet.valueForce('tag).result(r2) should be ("|spring|car|swimming|")
+    MapGet.valueForce('tag).result(r2) should be ("|car|spring|swimming|")
     val str = MapGet.valueForce('comment).result(r2)
     str should include ("quam, a auctor enim")
     str should include ("eget, sodales eget")

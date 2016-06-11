@@ -47,7 +47,25 @@ package metadata {
     def setTags(t1: Tag, ts: Tag*): MapGet[Unit] =
       setTags(t1 +: ts)
 
-    def removeTags = setTags(Seq.empty)
+    def addTags(tags: Seq[Tag]): MapGet[Unit] =
+      tagValues.flatMap { old =>
+        modify { m =>
+          m + (idents.tag -> tagsToTagString((old ++ tags).distinct))
+        }
+      }
+
+    def addTags(t1: Tag, ts: Tag*): MapGet[Unit] = addTags(t1 +: ts)
+
+    def removeTags(tags: Seq[Tag]): MapGet[Unit] =
+      tagValues.flatMap { old =>
+        modify { m =>
+          m + (idents.tag -> tagsToTagString(old diff tags))
+        }
+      }
+
+    def removeTags(t1: Tag, ts: Tag*): MapGet[Unit] = removeTags(t1 +: ts)
+
+    def removeAllTags = setTags(Seq.empty)
 
     def setComment(c: String): MapGet[Unit] = modify { m =>
       if (c.isEmpty) m.remove(idents.comment)
@@ -91,5 +109,5 @@ package object metadata {
 
   @inline
   private def stringsToTagString(s: Seq[String]): String =
-    s.mkString(Tag.separator, Tag.separator, Tag.separator)
+    s.sorted.mkString(Tag.separator, Tag.separator, Tag.separator)
 }

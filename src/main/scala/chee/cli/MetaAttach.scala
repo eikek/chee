@@ -19,44 +19,47 @@ class MetaAttach extends ScoptCommand with AbstractLs with LockSupport {
 
     noteW("\nMeta options")
     opt[Seq[String]]("tags") valueName("tag1,tag2,…,tagN") action { (t, c) =>
-      c.copy(tags = t.map(Tag.validated))
-    } textW("The tags to attach. Use comma separated list of tag names.")
+      c.copy(tags = t.map(Tag.validated), tagAction = TagAction.Set)
+    } textW("The tags to set. Use comma separated list of tag names.")
+
+    opt[Seq[String]]("add-tags") valueName("tag1,tag2,…,tagN") action { (t, c) =>
+      c.copy(tags = t.map(Tag.validated), tagAction = TagAction.Add)
+    } textW("The tags to add. Use comma separated list of tag names.")
+
+    opt[Seq[String]]("remove-tags") valueName("tag1,tag2,…,tagN") action { (t, c) =>
+      c.copy(tags = t.map(Tag.validated), tagAction = TagAction.Remove)
+    } textW("The tags to remove. Use comma separated list of tag names.")
 
     opt[String]("comment") action { (co, c) =>
       c.copy(comment = co)
     } textW("A comment to attach.")
 
     opt[Unit]("drop-comment") action { (_, c) =>
-      c.copy(dropComment = true)
+      c.copy(dropComment = true, dropping = true)
     } textW ("Removes the comment. Cannot be uset with `--comment'.")
 
     opt[Unit]("drop-tags") action { (_, c) =>
-      c.copy(dropTags = true)
-    } textW ("Removes the tags. Cannot be uset with `--tags'.")
+      c.copy(tagAction = TagAction.DropAll, dropping = true)
+    } textW ("Removes all tags.")
 
     opt[Unit]("drop-all") action { (_, c) =>
-      c.copy(dropTags = true, dropComment = true)
+      c.copy(tagAction = TagAction.DropAll, dropComment = true, dropping = true)
     } textW("Drop tags and comments. This is short for `--drop-tags --drop-comment'.")
 
     addQuery(_ updateLsOpts _)
 
     checkConfig { cfg =>
-      cfg.dropComment match {
+      cfg.dropping match {
         case true if cfg.comment.nonEmpty =>
           failure("Either --drop-comment or --comment is allowed.")
-        case _ => success
-      }
-    }
-    checkConfig { cfg =>
-      cfg.dropTags match {
         case true if cfg.tags.nonEmpty =>
-          failure("Either --drop-tags or --tags is allowed.")
+          failure("Either --drop-tags or --{add|remove}-tags allowed.")
         case _ => success
       }
     }
     checkConfig { cfg =>
       if (cfg.tags == defaults.tags &&
-        cfg.dropTags == defaults.dropTags &&
+        cfg.tagAction == defaults.tagAction &&
         cfg.comment == defaults.comment &&
         cfg.dropComment == defaults.dropComment)
         failure("A modification of comment or tags is required.")
@@ -70,8 +73,10 @@ class MetaAttach extends ScoptCommand with AbstractLs with LockSupport {
 
   def attachAction(opts: Opts): MapGet[Boolean] = {
     val tagAction = opts match {
-      case TagOpts(true, _) => mapget.removeTags
-      case TagOpts(_, tags) => mapget.setTags(tags)
+      case TagOpts(TagAction.DropAll, _) => mapget.removeAllTags
+      case TagOpts(TagAction.Set, tags) => mapget.setTags(tags)
+      case TagOpts(TagAction.Add, tags) => mapget.addTags(tags)
+      case TagOpts(TagAction.Remove, tags) => mapget.removeTags(tags)
       case _ => unit(())
     }
     val commentAction = opts match {
@@ -96,24 +101,32 @@ class MetaAttach extends ScoptCommand with AbstractLs with LockSupport {
 }
 
 object MetaAttach {
+  sealed trait TagAction
+  object TagAction {
+    case object Set extends TagAction
+    case object Add extends TagAction
+    case object Remove extends TagAction
+    case object DropAll extends TagAction
+  }
 
   case class Opts(
     lsOpts: LsOpts = LsOpts(),
     tags: Seq[Tag] = Seq.empty,
     comment: String = "",
     dropComment: Boolean = false,
-    dropTags: Boolean = false
+    dropping: Boolean = false,
+    tagAction: TagAction = TagAction.Set
   ) {
     def updateLsOpts(f: LsOpts => LsOpts) =
       copy(lsOpts = f(lsOpts))
 
-    def dropEntry = dropComment && dropTags
+    def dropEntry = dropComment && tagAction == TagAction.DropAll
   }
 
   object TagOpts {
-    def unapply(opts: Opts): Option[(Boolean, Seq[Tag])] =
-      if (opts.tags.isEmpty && opts.dropTags == false) None
-      else Some((opts.dropTags, opts.tags))
+    def unapply(opts: Opts): Option[(TagAction, Seq[Tag])] =
+      if (opts.tags.isEmpty && opts.tagAction == TagAction.Set) None
+      else Some((opts.tagAction, opts.tags))
   }
 
   object CommentOpts {

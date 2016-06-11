@@ -32,6 +32,24 @@ class MetaAttachTest extends FlatSpec with Matchers with CommandSetup with FindH
     }
   }
 
+  it should "add tags" in bothChee(addImages) { setup =>
+    val (out, Nil) = findLisp(setup)
+    val (_, Nil) = attach.run(setup, "--tags", "eagle,sheep")
+    val (_, Nil) = attach.run(setup, "--add-tags", "fish")
+
+    val (out2, Nil) = findLisp(setup, "tag:sheep")
+    out.map(_.replace(":tag nil", ":tag \"|eagle|fish|sheep|\"")) should be (out2)
+  }
+
+  it should "remove tags" in bothChee(addImages) { setup =>
+    val (out, Nil) = findLisp(setup)
+    val (_, Nil) = attach.run(setup, "--tags", "eagle,sheep")
+    val (_, Nil) = attach.run(setup, "--remove-tags", "eagle")
+
+    val (out2, Nil) = findLisp(setup, "tag:sheep")
+    out.map(_.replace(":tag nil", ":tag \"|sheep|\"")) should be (out2)
+  }
+
   it should "drop tags" in bothChee(addImages) { setup =>
     val (_, Nil) = attach.run(setup, "--comment", "scoobeedoobeedoo")
     val (out, Nil) = findLisp(setup)
@@ -71,10 +89,22 @@ class MetaAttachTest extends FlatSpec with Matchers with CommandSetup with FindH
 
   it should "refuse if drop and change tags/comments" in bothChee() { setup =>
     intercept[UserError] {
+      attach.run(setup, "--tags", "eagle", "--drop-tags")
+    }
+    intercept[UserError] {
+      attach.run(setup, "--drop-all", "--tags", "eagle")
+    }
+    intercept[UserError] {
       attach.run(setup, "--drop-tags", "--tags", "eagle")
     }
     intercept[UserError] {
       attach.run(setup, "--drop-comment", "--comment", "scoobeedoo")
+    }
+    intercept[UserError] {
+      attach.run(setup, "--drop-all", "--comment", "scoobeedoo")
+    }
+    intercept[UserError] {
+      attach.run(setup, "--drop-all", "--tags", "eagle", "--comment", "scoobeedoo")
     }
   }
 

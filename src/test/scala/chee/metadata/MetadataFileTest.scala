@@ -37,10 +37,27 @@ class MetadataFileTest extends FlatSpec with Matchers with FileLoan {
 
   it should "remove tags" in withMetadata("blue fox", Tag("car"), Tag("bus")) { mf =>
     val map = mf.find(TrueCondition).toList(0)
-    val next = mapget.removeTags.toMap.result(map)
+    val next = mapget.removeAllTags.toMap.result(map)
     val nmf = mf.write(Seq(next))
     nmf.querySize("comment:*blue*") should be (1)
     nmf.querySize("tag?") should be (0)
+  }
+
+  it should "add new tags" in withMetadata("blue fox", Tag("car"), Tag("bus")) { mf =>
+    val map = mf.find(TrueCondition).toList(0)
+    val next = mapget.addTags(Tag("moto")).toMap.result(map)
+    val nmf = mf.write(Seq(next))
+    nmf.querySize("tag:moto") should be (1)
+    nmf.querySize("tag:bus") should be (1)
+    nmf.querySize("tag:car") should be (1)
+  }
+
+  it should "add remove tags" in withMetadata("blue fox", Tag("car"), Tag("bus")) { mf =>
+    val map = mf.find(TrueCondition).toList(0)
+    val next = mapget.removeTags(Tag("car")).toMap.result(map)
+    val nmf = mf.write(Seq(next))
+    nmf.querySize("tag:bus") should be (1)
+    nmf.querySize("tag:car") should be (0)
   }
 
   it should "remove comment" in withMetadata("blue fox", Tag("car"), Tag("bus")) { mf =>
