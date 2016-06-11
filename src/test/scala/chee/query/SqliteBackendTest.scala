@@ -1,5 +1,6 @@
 package chee.query
 
+import better.files.File
 import chee.metadata.MetadataFile
 import org.scalatest._
 import chee.properties._
@@ -48,7 +49,19 @@ class SqliteBackendTest extends FlatSpec with Matchers with chee.FileLoan {
     val sqlite = new SqliteBackend(TestInfo.sampleDb, None)
     val Success(result1) = sqlite.find(Condition.or(Prop(Comp.Like, Ident.extension -> "jpg"), Prop(Comp.Like, Ident.extension -> "png")))
     val Success(result2) = sqlite.find(In(Ident.extension, List("jpg", "png")))
+    result1 should not be ('empty)
     result1.map(lisp.result) should be (result2.map(lisp.result))
+  }
+
+  it should "relativize path when in repo mode" in {
+    val path = "/home/eike/workspace/projects/chee2/src/test/resources/images/test1.jpg"
+    val sqlite = new SqliteBackend(TestInfo.sampleRepoDb, Some(File("/home/eike/workspace")))
+    val Success(result1) = sqlite.find(Prop(Comp.Like, Ident.path -> path))
+    result1.size should be (1)
+    val Success(result2) = sqlite.find(Prop(Comp.Like, Ident.location -> "/home/eike/workspace/projects/chee2"))
+    result2.size should be (6)
+    val Success(result3) = sqlite.find(In(Ident.path, List(path)))
+    result3.size should be (1)
   }
 
   "exists" should "check for existing files" in withNewFile { file =>

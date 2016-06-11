@@ -181,6 +181,9 @@ object SqliteBackend extends JdbcStatement with LazyLogging {
     case Prop(comp, Property(id, name))
         if id == Ident.location || id == Ident.path =>
       Prop(comp, Property(id, paths.relativeStr(root)(name)))
+    case In(id, values)
+        if id == Ident.location || id == Ident.path =>
+      In(id, values.map(paths.relativeStr(root)))
     case n => n
   })(c)
 }

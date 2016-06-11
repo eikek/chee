@@ -44,6 +44,8 @@ lazy val writeTestInfo = Def.task {
     |  val images: List[File] =
     |    ${IO.listFiles((resourceDirectory in Test).value / "images").map( f => "resourceDir / \"images\" / \"" + f.getName + "\"").toList}
     |  val sampleDb = resourceDir / "sample.db"
+    |  /** Repo dir is /home/eike/workspace */
+    |  val sampleRepoDb = resourceDir / "sampleRepo.db"
     |}
     """.stripMargin
   val file = (sourceManaged in Test).value / "chee" / "TestInfo.scala"
