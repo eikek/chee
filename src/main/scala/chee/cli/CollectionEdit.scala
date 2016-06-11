@@ -2,6 +2,7 @@ package chee.cli
 
 import com.typesafe.config.Config
 import better.files._
+import chee.OS
 import chee.conf._
 import chee.{Collection, CollectionConf}
 import CollectionEdit.Opts
@@ -123,33 +124,8 @@ class CollectionEdit extends ScoptCommand {
     }
   }
 
-  def edit(cfg: Config, file: File): Boolean = {
-    import scala.collection.JavaConverters._
-    val cmd = getEditor(cfg) :+ file.path.toString
-    logger.trace(s"""Running edit command `${cmd.mkString(" ")}'""")
-    val pb = new ProcessBuilder(cmd.asJava);
-    pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-    pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
-    pb.start().waitFor() == 0
-  }
-
-  def getEditor(cfg: Config): Seq[String] = {
-    val editor = Option(cfg.getString("chee.programs.editor")).filter(_.nonEmpty) orElse {
-      Option(System.getenv.get("EDITOR")).filter(_.nonEmpty)
-    }
-    editor match {
-      case Some(edit) =>
-        logger.trace(s"Using editor `$edit'")
-        edit.split("\\s+").toSeq
-      case None =>
-        chee.UserError {
-          """No editor found.
-          |Please set an editor command in the config file under key
-          |`chee.programs.editor' or set the environment variable `EDITOR'.""".stripMargin
-        }
-    }
-  }
+  def edit(cfg: Config, file: File): Boolean =
+    OS(cfg).edit(file).isSuccess
 
   object CollectionFileParser {
     sealed trait Pos

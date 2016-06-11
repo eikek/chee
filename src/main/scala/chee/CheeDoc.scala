@@ -1,11 +1,10 @@
 package chee
 
-import chee.properties.{ Ident, LazyMap, MapGet, Patterns }
+import chee.properties.{ Ident, LazyMap, Patterns }
 import java.net.URL
 import com.typesafe.config.Config
 
 import scala.io.Source
-import scala.sys.process.Process
 import scala.util.Try
 
 import better.files._
@@ -22,22 +21,22 @@ object CheeDoc {
   def findAboutPage(cmd: String, format: String): Option[URL] =
     findPage(s"about-$cmd", format)
 
-  def openPage(cfg: Config)(name: String): Try[Int] = Try {
+  def openPage(cfg: Config)(name: String): Try[Unit] = Try {
     val target = cfg.getFile("chee.tmpdir") / (name +".html")
     copyPage(name, "html", target) getOrElse {
       sys.error(s"The page ${name} could not be found!")
     }
-    browse(cfg, target).get
+    OS(cfg).browse(target)
   }
 
   /** Opens the html page for the given command in a browser */
-  def openCommandPage(cfg: Config)(cmd: String): Try[Int] =
+  def openCommandPage(cfg: Config)(cmd: String): Try[Unit] =
     openPage(cfg)("cmd-"+cmd)
 
-  def openAboutPage(cfg: Config)(name: String): Try[Int] =
+  def openAboutPage(cfg: Config)(name: String): Try[Unit] =
     openPage(cfg)("about-"+name)
 
-  def openManual(cfg: Config): Try[Int] =
+  def openManual(cfg: Config): Try[Unit] =
     openPage(cfg)("manual")
 
   /** Return the first paragraph of the command help page. */
@@ -95,14 +94,6 @@ object CheeDoc {
       } else result.toString
 
     loop().trim
-  }
-
-  def browse(cfg: Config, file: File): Try[Int] = Try {
-    val cmd = (cfg.getCommand("chee.programs.browser").collect {
-      case "%s" => file.path.toString
-      case s => s
-    }).toSeq
-    Process(cmd(0), cmd.drop(1)).!
   }
 
   /** Copies a help page to the given location.

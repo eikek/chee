@@ -1,26 +1,24 @@
 package chee.cli
 
-import chee.properties.FormatPatterns
-import com.typesafe.scalalogging.LazyLogging
 import java.io.BufferedOutputStream
 import java.util.concurrent.atomic.AtomicReference
-import better.files.File
-import chee.util.mustache.Template
-import com.typesafe.config.Config
+import java.util.zip.ZipOutputStream
+
+import CryptOptions.{Opts => CryptOpts}
 import Gallery._
-import chee.Size
-import chee.properties.{Ident, MapGet, Property, VirtualProperty, LazyMap}
-import chee.resources.ResourceInfo
+import LsOptions.{Opts => LsOpts}
+import ProcessingOptions.{Opts => ProcOpts}
+import better.files.File
+import chee.{Size, OS}
 import chee.conf._
-import chee.CheeDoc
 import chee.doc.CheeDocInfo
+import chee.properties.{FormatPatterns, Ident, LazyMap, MapGet, Property, VirtualProperty}
+import chee.properties.MapGet._
+import chee.resources.ResourceInfo
 import chee.util.files._
 import chee.util.mustache._
-import MapGet._
-import LsOptions.{Opts => LsOpts}
-import CryptOptions.{Opts => CryptOpts}
-import ProcessingOptions.{Opts => ProcOpts}
-import java.util.zip.ZipOutputStream
+import com.typesafe.config.Config
+import com.typesafe.scalalogging.LazyLogging
 
 class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
@@ -175,7 +173,7 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
       }
       opts.out match {
         case None =>
-          CheeDoc.browse(cfg, html)
+          OS(cfg).browse(html)
         case Some(f) =>
           if (opts.concurrent) outln("")
           outln(s"Gallery is at ${f.path}")

@@ -32,9 +32,9 @@ query empty, the process is cancelled and the collection list is not
 updated.
 
 The editor program is determined from the configuration file. Set a
-program at key `chee.programs.editor`. If this is not set, the
-environment variable `EDITOR` is used. If this is empty, too, an error
-is reported.
+program at key `chee.programs.editor`. If this is not set, the OS is
+asked to open an editor and at last the file is opend using a common
+program (xdg-open, open, etc).
 
 ==== show
 

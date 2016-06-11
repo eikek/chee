@@ -2,7 +2,6 @@ package chee
 
 import java.util.concurrent.atomic.AtomicReference
 
-import scala.sys.process.{Process, ProcessLogger}
 import scala.util.Try
 
 import better.files._
@@ -20,9 +19,6 @@ package object conf {
   implicit class ConfigOps(cfg: Config) {
 
     def getFile(key: String): File = File(cfg.getString(key))
-
-    def getCommand(key: String): List[String] =
-      cfg.getString(key).split("\\s+").filter(_.nonEmpty).toList
 
     def getIndexDb = getFile("chee.dbfile")
 
@@ -94,15 +90,10 @@ package object conf {
       getFile(key).readPassword
 
     def readPasswordFromCommand(key: String): Option[Array[Char]] = {
-      cfg.getCommand(key) match {
-        case Nil => None
-        case cmd =>
-          val pw = new AtomicReference[String]()
-          Process(cmd.head, cmd.tail) !< ProcessLogger(pw.compareAndSet(null, _), Console.err.println) match {
-            case 0 => Option(pw.get).map(_.toCharArray)
-            case rc => UserError(s"Password command returned non-zero: $rc")
-          }
-      }
+      OS.Command(cfg.getString(key)).flatMap(OS.Run.firstLine).map {
+        case p if p.isEmpty => None
+        case p => Some(p.toCharArray)
+      }.get
     }
 
     def getRepoRoot: Option[File] =

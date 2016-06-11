@@ -3,7 +3,7 @@ package chee
 import org.scalatest._
 import better.files._
 import chee.LocationConf.{Entry => LE}
-import scala.util.{Try, Success, Failure}
+import scala.util.{Try, Failure}
 
 class LocationConfTest extends FlatSpec with Matchers with chee.FileLoan {
 
