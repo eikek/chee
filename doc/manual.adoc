@@ -1,5 +1,5 @@
 Chee- Photo Organizer (<version>)
-============================
+=====================================
 Eike Kettner
 v<version> (build <commit> at <buildtime>)
 :toc: true
@@ -19,10 +19,7 @@ Some features are:
 
 - No “application lock-in”; chee uses open formats for storing data so
   that it can be easily accessed using other (free or open-source)
-  tools. For example, OpenPGP is used for encryption so the data
-  remains accessible using tools like gnupg. The metadata derived from
-  files is stored in an sqlite db for which many tools exists to
-  access its data.
+  tools.
 - search photos using a simple query language by file and image
   properties (resolution, created-time, etc)
 - manages collections (created from queries and can be used in
