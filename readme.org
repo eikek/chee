@@ -75,8 +75,8 @@ nix-env -if https://github.com/eikek/chee/archive/master.tar.gz
 
 Prebuild zip files are usually available for download here:
 
-- [[https://eknet.org/main/projects/chee/chee-0.2.0.zip][current]]
-- [[https://eknet.org/main/projects/chee/chee-0.1.0.zip][chee 0.1.0]]
+- [[https://eknet.org/main/projects/chee/chee-0.2.0-SNAPSHOT.zip][current]]
+- [[https://eknet.org/main/projects/chee/chee-0.1.1.zip][chee 0.1.1]]
 
 Download and unzip the file. Then add the resulting directory to your
 ~$PATH~. You need Java 8 for running it. Test it via
