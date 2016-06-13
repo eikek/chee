@@ -15,6 +15,7 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   def gallery = new Gallery with BufferOut
   def locUpdate = new LocationUpdate(new LocationAdd with BufferOut) with BufferOut
 
+  def metaAttach = new MetaAttach with BufferOut
 
   val copyImagesToDir: Setup => Setup = withSetup { setup =>
     val target = setup.files / "again"
@@ -83,6 +84,29 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
     (cwd / "gallery" / "index.html").contentAsString.trim should be ("6.6kb 47.6kb 19.4kb 303.8kb")
   }
 
+  it should "render tags and comments" in bothChee(addImages) { setup =>
+    metaAttach.run(setup, "--skip", "1", "--first", "1", "--tags", "d90a7879", "--comment", "323e-4c15-a1bd-9357121ca8b8")
+    val (out, Nil) = findLisp(setup, "tag:d90a7879")
+    out should have size (1)
+    val outfile = setup.dirs.userDir.get / "gallery"
+    gallery.run(setup, "--out", outfile.pathAsString)
+    val html = outfile / "index.html"
+    html.exists should be (true)
+    val content = html.contentAsString
+    val count = countWord(content)_
+    count("d90a7879") should be (1)
+    count("323e-4c15-a1bd-9357121ca8b8") should be (1)
+  }
+
+  def countWord(s: String)(word: String): Int = {
+    @annotation.tailrec
+    def loop(index: Int = 0, count: Int = 0): Int =
+      s.indexOf(word, index) match {
+        case n if n < 0 => count
+        case n => loop(n + 1, count + 1)
+      }
+    loop()
+  }
 
   def zipEntries(zip: File): Seq[String] = {
     val zipFile = new ZipFile(zip.toJava)

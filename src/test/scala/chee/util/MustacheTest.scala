@@ -6,6 +6,13 @@ import fastparse.core.Parsed.Success
 
 class MustacheTest extends FlatSpec with Matchers {
 
+  "stackedcontext" should "replace correct positions" in {
+    val sc = Context("name" -> Value.of("red")) :: Context("name" -> Value.of("red")) :: Context.empty
+    val (c2, Some(v)) = sc.find("name")
+    v should be (Value.of("red"))
+    c2 should be (sc)
+  }
+
   "template" should "render literals" in {
     val t = Template(Literal("Hello"), Literal(" "), Literal("world!"))
     t.render(Context.empty) should be ("Hello world!")
@@ -52,6 +59,19 @@ class MustacheTest extends FlatSpec with Matchers {
     val context = Context("colors" -> Value.list(
       Value.map("name" -> "red"), Value.map("name" -> "green"), Value.map("name" -> "yellow")))
     t.render(context) should be ("- red\n- green\n- yellow\n")
+  }
+
+  it should "push/pop list element context" in {
+    val t = Template(Section("colors", Seq(Literal("- "), Variable("name"), Literal("\n"))))
+    val maps = Value.list(
+      Value.map("name" -> "red"),
+      Value.map(),
+      Value.map("name" -> "green"),
+      Value.map(),
+      Value.map("name" -> "blue"),
+      Value.map())
+    val context = Context("colors" -> maps)
+    t.render(context) should be ("- red\n- \n- green\n- \n- blue\n- \n")
   }
 
   it should "render lambda values" in {

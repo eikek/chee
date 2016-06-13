@@ -15,27 +15,27 @@ object mustache {
     def tail: Context = this match {
       case c: StackedContext =>
         val rest = c.cs.tail
-        if (rest.isEmpty) this
+        if (rest.isEmpty) Context.empty
         else new StackedContext(rest)
       case _ => this
     }
   }
 
   private case class StackedContext(val cs: List[Context]) extends Context {
+    require(cs.nonEmpty, "empty list for stacked context")
     def find(key: String): (Context, Option[Value]) = {
-      @annotation.tailrec
-      def loop(in: List[Context], top: List[Context] = Nil): (List[Context], Option[Value]) =
-        in match {
-          case Nil => (top, None)
-          case c :: cs => c.find(key) match {
-            case (cnext, None) => loop(cs, cnext :: top)
-            case (cnext, v@Some(_)) => ((cnext :: top).reverse ::: in, v)
+      val (list, value) = cs.foldRight((List[Context](), None:Option[Value])) {
+        case (ctx, (list, value)) =>
+          if (value.isDefined) (ctx :: list, value)
+          else {
+            val (c, v) = ctx.find(key)
+            (c :: list, v)
           }
-        }
-      val (ncs, v) = loop(cs)
-      (new StackedContext(ncs), v)
+      }
+      if (list == cs) (this, value)
+      else (StackedContext(list), value)
     }
-    override def :: (head: Context) = new StackedContext(head :: cs)
+    override def :: (head: Context) = StackedContext(head :: cs)
   }
 
   object Context {

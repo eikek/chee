@@ -114,9 +114,6 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
         }
     }
 
-  def makeContext: MapGet[Value] =
-    get.map { m => MapValue(new LazyMapContext(m), false) }
-
   def writeTemplate(opts: Opts): Unit = {
     val file = opts.out.getOrElse(File("gallery-template.mustache")) match {
       case Directory(f) => f / "gallery-template.mustache"
@@ -303,6 +300,9 @@ object Gallery {
       } map (_ => true)
     }
   }
+
+  def makeContext: MapGet[Value] =
+    get.map { m => MapValue(new LazyMapContext(m), false) }
 
   case class LazyMapContext(lm: LazyMap) extends Context with LazyLogging {
     def find(key: String): (Context, Option[Value]) = {
