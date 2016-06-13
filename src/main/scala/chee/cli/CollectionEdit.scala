@@ -4,7 +4,7 @@ import com.typesafe.config.Config
 import better.files._
 import chee.OS
 import chee.conf._
-import chee.{Collection, CollectionConf}
+import chee.Collection
 import CollectionEdit.Opts
 
 class CollectionEdit extends ScoptCommand {

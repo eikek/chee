@@ -23,7 +23,7 @@ object Main extends LazyLogging {
     new Find,
     HubCommand("meta", List(new MetaFind, new MetaAttach)),
     Location.root,
-    HubCommand("collection", List(new CollectionEdit, new CollectionShow)),
+    HubCommand("collection", List(new CollectionEdit, new CollectionShow, new CollectionRemove)),
     View,
     new Move,
     new Remove,

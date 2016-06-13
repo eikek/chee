@@ -36,6 +36,7 @@ program at key `chee.programs.editor`. If this is not set, the OS is
 asked to open an editor and at last the file is opend using a common
 program (xdg-open, open, etc).
 
+
 ==== show
 
 Shows details about collections.
@@ -61,3 +62,16 @@ and `description`.
 The argument is a portion of a name to restrict the output to only
 those collection that start with `\<name>`. If not given, all
 collections are listed.
+
+
+==== remove
+
+Remove a collection.
+
+.Usage
+----------------------------------------------------------------------
+<usage_collection_remove>
+----------------------------------------------------------------------
+
+Removes a collection from the list. The name argument may be shortened
+to a non-ambigous term.
