@@ -113,7 +113,7 @@ object CheeDoc {
       val file =
         if (!target.isDirectory && target.name.endsWith("."+format)) target
         else target / (name +"."+ format)
-      file.createIfNotExists().clear()
+      file.createIfNotExists(createParents = true).clear()
       Source.fromURL(page).getLines.foreach(file.appendLine)
       file
     }

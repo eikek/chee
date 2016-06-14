@@ -11,10 +11,10 @@ lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "2.2.4"    % "it,test",
+  "org.scalatest"              %% "scalatest"                % "2.2.6"    % "it,test",
   "org.scalacheck"             %% "scalacheck"               % "1.13.1"   % "test",
   "com.lihaoyi"                %% "fastparse"                % "0.3.7",
-  "com.github.pathikrit"       %% "better-files"             % "2.15.0" excludeAll(
+  "com.github.pathikrit"       %% "better-files"             % "2.16.0" excludeAll(
     scalaLib
   ),
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.4.0" excludeAll(
@@ -22,8 +22,8 @@ lazy val dependencies = Seq(
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
-  "com.github.scopt"           %% "scopt"                    % "3.4.0",
-  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.0" excludeAll(
+  "com.github.scopt"           %% "scopt"                    % "3.5.0",
+  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.6" excludeAll(
     scalaLib,
     slf4jApi // use the one provided by logback
    ),

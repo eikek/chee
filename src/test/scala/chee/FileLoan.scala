@@ -15,7 +15,7 @@ trait FileLoan {
   }
 
   def withExistingFile(code: File => Any): Unit = withNewFile { f =>
-    f.createIfNotExists()
+    f.createIfNotExists(createParents = true)
     code(f)
   }
 }

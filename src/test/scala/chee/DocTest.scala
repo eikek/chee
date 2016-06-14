@@ -62,7 +62,7 @@ class DocTest extends FlatSpec with Matchers {
   "copy page" should "overwrite existing files" in {
     if (testFolder.exists) testFolder.delete()
     val target = testFolder/"myfile.html"
-    target.createIfNotExists()
+    target.createIfNotExists(createParents = true)
     target.appendLine("some other stuff")
     target.lines.mkString should be ("some other stuff")
     val Some(f) = CheeDoc.copyPage("cmd-help", "html", target)

@@ -80,6 +80,7 @@ trait ScoptCommand extends Command with LazyLogging {
   def exec(cfg: Config, opts: T): Unit
 
   abstract class Parser extends CheeOptionParser[T](name) {
+    override def renderingMode = scopt.RenderingMode.OneColumn
     override def showTryHelp(): Unit = {
       errln(cheeTryHelp)
     }
