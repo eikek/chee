@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelper with LazyLogging {
 
   def gallery = new Gallery with BufferOut
-  def locUpdate = new LocationUpdate(new LocationAdd with BufferOut) with BufferOut
+  def add  = new Add with BufferOut
 
   def metaAttach = new MetaAttach with BufferOut
 
@@ -36,7 +36,7 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   }
 
   val syncLocation: Setup => Setup = withSetup { setup =>
-    locUpdate.run(setup, "--all")
+    add.run(setup, "-r", setup.files.pathAsString)
     val (out, Nil) = findLisp(setup)
     out.size should be (8)
   }

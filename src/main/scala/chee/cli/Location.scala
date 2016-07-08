@@ -3,18 +3,11 @@ package chee.cli
 import better.files._
 import chee.conf._
 import chee.properties._
-import chee.query._
+import chee.query.{ Index, _ }
 import chee.util.files._
 import com.typesafe.config.Config
 
 object Location {
-  val root = HubCommand("location", List(
-    new LocationAdd,
-    new LocationUpdate,
-    new LocationImport,
-    new LocationInfo,
-    new LocationSync))
-
   /** Test whether `f` is inside a location given by `locations`.
     *
     * Return the location that `f` is a child of, or `None`.
@@ -28,48 +21,24 @@ object Location {
     * Apply the `include` function to the result of `findFileLocation`
     * and if `true` include dir (from `dirs`) in the result.
     */
-  private def filterFileLocation(conf: chee.LocationConf, include: Option[File] => Boolean)(dirs: Seq[File]): Seq[File] = {
-    val existing = conf.list.map(_.map(_.dir).toSet).get
+  private def filterFileLocation(index: Index, include: Option[File] => Boolean)(dirs: Seq[File]): Seq[File] = {
+    val existing = index.listLocations().get.toSet
     val check = findFileLocation(existing)_
     dirs.filter(d => include(check(d)))
   }
 
-  private def checkFileLocation(conf: chee.LocationConf, msg: String, err: Option[File] => Boolean, dirs: Seq[File]): Unit = {
-    val failedDirs = filterFileLocation(conf, err)(dirs)
+  private def checkFileLocation(index: Index, msg: String, err: Option[File] => Boolean, dirs: Seq[File]): Unit = {
+    val failedDirs = filterFileLocation(index, err)(dirs)
     if (failedDirs.isEmpty) ()
     else userError(failedDirs.map(d => s"`${d.path}' $msg").mkString("\n"))
   }
 
   /** Check if all `dirs` are known locations (or childs thereof). */
-  def checkRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
-    checkFileLocation(conf, "is not a known location", _.isEmpty, dirs)
+  def checkRegisteredLocations(index: Index, dirs: Seq[File]): Unit =
+    checkFileLocation(index, "is not a known location", _.isEmpty, dirs)
 
   /** Check if all `dirs` are not known locations. */
-  def checkNotRegisteredLocations(conf: chee.LocationConf, dirs: Seq[File]): Unit =
-    checkFileLocation(conf, "is a known location", _.nonEmpty, dirs)
+  def checkNotRegisteredLocations(index: Index, dirs: Seq[File]): Unit =
+    checkFileLocation(index, "is a known location", _.nonEmpty, dirs)
 
-  def checkRepoRoot(conf: Config, dirs: Seq[File]): Unit =
-    conf.getRepoRoot match {
-      case Some(root) if conf.getBoolean("chee.repo.restrict-to-root") =>
-        val errors = dirs.filterNot(_ childOf root)
-        if (errors.nonEmpty) {
-          userError(s"""Directories ${errors.mkString(", ")} outside of repository root ${root.path}!""")
-        }
-      case _ =>
-    }
-}
-
-class LocationInfo extends Command {
-  val name = "info"
-
-  def exec(cfg: Config, args: Array[String]): Unit = {
-    val sqlite = new SqliteBackend(cfg.getIndexDb, cfg.getRepoRoot)
-    val file = cfg.getLocationConf
-
-    for (loc <- file.list.get) {
-      val count = sqlite.count(Prop(Comp.Eq, Ident.location -> loc.dirname)).get
-      outln(s"${loc.dir}: $count")
-    }
-    outln(s"All: ${sqlite.count(TrueCondition).get}")
-  }
 }

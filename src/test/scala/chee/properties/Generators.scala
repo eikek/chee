@@ -1,7 +1,6 @@
 package chee.properties
 
 import org.scalacheck.{Gen, Arbitrary}
-import chee.properties._
 
 object Generators {
 
@@ -21,9 +20,11 @@ object Generators {
     n <- Gen.oneOf(Ident.width, Ident.height, Ident.iso)
   } yield Property(n, v.toString)
 
-  val longProperty = for (v <- Arbitrary.arbitrary[Long]) yield Property(Ident.length, v.toString)
+  val numLong = Gen.posNum[Long]
 
-  val genProperty = Gen.oneOf(stringProperty, intProperty, longProperty)
+  val longProperty: Gen[Property] = for (v <- numLong) yield Property(Ident.length, v.toString)
+
+  val genProperty: Gen[Property] = Gen.oneOf(stringProperty, intProperty, longProperty)
 
   def genPropertyList(len: Int): Gen[List[Property]] = Gen.listOfN(len, genProperty)
 

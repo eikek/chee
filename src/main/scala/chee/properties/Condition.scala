@@ -49,6 +49,22 @@ object Condition {
   def lt(p: Property) = Prop(Comp.Lt, p)
   def gt(p: Property) = Prop(Comp.Gt, p)
 
+  def lookup(comp: Comp, id: Ident, value: MapGet[Option[String]]): MapGet[Condition] =
+    value.map {
+      case Some(v) => Prop(comp, Property(id, v))
+      case None =>
+        if (comp != Comp.Eq) Not(TrueCondition)
+        else Not(Exists(id))
+    }
+
+  def lookup(comp: Comp, id: Ident, valueId: Ident): MapGet[Condition] =
+    lookup(comp, id, MapGet.value(valueId))
+
+  def lookup(comp: Comp, id: Ident): MapGet[Condition] = lookup(comp, id, id)
+
+  def lookup(id: Ident): MapGet[Condition] = lookup(Comp.Eq, id)
+
+
   def mapAll(f: Condition => Condition)(c: Condition): Condition = c match {
     case l: Leaf => f(l)
     case Junc(op, nodes) => f(Junc(op, nodes.map(mapAll(f))))

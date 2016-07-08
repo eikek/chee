@@ -1,0 +1,36 @@
+=== sync
+
+Synchronise files and directories with the index.
+
+.Usage
+----------------------------------------------------------------------
+<usage_sync>
+----------------------------------------------------------------------
+
+Checks each file if it has changed with respect to the information in
+the index. If so, the index is updated with new properties from the
+file. With `--reindex` the check is skipped so that the index is
+always updated with new properties from the files.
+
+You can specify files or directories to sync or `--everything`, which
+will sync all known xref:_locations[locations].
+
+If a file has been deleted on the file system, it is also removed from
+the index. If chee encounters a new file it is added the same way as
+with the `add` command. If one of the directories to sync does not
+exist, the sync commands fails with an error to avoid dropping the
+index accidentally. If you want to remove all files below a location
+directory, use the xref:_rm[rm] command.
+
+<transparent_decrypt>
+If a file has been encrypted outside of chee, chee will recognise this
+and update the index accordingly. This requires to specify decrypt
+options. On the other hand, if a file has been decrypted and chee
+still refers to the encrypted version, it will update the index
+accordingly, too, but in this case decrypt options are not needed.
+
+.Example
+----------------------------------------------------------------------
+$ chee sync -r /mnt/photos/card0
+$ chee sync /mnt/photos/card0/DSC_7877.JPG
+----------------------------------------------------------------------

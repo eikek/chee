@@ -4,6 +4,7 @@ import chee.crypto.CheeCrypt
 import chee.util.Render
 import chee.properties._
 import Condition.Render._
+import Patterns._
 
 object SqlFormat {
 
@@ -27,7 +28,7 @@ object SqlFormat {
     }
   }
 
-  private[query] def sqlValue(p: Prop) = {
+  private def sqlValue(p: Prop) = {
     def quote(s: String) = s"'$s'"
 
     def parse(v: Value[_], s: String, comp: Comp, id: Ident): String = v.parse(s) match {
@@ -50,7 +51,7 @@ object SqlFormat {
     }
   }
 
-  private[query] def columnSql(id: Ident, comp: Comp): String = id match {
+  private def columnSql(id: Ident, comp: Comp): String = id match {
     case VirtualProperty.idents.pixel =>
       s"(${Ident.width.name} * ${Ident.height.name})"
     case VirtualProperty.idents.encrypted =>
@@ -61,7 +62,7 @@ object SqlFormat {
     case id => id.name
   }
 
-  private[query] def operatorSql(comp: Comp) = comp match {
+  private def operatorSql(comp: Comp) = comp match {
     case Comp.Like => "like"
     case c => c.name
   }
@@ -97,7 +98,6 @@ object SqlFormat {
       val r = implicitly[Render[Condition]]
       s"not(${r.render(c)})"
   }
-
 
   def render(c: Condition): String = {
     val r = implicitly[Render[Condition]]

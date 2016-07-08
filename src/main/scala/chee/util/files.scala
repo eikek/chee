@@ -88,6 +88,11 @@ object files {
     def getExtension: Option[String] =
       Some(f.splitFileName._2).filter(_.nonEmpty)
 
+    def stripExtension: File = getExtension match {
+      case Some(ext) => File(f.pathAsString.substring(0, f.pathAsString.length - ext.length -1))
+      case None => f
+    }
+
     /**
       * Return the name without extension. This method works on names,
       * i.e. it doesn't care whether this names a directory, symlink

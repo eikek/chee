@@ -20,16 +20,16 @@ class DocTest extends FlatSpec with Matchers {
   }
 
   "commandSummaryLine" should "find subcommands" in {
-    CheeDoc.commandSummaryLine("location", Some("import")) should be (
-      Some("Imports files from a folder into a location."))
+    CheeDoc.commandSummaryLine("collection", Some("edit")) should be (
+      Some("Edits a collection or creates a new one."))
 
-    CheeDoc.commandSummaryLine("location") should be (
-      Some("This command manages locations."))
+    CheeDoc.commandSummaryLine("import") should be (
+      Some("Imports files from a folder into a location."))
   }
 
   it should "return None for non existing commands" in {
     CheeDoc.commandSummaryLine("abc") should be (None)
-    CheeDoc.commandSummaryLine("location", Some("abc")) should be (None)
+    CheeDoc.commandSummaryLine("collection", Some("abc")) should be (None)
   }
 
   "doc util" should "find existing pages" in {

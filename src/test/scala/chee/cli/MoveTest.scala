@@ -1,15 +1,15 @@
 package chee.cli
 
-import chee.{TestInfo, UserError}
+import chee.{FileLoan, TestInfo, UserError}
 import chee.it._
 import chee.util.files._
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest._
 
-class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper with LazyLogging {
+class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper with LazyLogging with FileLoan {
 
   def move = new Move with BufferOut
-  def linfo = new LocationInfo with BufferOut
+  def linfo = new Info with BufferOut
 
   "Move" should "error if source dir is not a location" in bothChee(addImages) { setup =>
     val nonExistingDir = setup.userDir / "does-not-exist"
@@ -224,7 +224,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
         "/files: 8")
       .replace(
         "/morefiles: 4",
-        "/morefiles: 0")) should be (afterLoc)
+        "/morefiles: 0")).filterNot(_ endsWith "0") should be (afterLoc)
   }
 
   it should "move a directory back to a location root" in bothChee(addImages) { setup =>
@@ -247,5 +247,25 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
 
     afterOut should be (beforeOut)
     afterLoc should be (beforeLoc)
+  }
+
+  it should "not move files with --index" in bothChee(addImages) { setup =>
+    val images = setup.userDir / "images"
+    val (stdout, Nil) = move.run(setup, "--index", setup.files.pathAsString, images.pathAsString)
+    stdout should have size (2)
+    setup.files.exists should be (true)
+    images.exists should be (false)
+    val (out, Nil) = findLisp(setup, "path:*images*")
+    out should have size (4)
+  }
+
+  it should "refuse to move non-indexed files" in bothChee() { setup =>
+    val target = (setup.files / "repo").createDirectories()
+    copyFile(TestInfo.images(2), Some(target)) { file =>
+      val newName = file.mapBaseName(_ => "funny")
+      intercept[UserError] {
+        move.run(setup, file.pathAsString, newName.pathAsString)
+      }
+    }
   }
 }

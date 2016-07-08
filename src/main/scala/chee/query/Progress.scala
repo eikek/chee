@@ -22,54 +22,87 @@ trait Progress[T, C] { self =>
       }
     }
 
+  final def setDone(f: (C, Duration) => Unit): Progress[T, C] =
+    Progress.setDone(this, f)
+
+  final def setBefore(f: C => MapGet[Unit]): Progress[T, C] =
+    Progress.setBefore(this, f)
+
+  final def setAfter(f: (C, T, Duration) => MapGet[C]): Progress[T, C] =
+    Progress.setAfter(this, f)
+
   /** Apply `action` to every element in `maps` invoking callbacks of this progress. */
   final def foreach(zero: C, zd: Duration = Duration.ZERO)(maps: Traversable[LazyMap], action: MapGet[T]): (C, Duration) =
     Progress.foreach(zero, zd)(this, maps, action)
 }
 
 object Progress {
-  class DefaultProgress[T, C] extends Progress[T, C] {
+  class EmptyProgress[T, C] extends Progress[T, C] {
     def before(n: C): MapGet[Unit] = MapGet.unit(())
     def after(n: C, v: T, d: Duration): MapGet[C] = MapGet.unit(n)
     def done(count: C, dur: Duration): Unit = ()
   }
 
-  def before[T, C](m: MapGet[Unit]): Progress[T, C] = new DefaultProgress[T, C] {
+  class DelegateProgress[T, C](p: Progress[T, C]) extends Progress[T, C] {
+    def before(n: C): MapGet[Unit] = p.before(n)
+    def after(n: C, v: T, d: Duration): MapGet[C] = p.after(n, v, d)
+    def done(count: C, dur: Duration): Unit = p.done(count, dur)
+  }
+
+  def setDone[T, C](p: Progress[T, C], f: (C, Duration) => Unit): Progress[T, C] =
+    new DelegateProgress(p) {
+      override def done(c: C, d: Duration) = f(c, d)
+    }
+
+  def setBefore[T, C](p: Progress[T, C], f: C => MapGet[Unit]): Progress[T, C] =
+    new DelegateProgress(p) {
+      override def before(n: C) = f(n)
+    }
+
+  def setAfter[T, C](p: Progress[T, C], f: (C, T, Duration) => MapGet[C]): Progress[T, C] =
+    new DelegateProgress(p) {
+      override def after(n: C, v: T, d: Duration) = f(n, v, d)
+    }
+
+  def before[T, C](m: MapGet[Unit]): Progress[T, C] = new EmptyProgress[T, C] {
     override def before(n: C) = m
   }
 
-  def before[T, C](body: C => Any): Progress[T, C] = new DefaultProgress[T, C] {
+  def before[T, C](body: C => Any): Progress[T, C] = new EmptyProgress[T, C] {
     override def before(n: C): MapGet[Unit] = {
       body(n)
       MapGet.unit(())
     }
   }
 
-  def after[T, C](f: (C, T, Duration) => C): Progress[T, C] = new DefaultProgress[T, C] {
+  def after[T, C](f: (C, T, Duration) => C): Progress[T, C] = new EmptyProgress[T, C] {
     override def after(n: C, t: T, d: Duration): MapGet[C] = {
       MapGet.unit(f(n, t, d))
     }
   }
 
-  def after[T, C](f: C => C): Progress[T, C] = new DefaultProgress[T, C] {
+  def after[T, C](f: C => C): Progress[T, C] = new EmptyProgress[T, C] {
     override def after(n: C, t: T, d: Duration): MapGet[C] = {
       MapGet.unit(f(n))
     }
   }
 
-  def done[T, C](f: (C, Duration) => Any): Progress[T, C] = new DefaultProgress[T, C] {
+  def done[T, C](f: (C, Duration) => Any): Progress[T, C] = new EmptyProgress[T, C] {
     override def done(c: C, d: Duration): Unit = f(c, d)
   }
 
-  def empty[T, C]: Progress[T, C] = new DefaultProgress[T, C]
+  def empty[T, C]: Progress[T, C] = new EmptyProgress[T, C]
+
+  def count[T](implicit f: T => Boolean): Progress[T, Int] = after((c, t, _) => if (f(t)) c + 1 else c)
 
   def seq[T, C](ps: Progress[T, C]*): Progress[T, C] =
     ps.reduce { (a, b) => a andThen b }
 
-  def foreach[T, C](zero: C, zd: Duration = Duration.ZERO)(p: Progress[T, C], maps: Traversable[LazyMap], action: MapGet[T]) = {
+  def foreach[T, C](zero: C, zd: Duration = Duration.ZERO)(p: Progress[T, C], maps: Traversable[LazyMap], action: MapGet[T]): (C, Duration) = {
     val a: C => MapGet[C] = n => action.around(p.before(n), p.after(n, _, _))
-    val t = chee.Timing.timedResult(MapGet.fold(zero, maps)(a))
-    p.done(t._1, zd.plus(t._2))
-    t
+    val (t, d) = chee.Timing.timedResult(MapGet.fold(zero, maps)(a))
+    val time = zd.plus(d)
+    p.done(t, time)
+    (t, time)
   }
 }

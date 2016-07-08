@@ -2,10 +2,9 @@ package chee.query
 
 import org.scalatest._
 import chee.properties._
-import chee.TestInfo
+import SqlBackend._
 
 class SqlBackendTest extends FlatSpec with Matchers {
-  import SqlBackend._
 
   "whereClause" should "translate exists to null check" in {
     whereClause(Exists('path)) should be ("path is not null")
@@ -82,15 +81,25 @@ class SqlBackendTest extends FlatSpec with Matchers {
     val Some(lastmod) = MapGet.value(Ident.lastModified).result(map)
     val Some(path) = MapGet.value(Ident.path).result(map)
 
+    val statement = "UPDATE chee_index SET " +
+      s"path = '$path', "+
+      s"filename = 'CIMG2590_s.JPG', length = 48746, lastmodified = $lastmod, " +
+      "mimetype = 'image/jpeg', extension = 'JPG', "+
+      "checksum = '95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b', "+
+      "location = './', make = 'CASIO COMPUTER CO.,LTD', "+
+      "model = 'EX-Z750', width = 100, height = 75, iso = null, " +
+      "orientation = 1, created = '2012-11-26 13:50:19' "
+
     SqlBackend.updateRowStatement("chee_index").result(map) should be (
-      "UPDATE chee_index SET " +
-        s"path = '$path', "+
-        s"filename = 'CIMG2590_s.JPG', length = 48746, lastmodified = $lastmod, " +
-        "mimetype = 'image/jpeg', extension = 'JPG', "+
-        "checksum = '95254d11a2916bff2357ea3f1572d366398de17150b8ef11d5f11ef8061f371b', "+
-        "location = './', make = 'CASIO COMPUTER CO.,LTD', "+
-        "model = 'EX-Z750', width = 100, height = 75, iso = null, " +
-        "orientation = 1, created = '2012-11-26 13:50:19' " +
-        s"WHERE path = '$path'")
+      statement + s"WHERE path = '$path'")
+
+    SqlBackend.updateRowStatement("chee_index", where = Condition.lookup(Ident.iso)).result(map) should be (
+      statement + s"WHERE not(iso is not null)")
+
+    SqlBackend.updateRowStatement("chee_index", where = Condition.lookup(Comp.Gt, Ident.iso)).result(map) should be (
+      statement + s"WHERE not(1=1)")
+
+    SqlBackend.updateRowStatement("chee_index", where = Condition.lookup(Comp.Gt, Ident.length)).result(map) should be (
+      statement + s"WHERE length > 48746")
   }
 }

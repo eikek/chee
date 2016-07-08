@@ -1,0 +1,29 @@
+=== import
+
+Imports files from a folder into a location.
+
+.Usage
+----------------------------------------------------------------------
+<usage_import>
+----------------------------------------------------------------------
+
+Searches `\<sourcedir>` directory and copies matching files into the
+given location directory, adding them to the index. If a file is
+already present in the index (no matter which location), it is not
+copied unless `--duplicates` is specified. Files are never
+overwritten, new filenames are generated (appending a number until a
+non-existent file is found) if the a target file already exists.
+
+The directory structure in `\<sourcedir>` is preserved in `\<location>`
+directory.
+
+.Example
+----------------------------------------------------------------------
+chee import -r /media/sdcard/DCIM /disk/fotos/camera2
+----------------------------------------------------------------------
+
+Searches recursively through `/media/sdcard/DCIM` and copies files to
+`/disk/fotos/camera2` while preserving the folder structure below
+`/media/sdcard/DCIM`. So the file
+`/media/sdcard/DCIM/102ND200/DSC0645.JPG` is copied to
+`/disk/fotos/camera2/102ND200/DSC0645.JPG`.

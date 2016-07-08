@@ -15,23 +15,26 @@ object CheeConf {
 
   def loadDefault(): Config = load(Directories.makeDefault)
 
-  def load(dirs: Directories): Config = load(dirs.userConfig, initialConfig(dirs))
+  def load(dirs: Directories): Config = {
+    val userCfg = userConfigOverride orElse dirs.userConfig.map(parse)
+    val config =
+      dirs.initial withFallback
+      userCfg.getOrElse(ConfigFactory.empty) withFallback
+      ConfigFactory.defaultApplication
 
-  def load(userConfigFile: Option[File], overrides: Config): Config = {
-    val userConfig = userConfigOverride orElse userConfigFile.map(parse) match {
-      case Some(cfg) => overrides withFallback cfg
-      case _ => overrides
-    }
-    ConfigFactory.load(userConfig withFallback ConfigFactory.defaultApplication)
+    val overrides = overrideConfig(dirs).withFallback(ConfigFactory.defaultOverrides())
+    val ref = ConfigFactory.defaultReference()
+
+    ((overrides withFallback config) withFallback ref).resolve
   }
 
-  def initialConfig(dirs: Directories) = {
+  private def overrideConfig(dirs: Directories) = {
     val overrides = List(
       "user.dir" -> dirs.userDir,
       "chee.configdir" -> dirs.configDir,
       "chee.workingdir" -> dirs.workingDir,
       "chee.repo.root" -> dirs.repoRoot)
-    overrides.foldLeft(dirs.initial) {
+    overrides.foldLeft(ConfigFactory.empty) {
       case (cfg, (path, Some(dir))) =>
         debug(s"Overriding config value $path -> ${dir.path}")
         cfg.withValue(path, cfgValue(dir.pathAsString))

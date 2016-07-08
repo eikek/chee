@@ -1,18 +1,21 @@
 package chee.it
 
+import chee.CheeApi._
+import chee.query.Progress
 import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
+import org.scalatest.FlatSpec
 
 import scala.util.{Failure, Try}
 
 import CommandSetup._
 import better.files._
 import chee.TestInfo
-import chee.cli.{Command, LocationAdd}
+import chee.cli.Command
 import chee.conf._
-import chee.query.SqliteBackend
 
-trait CommandSetup {
+trait CommandSetup extends LazyLogging {
+  self: FlatSpec =>
 
   private def mkDir: File = {
     val name = UUID.randomUUID().toString
@@ -22,11 +25,15 @@ trait CommandSetup {
   }
 
   val globalSetup: File => Directories =
-    dir => Directories.inDirectory(dir)
+    dir => {
+      info(s"Global mode at $dir")
+      Directories.inDirectory(dir)
+    }
 
   val repoSetup: File => Directories = { dir =>
     val dirs = Directories.atRepoRoot(dir).copy(userDir = Some(dir))
     dirs.configDir.foreach(_.createDirectories())
+    info(s"Repository mode at $dir")
     dirs
   }
 
@@ -48,10 +55,8 @@ trait CommandSetup {
   def addLocation(pics: File, setupVals: Setup): Unit = {
     pics.createIfNotExists(asDirectory = true)
     TestInfo.images.foreach(f => f.copyTo(pics / f.name))
-    val addCmd = new LocationAdd with BufferOut
-    val addOpts = LocationAdd.Opts(dirs = Seq(pics), recursive = true)
-    val sqlite = new SqliteBackend(setupVals.cfg)
-    addCmd.indexDirs(setupVals.cfg, addOpts, sqlite)
+    val param = AddParam(FileSettings(true, false, ""), DecryptSettings.none, true, Seq(pics))
+    CheeApi(setupVals.cfg).addFiles(0, Progress.empty[Result, Int])(param)
   }
 
   private def createTemp(setupVals: Setup): Setup = {
@@ -62,6 +67,7 @@ trait CommandSetup {
 
   def cheeSetup(before: File => Setup)(code: Setup => Any): Unit = {
     val setupVals = before(mkDir)
+    logger.info(setupVals.dirs.repoRoot.map(_ => "Repo-mode").getOrElse("Global-mode") + ": "+ setupVals)
     val test = Try(code(setupVals))
     teardown(setupVals)
     test match {

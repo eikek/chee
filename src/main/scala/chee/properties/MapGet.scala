@@ -34,16 +34,32 @@ object MapGet extends States[LazyMap] {
   def existingPath: MapGet[Option[File]] =
     path.map(p => Option(p).filter(_.exists))
 
+  def add(es: Seq[Property]): MapGet[Unit] =
+    modify { m => es.foldLeft(m)(_ + _) }
+
+  def add(e: Property, es: Property*): MapGet[Unit] =
+    add(e +: es)
+
+  def remove(ids: Seq[Ident]): MapGet[Unit] =
+    modify { m => ids.foldLeft(m)(_ remove _) }
+
+  def remove(id: Ident, ids: Ident*): MapGet[Unit] =
+    remove(id +: ids)
+
   /** Modifies the map by changing {{path}} and {{location}} properties
     * by the given function. */
-  def changePath(f: String => String): MapGet[Unit] =
-    seq(Seq(find(Ident.path), find(Ident.location))).flatMap { list =>
+  def changePath(f: String => String): MapGet[Unit] = {
+    val pathOrLocation = (i: Ident) => (i is Ident.location) || (i is Ident.path)
+    idents(false).map(_ filter pathOrLocation)
+      .flatMap(n => seq(n.map(find)))
+      .flatMap { list =>
       val props = list.collect({
         case Some(Property(id, value)) =>
           Property(id, f(value))
       })
-      modify(props.foldLeft(_){ (m, p) => m + p })
+      add(props)
     }
+  }
 
   def convert[T](id: Ident, conv: Converter[T]) =
     value(id).map(v => v.map(conv.parse(_)))
@@ -142,6 +158,30 @@ case class MapGetOps[A](self: MapGet[A]) {
     (nextm, (a, dur))
   }
 
-  def around[B](before: MapGet[Unit], after: (A, Duration) => MapGet[B]): MapGet[B]
-  = MapGet.aroundEffect(before, after)(self)
+  def around[B](before: MapGet[Unit], after: (A, Duration) => MapGet[B]): MapGet[B] =
+    MapGet.aroundEffect(before, after)(self)
+
+  def add(e: Property, es: Property*): MapGet[A] =
+    for {
+      a <- self
+      _ <- MapGet.add(e, es: _*)
+    } yield a
+
+  def add(es: Seq[Property]): MapGet[A] =
+    for {
+      a <- self
+      _ <- MapGet.add(es)
+    } yield a
+
+  def remove(ids: Seq[Ident]): MapGet[A] =
+    for {
+      a <- self
+      _ <- MapGet.remove(ids)
+    } yield a
+
+  def remove(id: Ident, ids: Ident*): MapGet[A] =
+    for {
+      a <- self
+      _ <- MapGet.remove(id, ids: _*)
+    } yield a
 }

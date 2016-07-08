@@ -7,6 +7,8 @@ object state {
 
   implicit def stateOps[S, A](s: State[S, A]) = StateOps(s)
 
+  implicit def stateOptionOps[S, A](s: State[S, Option[A]]) = StateOptionOps(s)
+
   case class State[S, +A](run: S => (S, A)) { self =>
     def flatMap[B](f: A => State[S, B]): State[S, B] = State[S, B] { s =>
       val (next, a) = run(s)
@@ -108,5 +110,10 @@ object state {
     }
 
     def whenNot(p: State[S, Boolean]) = when(states.not(p))
+  }
+
+  case class StateOptionOps[S, A](s: State[S, Option[A]]) {
+    def orElse(o: State[S, Option[A]]): State[S, Option[A]] =
+      s.flatMap(a => if (a.isDefined) s else o)
   }
 }

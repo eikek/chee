@@ -74,9 +74,10 @@ object Patterns {
     else find(ident).map(convert)
   }
 
-  def existsIdent(id: Ident, searchIdent: Boolean = true): PatternPred =
-    if (searchIdent) findIdent(id).rflatMap(Predicates.exists)
-    else Predicates.exists(id).map(Right(_))
+  def existsIdent(id: Ident, searchIdent: Boolean = true): PatternPred = {
+    if (searchIdent) findIdent(id).rflatMap(Predicates.exists).map(_.left.flatMap(_ => Right(false)))
+    else Predicates.exists(id).map(Right(_)).map(_.left.flatMap(_ => Right(false)))
+  }
 
   def quote(quoteChar: Character, p: Pattern): Pattern = p.rmap { str =>
     if (str matches "[0-9]+") str
@@ -129,10 +130,10 @@ object Patterns {
   def loop(main: Ident => Pattern, stop: Ident => Pattern, idents: MapGet[Seq[Ident]], includeEmpty: Boolean = true): Pattern = {
     type Result = Either[String, String]
     def valueFor(id: Ident) =
-      value(id).modify(_.add(Ident("ident") -> id.name)).flatMap { v =>
+      value(id).add(Ident("ident") -> id.name).flatMap { v =>
         if (v.isEmpty && !includeEmpty) pair(empty, empty)
         else pair(main(id), stop(id))
-      }.modify(_.remove(Ident("ident")))
+      }.remove(Ident("ident"))
 
     def concat(xs: Seq[(Result, Result)]): Result =
       flatten2(xs) match {

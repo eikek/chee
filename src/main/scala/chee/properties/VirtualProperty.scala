@@ -33,14 +33,7 @@ object VirtualProperty {
     }
 
     private def encryptedValue: VirtualValue = new VirtualValue {
-      import CheeCrypt._
-      def value = MapGet.value(mapping(Ident.path)).map {
-        case Some(path) =>
-          if (path.endsWith("."+ passwordEncryptExtension)) Some(passwordEncryptExtension)
-          else if (path.endsWith("."+ publicKeyEncryptExtension)) Some(publicKeyEncryptExtension)
-          else None
-        case None => None
-      }
+      def value = CheeCrypt.encryptedExtension(mapping(Ident.path))
       def map(f: Ident => Ident) = mapIdents(f).encryptedValue
     }
 

@@ -12,4 +12,4 @@ cache:
     - $HOME/.sbt/boot
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION ";genDocResources;test;it:test"
+  - sbt ++$TRAVIS_SCALA_VERSION "run-all-tests"

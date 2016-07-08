@@ -7,7 +7,7 @@ import better.files._
 import chee.Timing
 import chee.properties.{Ident, LazyMap, Property}
 import chee.util.paths
-import com.typesafe.scalalogging.{LazyLogging, Logger}
+import com.typesafe.scalalogging.Logger
 
 
 trait JdbcStatement {

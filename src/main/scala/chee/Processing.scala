@@ -1,7 +1,9 @@
 package chee
 
+import CheeApi.PubkeySecret
 import chee.crypto.{ Algorithm, CheeCrypt, FileProcessor }
-import chee.query.SqliteBackend
+import chee.query.Index
+import chee.query.Index.UpdateParam
 import org.bouncycastle.openpgp.PGPPublicKey
 import scala.util.Try
 import chee.properties._
@@ -107,17 +109,14 @@ object Processing {
   private val originFile: MapGet[File] =
     valueForce(originPath).map(File(_))
 
-  private def originPathIndexed(sqlite: SqliteBackend): MapGet[Boolean] =
-    valueForce(originPath).map(sqlite.pathExists).map(_.get)
+  private def originPathIndexed(index: Index): MapGet[Boolean] =
+    index.exists(Condition.lookup(Comp.Eq, Ident.path, originPath)).map(_.get)
 
   private def cryptFile(outFile: MapGet[File], cf: (File, File) => Unit, skip: MapGet[Boolean]) =
     pair(existingPath.whenNot(skip), outFile).flatMap {
       case (Some(Some(in)), out) =>
         if (!out.exists) cf(in, out)
-        modify { m =>
-          m.add(originPath -> in.pathAsString)
-           .add(Ident.path -> out.pathAsString)
-        } map (_ => true)
+        add(originPath -> in.pathAsString, Ident.path -> out.pathAsString).map(_ => true)
       case _ =>
         unit(false)
     }
@@ -146,12 +145,10 @@ object Processing {
   def decryptPassword(passphrase: Array[Char], outFile: MapGet[File]): MapGet[Boolean] =
     cryptFile(outFile, FileProcessor.decryptSymmetric(_, _, passphrase), CheeCrypt.isNotEncrypted)
 
-  case class DecryptSecret(keyFile: File, keyPass: Array[Char])
-
   /** Decrypts the file either with the given password or secret key. If
     * one is not given, those files are skipped. If both are not
     * given, an exception is thrown. */
-  def decryptFile(pubSecret: Option[DecryptSecret], passphrase: Option[Array[Char]], outFile: MapGet[File]): MapGet[Boolean] = {
+  def decryptFile(pubSecret: Option[PubkeySecret], passphrase: Option[Array[Char]], outFile: MapGet[File]): MapGet[Boolean] = {
     import CheeCrypt._
     if (pubSecret.isEmpty && passphrase.isEmpty) {
       throw UserError("Either a secret key or passphrase muste be given!")
@@ -170,13 +167,14 @@ object Processing {
     *
     * Deletes the old file. If the old file is indexed, its path
     * property is updated to reflect the new existing file. */
-  def cryptInplacePostProcess(sqlite: SqliteBackend): MapGet[Boolean] =
-    tuple3(path, originFile, originPathIndexed(sqlite)).flatMap {
+  def cryptInplacePostProcess(index: Index): MapGet[Boolean] =
+    tuple3(path, originFile, originPathIndexed(index)).flatMap {
       case (newFile, oldFile, indexed) if newFile.exists =>
         if (indexed) {
           modify { m =>
-            val (next, success) = sqlite.updateOne(m, unit(Seq(Ident.path)), IdentProp(Comp.Eq, Ident.path, originPath)).get
-            if (success && oldFile.exists) oldFile.delete()
+            val updateCond = Condition.lookup(Comp.Eq, Ident.path, originPath)
+            val (next, success) = index.updateOne(UpdateParam(unit(Seq(Ident.path)), updateCond)).run(m)
+            if (success.get && oldFile.exists) oldFile.delete()
             next.add(originPath -> oldFile.pathAsString)
           } map (_ => true)
         } else {

@@ -5,9 +5,11 @@ default.
 
 Chee can be used to query images anywhere in the file system. But
 since most of the time photos are stored at the same places, chee can
-manage such places–called “locations”. By default, commands operating
-on a set of files search all known locations. Results can be
-restricted to specific locations with a query.
+index them into a database and perform queries much faster. If you add
+a directory with images to the index, this directory is refered to as
+“location”. Chee tries to normalise these such that no nested location
+exists. For instance, if you add directory `/a/b/c` and then `/a/b`,
+chee will update the former location to `/a/b`.
 
 Images from other directories can be “imported“ into a location. Chee
 simply copies the files and skips any duplicate by default.

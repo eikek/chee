@@ -2,16 +2,22 @@ package chee
 
 import better.files._
 import chee.crypto.CryptMethod
+import chee.FileOps.Result
 
 package object cli {
 
   def userError(s: String) = chee.UserError(s)
 
-  private def lift[A](f: (Traversable[A], Int) => Traversable[A]): Option[Int] => Traversable[A] => Traversable[A] =
-    n => s => n.map(f(s, _)).getOrElse(s)
+  case class ResultCount private (counter: Map[Result, Int]) {
+    def inc(r: Result): ResultCount = {
+      ResultCount(counter + (r -> (get(r) + 1)))
+    }
 
-  def sliced[A](first: Option[Int], skip: Option[Int]): Traversable[A] => Traversable[A] =
-    lift[A](_ drop _)(skip) andThen lift[A](_ take _)(first)
+    def get(r: Result): Int = counter(r)
+  }
+  object ResultCount {
+    val empty = ResultCount(Map.empty withDefaultValue 0)
+  }
 
   def promptPassphrase(prompt: String = "Passphrase: "): Array[Char] = {
     def equals(a1: Array[Char], a2: Array[Char]): Boolean =
@@ -68,4 +74,5 @@ package object cli {
       case "pubkey" => CryptMethod.Pubkey
       case _ => userError(s"Allowed are: password or pubkey")
     })
+
 }

@@ -2,9 +2,8 @@ package chee.cli
 
 import Remove._
 import better.files._
-import chee.query.SqliteBackend
+import chee.query.{ Index, SqliteBackend }
 import com.typesafe.config.Config
-import chee.conf._
 import chee.properties._
 import scala.util.Try
 
@@ -26,7 +25,8 @@ class Remove extends ScoptCommand with LockSupport {
   }
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
-    Location.checkRegisteredLocations(cfg.getLocationConf, opts.files)
+    val index: Index = new SqliteBackend(cfg)
+    Location.checkRegisteredLocations(index, opts.files)
 
     val n = opts.files.foldLeft(0) { (i, f) =>
       out(s"Remove ${f.path} … ")
@@ -48,9 +48,6 @@ object Remove {
   def remove(cfg: Config, file: File, indexOnly: Boolean): Try[Int] = Try {
     val sqlite = new SqliteBackend(cfg)
     val n = sqlite.delete(Prop(Comp.Like, Ident.path -> s"${file.pathAsString}*")).get
-    if (cfg.getLocationConf.list.get.exists(_.dir == file)) {
-      cfg.getLocationConf.remove(file).get
-    }
     if (file.exists && !indexOnly) {
       file.delete()
     }

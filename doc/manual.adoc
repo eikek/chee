@@ -71,7 +71,13 @@ include::cmd-view.adoc[]
 
 include::cmd-gallery.adoc[]
 
-include::cmd-location.adoc[]
+include::cmd-add.adoc[]
+
+include::cmd-import.adoc[]
+
+include::cmd-sync.adoc[]
+
+include::cmd-info.adoc[]
 
 include::cmd-meta.adoc[]
 

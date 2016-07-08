@@ -1,0 +1,26 @@
+=== add
+
+Adds files and directories to the index.
+
+.Usage
+----------------------------------------------------------------------
+<usage_add>
+----------------------------------------------------------------------
+
+The options are self explaining: without any options, chee searches a
+given directory for image and video files. This means it looks for
+files with content type `image/*` and `video/*`. It skips all
+directories and files starting with `.`. You can change this
+restriction by either specifying `--all`, which disables this
+condition, or by changing it in the config file. You can further
+restrict the set of files by specifying a query with `--query`.
+
+Each given directory is added as the xref:_locations[location] to the
+index. If a file is given, its parent directory is used.
+
+<transparent_decrypt>
+.Example
+----------------------------------------------------------------------
+$ chee add -r /mnt/photos/sdcard0
+$ chee add -r /mnt/photos/*
+----------------------------------------------------------------------

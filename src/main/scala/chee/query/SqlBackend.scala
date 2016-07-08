@@ -4,12 +4,19 @@ import better.files._
 import chee.properties._
 import chee.util.files._
 import java.nio.file.Path
+import Patterns._
+import SqlFormat._
 
 // todo: despite its name SqlBackend, some queries  are sqlite specific
 object SqlBackend {
-  import Patterns._
 
   val idents = Ident.defaults diff VirtualProperty.idents.all
+
+  private def valuePattern(id: Ident) = {
+    def ofId(id: Ident) = cond(existsIdent(id), quote(''', lookup(id)), raw("null"))
+    if (id == Ident.path) cond(existsIdent(Index.realPathIdent), ofId(Index.realPathIdent), ofId(id))
+    else ofId(id)
+  }
 
   def insertStatement(table: String): MapGet[String] =
     seq(
@@ -23,24 +30,22 @@ object SqlBackend {
         includeEmpty = false),
       raw(") VALUES ("),
       loop(
-        id => cond(existsIdent(id), quote(''', lookup(id)), raw("null")),
+        id => valuePattern(id),
         id => raw(","),
         MapGet.unit(idents),
         includeEmpty = false),
       raw(")")).right
 
-  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: IdentProp = IdentProp(Comp.Eq, Ident.path, Ident.path)): MapGet[String] =
+  def updateRowStatement(table: String, columns: MapGet[Seq[Ident]] = MapGet.idents(false), where: MapGet[Condition] = Condition.lookup(Ident.path)): MapGet[String] =
     seq(
       raw("UPDATE "), raw(table), raw(" SET "),
       loop(
-        id => seq(lookup('ident), raw(" = "), cond(existsIdent(id), quote(''', lookup(id)), raw("null"))),
+        id => seq(lookup('ident), raw(" = "), valuePattern(id)),
         id => raw(", "),
         columns.map(_.filterNot(_ == Ident.added).intersect(idents)),
         includeEmpty = true),
       raw(" WHERE "),
-      raw(SqlFormat.columnSql(where.id1, where.comp)),
-      raw(" "+ SqlFormat.operatorSql(where.comp) +" "),
-      sqlValue(where)).right
+      where.flatMap(c => raw(render(c)))).right
 
   def createTable(name: String): String = {
     val cols = idents.foldLeft(List[String]()){ (sql, id) =>
@@ -75,10 +80,4 @@ object SqlBackend {
     }
     s"""UPDATE chee_index SET ${updates.mkString(", ")} WHERE path like '${source}%'"""
   }
-
-  private def sqlValue(prop: IdentProp): Pattern =
-    lookup(prop.id2).rmap { value =>
-      SqlFormat.sqlValue(Prop(prop.comp, prop.id1 -> value))
-    }
-
 }

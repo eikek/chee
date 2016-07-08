@@ -9,7 +9,7 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
 
   def move = new Move with BufferOut
   def remove = new Remove with BufferOut
-  def linfo = new LocationInfo with BufferOut
+  def linfo = new Info with BufferOut
 
   "Remove" should "error if source dir is not a location" in bothChee(addImages) { setup =>
     val nonExistingDir = setup.userDir / "does-not-exist"

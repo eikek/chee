@@ -1,7 +1,5 @@
 package chee
 
-import java.util.concurrent.atomic.AtomicReference
-
 import scala.util.Try
 
 import better.files._
@@ -23,7 +21,6 @@ package object conf {
     def getIndexDb = getFile("chee.dbfile")
 
     def getSystemConfig = ConfigFile(getFile("chee.system-config"))
-    def getLocationConf = new LocationConf(getSystemConfig, getRepoRoot)
     def getCollectionConf = new CollectionConf(getSystemConfig)
     def getMetadataFile = MetadataFile(getFile("chee.metadata-file"))
 
@@ -90,7 +87,9 @@ package object conf {
       getFile(key).readPassword
 
     def readPasswordFromCommand(key: String): Option[Array[Char]] = {
-      OS.Command(cfg.getString(key)).flatMap(OS.Run.firstLine).map {
+      val cmd = cfg.getString(key)
+      if (cmd.isEmpty) None
+      else OS.Command(cfg.getString(key)).flatMap(OS.Run.firstLine).map {
         case p if p.isEmpty => None
         case p => Some(p.toCharArray)
       }.get

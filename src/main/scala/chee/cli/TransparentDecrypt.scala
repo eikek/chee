@@ -1,8 +1,10 @@
 package chee.cli
 
+import better.files.File
 import chee.crypto.CheeCrypt
 import chee.properties._
 import chee.conf._
+import chee.util.files._
 import com.typesafe.config.Config
 
 /** Enable transparent decryption.
@@ -26,13 +28,7 @@ trait TransparentDecrypt { self: AbstractLs =>
 
   def findDecrypt(cfg: Config, lsOpts: LsOptions.Opts, cryptOpts: CryptOptions.Opts): Stream[LazyMap] = {
     if (cryptOpts.enable) {
-      val tempdir = cfg.getFile("chee.crypt.decrypt-temp")
-      if (!tempdir.exists) tempdir.createDirectories()
-      val out = MapGet.valueForce(Ident.checksum).combine(MapGet.value(Ident.extension)) {
-        case (hash, Some(ext)) => tempdir / s"$hash.$ext"
-        case (hash, None) => tempdir / hash
-      }
-      val decryptAction = Decrypt.decryptFile(cfg, cryptOpts, out)
+      val decryptAction = Decrypt.decryptFile(cfg, cryptOpts, TransparentDecrypt.tempDecrypt(cfg))
       val filter = CheeCrypt.isEncrypted.flatMap {
         case true => decryptAction
         case false => MapGet.unit(true)
@@ -45,4 +41,17 @@ trait TransparentDecrypt { self: AbstractLs =>
     }
   }
 
+}
+
+object TransparentDecrypt {
+
+  def tempDecrypt(cfg: Config): MapGet[File] = {
+    val tempdir = cfg.getFile("chee.crypt.decrypt-temp")
+    if (!tempdir.exists) tempdir.createDirectories()
+    MapGet.pair(MapGet.valueForce(Ident.checksum), MapGet.path).map {
+      case (hash, path) =>
+        val ext = path.stripExtension.getExtension.map("." + _).getOrElse("")
+        tempdir / s"$hash$ext"
+    }
+  }
 }

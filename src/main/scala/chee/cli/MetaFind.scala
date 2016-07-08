@@ -5,6 +5,7 @@ import LsOptions.{ Opts => LsOpts }
 import com.typesafe.config.Config
 import chee.conf._
 import chee.properties.Patterns._
+import chee.util.more._
 
 class MetaFind extends ScoptCommand with LockSupport {
 

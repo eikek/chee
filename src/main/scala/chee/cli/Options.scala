@@ -1,7 +1,9 @@
 package chee.cli
 
 import better.files._
+import chee.CheeApi.{ DecryptSettings, FileSettings }
 import chee.crypto.CryptMethod
+import com.typesafe.config.Config
 
 // A collection of cli options that are shared among some
 // commands. Parsers can mix in the traits and add desired options.
@@ -23,10 +25,10 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
       a(c, _.copy(directory = Some(f)))
     } textW ("A directory to search instead of the index.")
 
-  def recursive(a: (C, Opts => Opts) => C = noAction) =
+  def recursive(a: (C, Opts => Opts) => C = noAction, text: String) =
     opt[Unit]('r', "recursive") optional() action { (_, c) =>
       a(c, _.copy(recursive = true))
-    } textW ("Find files recursively. Only applicable if `-f' is specified.")
+    } textW (text)
 
   def indexed(a: (C, Opts => Opts) => C = noAction) =
     opt[Boolean]('i', "indexed") action { (b, c) =>
@@ -34,11 +36,10 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
     } textW ("Find indexed or not indexed files. Only applicable if `-f' is "+
       "specified.")
 
-  def all(a: (C, Opts => Opts) => C = noAction) =
+  def all(a: (C, Opts => Opts) => C = noAction, text: String) =
     opt[Unit]('a', "all") optional() action { (_, c) =>
       a(c, _.copy(all = true))
-    } textW ("When used with `-f', ignore the default query, otherwise " +
-      "select non-existing files.")
+    } textW (text)
 
   def skip(a: (C, Opts => Opts) => C = noAction) =
     opt[Int]("skip") valueName ("<n>") action { (n, c) =>
@@ -57,14 +58,32 @@ trait LsOptions[C] extends Options { self: CheeOptionParser[C] =>
     } textW ("The query string. See the manual page about queries for" +
       " more information.")
 
+  def queryOpt(a: (C, Opts => Opts) => C = noAction) =
+    opt[String]('q', "query") optional() action { (q, c) =>
+      a(c, _.appendQuery(q))
+    } textW ("The query string. See the manual page about queries for" +
+      " more information.")
+
   def addLsOptions(a: (C, Opts => Opts) => C, title: Option[String] = Some("\nFind options:")): Unit = {
     title.foreach(noteW)
     file(a)
-    recursive(a)
+    recursive(a, "Find files recursively. Only applicable if `-f` is specified.")
     indexed(a)
-    all(a)
+    all(a, "When used with `-f', ignore the default query, otherwise select non-existing files.")
     skip(a)
     first(a)
+  }
+
+  def addFileSettings(a: (C, FileSettings => FileSettings) => C, title: Option[String] = Some("\nFind options:")): Unit = {
+    title.foreach(noteW)
+    val xa: (C, Opts => Opts) => C =
+      (c, f) => a(c, fs => f(Opts(fs)).toFileSettings)
+
+    recursive(xa, "Find files recursively.")
+    all(xa, "Ignore the default query that only selects images and video files,")
+    skip(xa)
+    first(xa)
+    queryOpt(xa)
   }
 
   def addQuery(a: (C, Opts => Opts) => C, title: Option[String] = Some("")): Unit = {
@@ -83,6 +102,10 @@ object LsOptions {
     indexed: Option[Boolean] = None,
     query: String = "") {
     def appendQuery(q: String) = copy(query = query +" "+ q)
+    def toFileSettings = FileSettings(recursive, all, query, skip, first)
+  }
+  object Opts {
+    def apply(fs: FileSettings): Opts = Opts(None, fs.recursive, fs.all, fs.skip, fs.first, None, fs.query)
   }
 }
 
@@ -209,5 +232,11 @@ object CryptOptions {
     passPrompt: Boolean = false,
     secretKeyPass: Option[File] = None,
     passphrase: Option[File] = None
-  )
+  ) {
+
+    def toSettings(cfg: Config): DecryptSettings =
+      DecryptSettings(
+      if (enable) CryptCommand.pubKeySecret(cfg, this) else None,
+      if (enable) CryptCommand.passphraseSecret(cfg, this) else None)
+  }
 }

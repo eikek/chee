@@ -266,9 +266,7 @@ object Gallery {
       if (!target.exists) {
         file.copyTo(target)
       }
-      modify {
-        _.add(id -> (out relativize target).toString)
-      } map (_ => true)
+      add(id -> (out relativize target).toString).map(_ => true)
     }
   }
 
@@ -295,9 +293,7 @@ object Gallery {
     }
     valueForce(id).map(File(_)).flatMap { file =>
       val target = addToZip(file)
-      modify {
-        _.add(id -> target)
-      } map (_ => true)
+      add(id -> target).map(_ => true)
     }
   }
 

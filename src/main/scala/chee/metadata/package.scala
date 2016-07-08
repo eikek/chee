@@ -39,42 +39,35 @@ package metadata {
         case None => Seq.empty
       }
 
-    def setTags(tags: Seq[Tag]): MapGet[Unit] = modify { m =>
-      if (tags.isEmpty) m.remove(idents.tag)
-      else m + (idents.tag -> tagsToTagString(tags))
-    }
+    def setTags(tags: Seq[Tag]): MapGet[Unit] =
+      if (tags.isEmpty) remove(idents.tag)
+      else add(idents.tag -> tagsToTagString(tags))
 
     def setTags(t1: Tag, ts: Tag*): MapGet[Unit] =
       setTags(t1 +: ts)
 
     def addTags(tags: Seq[Tag]): MapGet[Unit] =
       tagValues.flatMap { old =>
-        modify { m =>
-          m + (idents.tag -> tagsToTagString((old ++ tags).distinct))
-        }
+        add(idents.tag -> tagsToTagString((old ++ tags).distinct))
       }
 
     def addTags(t1: Tag, ts: Tag*): MapGet[Unit] = addTags(t1 +: ts)
 
     def removeTags(tags: Seq[Tag]): MapGet[Unit] =
       tagValues.flatMap { old =>
-        modify { m =>
-          m + (idents.tag -> tagsToTagString(old diff tags))
-        }
+        add(idents.tag -> tagsToTagString(old diff tags))
       }
 
     def removeTags(t1: Tag, ts: Tag*): MapGet[Unit] = removeTags(t1 +: ts)
 
     def removeAllTags = setTags(Seq.empty)
 
-    def setComment(c: String): MapGet[Unit] = modify { m =>
-      if (c.isEmpty) m.remove(idents.comment)
-      else m + (idents.comment -> c)
-    }
+    def setComment(c: String): MapGet[Unit] =
+      if (c.isEmpty) remove(idents.comment)
+      else add(idents.comment -> c)
 
-    def setId(id: String): MapGet[Unit] = modify { m =>
-      m + (Ident.checksum -> id)
-    }
+    def setId(id: String): MapGet[Unit] =
+      add(Ident.checksum -> id)
 
     val makeRecord: MapGet[Record] =
       pair(valueForce(Ident.checksum), pair(value(idents.comment), tagValues)).map {

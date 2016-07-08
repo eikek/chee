@@ -7,6 +7,10 @@ case class Ident(name: String) {
     require(ns matches "[a-zA-Z][a-zA-Z0-9_]+", s"Invalid namespace name: $ns")
     Ident(ns +"-"+ name)
   }
+
+  /** Equal ignoring namespace. */
+  def is(other: Ident): Boolean =
+    this == other || name.endsWith("-" + other.name)
 }
 
 object Ident {

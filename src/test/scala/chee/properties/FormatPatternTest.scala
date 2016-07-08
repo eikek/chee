@@ -93,4 +93,8 @@ class FormatPatternTest extends FlatSpec with Matchers {
   it should "return error if ident cannot be expanded" in {
     lookup('blabla).result(emptyMap) should be a ('left)
   }
+
+  "exisitsIdent" should "return false on non-existing keys" in {
+    existsIdent(Ident.extension, true).right.result(LazyMap(Ident.filename -> "test.png")) should be (false)
+  }
 }

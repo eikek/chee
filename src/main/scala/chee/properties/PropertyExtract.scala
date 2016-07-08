@@ -172,5 +172,5 @@ object ChecksumExtract {
     javax.xml.bind.DatatypeConverter.printHexBinary(md.digest()).toLowerCase()
   }
 
-  def checksum(f: File) = digestFile("SHA-256")(f)
+  def checksum(f: File): String = digestFile("SHA-256")(f)
 }

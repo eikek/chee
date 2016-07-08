@@ -19,10 +19,13 @@ object Main extends LazyLogging {
 
   val chee: List[CommandTree] = List(
     new Help,
+    new Add,
+    new Sync,
+    new Info,
+    new Import,
     new Version,
     new Find,
     HubCommand("meta", List(new MetaFind, new MetaAttach)),
-    Location.root,
     HubCommand("collection", List(new CollectionEdit, new CollectionShow, new CollectionRemove)),
     View,
     new Move,
@@ -31,8 +34,8 @@ object Main extends LazyLogging {
     Thumb,
     Scale,
     new ConfigCmd,
-    Encrypt,
-    Decrypt,
+    new Encrypt,
+    new Decrypt,
     new Clean,
     new Gallery
   )

@@ -124,6 +124,8 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
   ~location mv~.
 - new metadata feature to attach tags and comments to files
 - new ~gallery~ command for creating static html photo galleries
+- drop location management and ~location …~ commands; add new commands
+  ~sync~, ~add~ and ~import~ instead that also work for encrypted files
 
 ** 0.1.0
 

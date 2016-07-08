@@ -8,6 +8,8 @@ import chee.util.files._
 import chee.properties._
 import chee.properties.MapGet._
 import chee.query.Progress
+import chee.CheeApi
+import chee.crypto.CryptMethod
 import com.typesafe.config.Config
 
 trait CryptCommand { self: ScoptCommand with AbstractLs =>
@@ -68,6 +70,16 @@ trait CryptCommand { self: ScoptCommand with AbstractLs =>
     }
   }
 
+  def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] 
+
+  def exec(cfg: Config, opts: Opts): Unit = {
+    val proc = processingAction(cfg, opts.cryptOpts)
+    val props = find(cfg, opts.lsOpts)
+    runProcess(props, proc, opts.parallel)
+  }
+}
+
+object CryptCommand {
 
   /** Get the password in order:
     *  - from `passphrase` if non-empty
@@ -92,11 +104,27 @@ trait CryptCommand { self: ScoptCommand with AbstractLs =>
     p.getOrElse(promptPassphrase(prompt))
   }
 
-  def processingAction(cfg: Config, opts: CryptOptions.Opts): MapGet[Boolean] 
-
-  def exec(cfg: Config, opts: Opts): Unit = {
-    val proc = processingAction(cfg, opts.cryptOpts)
-    val props = find(cfg, opts.lsOpts)
-    runProcess(props, proc, opts.parallel)
+  def pubKeySecret(cfg: Config, opts: CryptOpts): Option[CheeApi.PubkeySecret] = {
+    val method = opts.cryptMethod.getOrElse(cfg.getCryptMethod)
+    method match {
+      case CryptMethod.Password => None
+      case _ =>
+        val keyFile = opts.keyFile.getOrElse(cfg.getFile("chee.crypt.secret-key-file"))
+        val pass = getPassword(cfg, opts.secretKeyPass,
+          "chee.crypt.secret-key-pass-command",
+          "chee.crypt.secret-key-pass-file").getOrElse {
+          promptPassphrase("Passphrase for private key: ")
+        }
+        Some(CheeApi.PubkeySecret(keyFile, pass))
+    }
   }
+
+  def passphraseSecret(cfg: Config, opts: CryptOpts) = {
+    val method = opts.cryptMethod.getOrElse(cfg.getCryptMethod)
+    method match {
+      case CryptMethod.Pubkey => None
+      case _ => Some(findPassphrase(cfg, opts.passPrompt, opts.passphrase, "Password for decryption: "))
+    }
+  }
+
 }

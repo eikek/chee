@@ -1,5 +1,3 @@
-import java.nio.file.{Files, Paths, StandardCopyOption}
-
 lazy val commonSettings = Seq(
   name := "chee",
   homepage := Some(url("https://github.com/eikek/chee")),
@@ -11,7 +9,7 @@ lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "2.2.6"    % "it,test",
+  "org.scalatest"              %% "scalatest"                % "2.2.6"    % "test",
   "org.scalacheck"             %% "scalacheck"               % "1.13.1"   % "test",
   "com.lihaoyi"                %% "fastparse"                % "0.3.7",
   "com.github.pathikrit"       %% "better-files"             % "2.16.0" excludeAll(
@@ -53,21 +51,22 @@ lazy val writeTestInfo = Def.task {
   Seq(file)
 }
 
+lazy val ItTest = config("itTest") extend Test
+def itFilter(name: String): Boolean = (name endsWith "Test") && (name.startsWith("chee.cli")  || name.startsWith("chee.it"))
+def unitFilter(name: String): Boolean = ((name endsWith "Test") || (name endsWith "Spec")) && !itFilter(name)
+
 lazy val testSettings = Defaults.itSettings ++ Seq(
   fork in Test := true,
-  fork in IntegrationTest := true,
+  fork in ItTest := true,
   javaOptions in Test ++= Seq(
     "-Duser.timezone=Europe/Berlin",
-    s"-Dchee.workingdir=${(target in Test).value}/test",
-    s"-Dchee.configdir=${(target in Test).value}/test",
-    s"-Duser.dir=${(target in Test).value}/test",
-    "-Dchee.logLevel=OFF"
+    s"-Dchee.workingdir=${(target in Test).value}/test/.chee-dir",
+    s"-Dchee.configdir=${(target in Test).value}/test/.chee-dir",
+    s"-Duser.dir=${(target in Test).value}/test"
   ),
-  javaOptions in IntegrationTest := Seq(
-    "-Duser.timezone=Europe/Berlin"
-  ),
-  sourceGenerators in Test += writeTestInfo.taskValue,
-  sourceGenerators in IntegrationTest += writeTestInfo.taskValue
+  testOptions in Test := Seq(Tests.Filter(unitFilter)),
+  testOptions in ItTest := Seq(Tests.Filter(itFilter)),
+  sourceGenerators in Test += writeTestInfo.taskValue
 )
 
 lazy val bootstrapVersion = "3.3.6"
@@ -115,11 +114,13 @@ lazy val buildSettings = Seq(
   sourceGenerators in Compile += (resourceInfo in Compile).taskValue.map(f => Seq(f))
 )
 
+addCommandAlias("run-all-tests", ";genDocResources;test;itTest:test")
 addCommandAlias("make-chee", ";genDocResources;gen-chee")
-addCommandAlias("make-zip", ";genDocResources;test;it:test;gen-zip")
+addCommandAlias("make-zip", ";run-all-tests;gen-zip;gen-chee")
 
 lazy val chee = (project in file("."))
-  .configs(IntegrationTest, CheeDoc, script)
+  .configs(ItTest, CheeDoc, script)
+  .settings(inConfig(ItTest)(Defaults.testTasks): _*)
   .settings(commonSettings: _*)
   .settings(testSettings: _*)
   .settings(buildSettings: _*)

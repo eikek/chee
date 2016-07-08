@@ -1,6 +1,6 @@
 package chee.it
 
-import chee.cli.LocationInfo
+import chee.cli.Info
 import org.scalatest._
 import chee.conf._
 
@@ -14,7 +14,7 @@ class SetupTest extends FlatSpec with Matchers with CommandSetup with FindHelper
   }
 
   "withImages" should "add a location with images" in bothChee(addImages) { setup =>
-    val linfo = new LocationInfo with BufferOut
+    val linfo = new Info with BufferOut
     val (stdout, Nil) = linfo.run(setup)
     stdout(0) should startWith (setup.files.pathAsString)
 

@@ -8,8 +8,9 @@ import chee.properties.MapGet._
 import chee.query.SqliteBackend
 import com.typesafe.config.Config
 import org.bouncycastle.openpgp.PGPPublicKey
+import CryptCommand._
 
-object Encrypt extends ScoptCommand with AbstractLs with CryptCommand {
+class Encrypt extends ScoptCommand with AbstractLs with CryptCommand {
 
   val name = "encrypt"
 
