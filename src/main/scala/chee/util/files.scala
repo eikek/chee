@@ -71,6 +71,7 @@ object files {
 
 
   implicit class FileExt(f: File) {
+    private val NonExistingRegex = """(.*?-)([0-9]+)""".r
 
     /**
       * Split the name of the file in basename and extension.
@@ -127,7 +128,8 @@ object files {
     def mapBaseName(fn: String => String): File = {
       def rename(ff: File): File = {
         val (bname, ext) = ff.splitFileName
-        ff.sibling(s"${fn(bname)}.$ext")
+        val suffix = if (ext.nonEmpty) s".$ext" else ""
+        ff.sibling(s"${fn(bname)}$suffix")
       }
       mapPath(rename)
     }
@@ -177,12 +179,17 @@ object files {
 
     /** Append a number to the file until it does not exist. */
     def makeNonExisting(max: Int = 900, exists: File => Boolean = _.exists): Option[File] = {
+      def nameMapper(n: Int)(basename: String): String = basename match {
+        case NonExistingRegex(prefix, num) => prefix + (num.toInt + 1)
+        case _ => basename + "-" + n
+      }
+
       @annotation.tailrec
       def asNonExistent(f: File, n: Int = 1): Option[File] = f match {
         case _ if n >= max =>
           None
         case _ if exists(f) =>
-          asNonExistent(f.mapBaseName(_ +"-"+ n), n+1)
+          asNonExistent(f.mapBaseName(nameMapper(n)), n+1)
         case _ => Some(f)
       }
       asNonExistent(f)
