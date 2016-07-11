@@ -60,7 +60,7 @@ final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction 
 
 final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
   import com.drew.imaging.ImageMetadataReader
-  import com.sksamuel.scrimage.{ImageMetadata, Image}
+  import com.sksamuel.scrimage.ImageMetadata
 
   val idents = (Ident.imageProperties.toSet - Ident.width - Ident.height).map(mapping)
 
@@ -70,9 +70,6 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
     0x0110 -> mapping(Ident.model),
     0x9003 -> mapping(Ident.created),
     0x8827 -> mapping(Ident.iso),
-    0xa002 -> mapping(Ident.width),
-    0xa003 -> mapping(Ident.height),
-    0x0100 -> mapping(Ident.width),
     0x0101 -> mapping(Ident.height)
   )
 
@@ -117,19 +114,14 @@ final class WidthHeightExtract(mapping: Ident => Ident = identity) extends Extra
 
   val idents = Set(Ident.width, Ident.height).map(mapping)
   def mapIdents(f: Ident => Ident) = new WidthHeightExtract(f)
-  def extractM(file: File): MapGet[PropertyMap] = {
-    MapGet.value(mapping(Ident.mimetype)).map {
-      case Some(m) if m startsWith "image/" =>
-        Try(Image.fromPath(file.path)) match {
-          case Success(img) =>
-            PropertyMap(
-              (mapping(Ident.width) -> img.width.toString),
-              (mapping(Ident.height) -> img.height.toString))
-          case Failure(ex) =>
-            logger.warn(s"Cannot load image: ${file.path}", ex)
-            PropertyMap.empty
-        }
-      case _ =>
+  def extractM(file: File): MapGet[PropertyMap] = MapGet.unit {
+    Try(Image.fromPath(file.path)) match {
+      case Success(img) =>
+        PropertyMap(
+          (mapping(Ident.width) -> img.width.toString),
+          (mapping(Ident.height) -> img.height.toString))
+      case Failure(ex) =>
+        logger.warn(s"Cannot load image: ${file.path}", ex)
         PropertyMap.empty
     }
   }

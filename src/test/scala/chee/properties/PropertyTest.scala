@@ -1,6 +1,5 @@
 package chee.properties
 
-import chee.metadata.MetadataFile
 import scala.util._
 import org.scalatest._
 import better.files._
@@ -69,8 +68,26 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   it should "work for existing file" in {
     for (file <- TestInfo.images if file.extension != Some(".png")) {
       val props = new ImageExtract().extract(file)
-      for (id <- (Ident.imageProperties.toSet - Ident.iso)) {
+      for (id <- (Ident.imageProperties.toSet - Ident.iso - Ident.width - Ident.height)) {
         props.get(id) should not be (None)
+      }
+      props.get(Ident.width) should be (None)
+      props.get(Ident.height) should be (None)
+    }
+  }
+
+  it should "work for image files without extension" in {
+    for (img <- TestInfo.images if img.extension != Some(".png")) {
+      newDirectory { dir =>
+        val f = img.copyTo(dir / img.stripExtension.name)
+        deleteFile(f) {
+          val props = new ImageExtract().extract(f)
+          for (id <- (Ident.imageProperties.toSet - Ident.iso - Ident.width - Ident.height)) {
+            props.get(id) should not be (None)
+          }
+          props.get(Ident.width) should be (None)
+          props.get(Ident.height) should be (None)
+        }
       }
     }
   }
@@ -90,9 +107,28 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
     }
   }
 
+  "width, height" should "work for image files without extension" in randomImage { img =>
+    val f = img.moveTo(img.stripExtension)
+    deleteFile(f) {
+      val props = new WidthHeightExtract().extract(f)
+      for (id <- List(Ident.width, Ident.height)) {
+        props.get(id) should not be (None)
+      }
+    }
+  }
+
+  it should "work for image files" in {
+    for (file <- TestInfo.images) {
+      val props = new WidthHeightExtract().extract(file)
+      for (id <- List(Ident.width, Ident.height)) {
+        props.get(id) should not be (None)
+      }
+    }
+  }
+
   "width, height and iso" should "be numeric values" in {
     for (img <- TestInfo.images) {
-      val props = new WidthHeightExtract().extractM(img).result(LazyMap(Ident.mimetype -> "image/jpg"))
+      val props = new WidthHeightExtract().extract(img)
       props.get(Ident.height).get should fullyMatch regex ("[0-9]+".r)
       props.get(Ident.width).get should fullyMatch regex ("[0-9]+".r)
     }
@@ -139,4 +175,5 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
     extension(file"test.") should be (None)
     extension(file"test") should be (None)
   }
+
 }
