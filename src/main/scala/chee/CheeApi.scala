@@ -12,6 +12,7 @@ import chee.util.more._
 import FileOps.{CryptSettings, Result}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
+import java.time.Duration
 import scala.util.{ Failure, Success, Try }
 
 trait CheeApi {
@@ -79,15 +80,21 @@ private class CheeApiImpl(cfg: Config) extends CheeApi with LazyLogging {
     val files: Stream[LazyMap] = fileStream(index, param.find, meta, input)
     val (c, d) = syncProgr.foreach(zero)(files, syncAction)
 
-    val deleteAction = FileOps.deleteNonExistingFile(index).map(unwrap(param.failFast))
+    val c2 = deleteNonExistingFiles(c, d, progress)(input, param.failFast)
+
+    updateLocation(input)
+    c2
+  }
+
+  def deleteNonExistingFiles[C](zero: C, dur: Duration, progress: Progress[Result, C])(paths: Seq[File], failFast: Boolean): C = {
+    val deleteAction = FileOps.deleteNonExistingFile(index).map(unwrap(failFast))
     val deleteProgr = progress.setBefore(Progress.empty.before).setAfter { (c, t, d) =>
       if (t == Result.Skipped) MapGet.unit(c) // don't call progress for skipped entries
       else progress.before(c).flatMap(_ => progress.after(c, t, d))
     }
-    val (c2, _) = deleteProgr.foreach(c, d)(index.find(TrueCondition).get, deleteAction)
-
-    updateLocation(param.files)
-    c2
+    val deleteCond = Condition.or(paths.map(f => Prop(Comp.Like, Ident.path -> s"${f.pathAsString}*")): _*)
+    val (c, _) = deleteProgr.foreach(zero, dur)(index.find(deleteCond).get, deleteAction)
+    c
   }
 
   def addFiles[C](zero: C, progress: Progress[Result, C])(param: AddParam): C = {

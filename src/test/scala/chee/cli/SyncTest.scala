@@ -55,6 +55,15 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     after.size should be (before.size -2)
   }
 
+  it should "delete non existing files only for given paths" in bothChee(addImages) { setup =>
+    val files = setup.files.list.toList
+    val file = files.head
+    files.tail.foreach(_.delete())
+    val (_, Nil) = sync.run(setup, file.pathAsString)
+    val (out, Nil) = findLisp(setup)
+    out should have size (files.size)
+  }
+
   it should "update changed encrypted files" in bothChee() { setup => //broken
     val target = (setup.files / "repo").createDirectories()
     val source = target / TestInfo.images(2).name
@@ -140,7 +149,6 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
   }
 
   it should "refuse for non existing dirs" in bothChee() { setup =>
-
     val dir = setup.files / "non-existing"
 
     intercept[UserError] {
@@ -157,5 +165,22 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     intercept[UserError] {
       sync.run(setup, "--reindex", "--everything")
     }
+  }
+
+  it should "update location after sync" in bothChee() { setup =>
+    for (file <- TestInfo.images.take(2)) {
+      val target = setup.files / "dir" / file.name
+      target.parent.createDirectories()
+      file.copyTo(target)
+    }
+    addCmd.run(setup, "-r", (setup.files / "dir").pathAsString)
+
+    for (file <- TestInfo.images.drop(2)) {
+      file.copyTo(setup.files / file.name)
+    }
+    val (_, Nil) = sync.run(setup, "-r", setup.files.pathAsString)
+    val (out, Nil) = find.run(setup, "-p", "~#location~%")
+    out.toSet should have size (1)
+    out(0) should be (setup.files.pathAsString)
   }
 }

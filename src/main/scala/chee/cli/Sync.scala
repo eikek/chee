@@ -54,7 +54,7 @@ class Sync extends ScoptCommand with LockSupport with ProgressDef {
   }
 
   def exec(cfg: Config, opts: Opts): Unit = withLock(cfg) {
-    outln("Syncronise " + opts.files.mkString(", "))
+    outln("Syncronise " + (if (opts.everything) "everything" else opts.files.mkString(", ")))
     val apiSync = CheeApi(cfg).syncFiles(ResultCount.empty, resultCountProgress)_
     val decrypt = opts.cryptOpts.toSettings(cfg)
     apiSync(SyncParam(opts.fileSettings, decrypt,
