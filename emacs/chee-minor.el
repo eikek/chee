@@ -158,6 +158,9 @@ navigating to a record."
 
 ;;;###autoload
 (defun chee-minor-rec-setup ()
+  "Adds a function to `rec-mode-hooks' to setup additional key bindings:
+- v:  `chee-minor-display-image-at-point'
+- V:  `chee-minor-rec-nav-mode'"
   ;; there seems to be a bug in rec-mode: it declares rec-mode-hook
   ;; but runs rec-mode-hooks
   (defvar rec-mode-hooks nil)

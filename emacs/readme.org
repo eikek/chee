@@ -7,6 +7,8 @@ It provides a special buffer where you can edit chee queries. Then
 chee is called in a subprocess and the results are added to a dired
 buffer and a thumbnail buffer.
 
+It also aids editing the file containing tags and comments to photos.
+
 * Installation
 
 You must install the chee cli program first. Please refer to the
@@ -33,6 +35,8 @@ under key ~C-c C-s~ in the ~global-map~.
 
 * Usage
 
+** Query
+
 #+name: Example
 [[file:example.gif]]
 
@@ -46,3 +50,30 @@ Setting a ~File~ makes chee search this directory instead of the
 index. This can be unset with a prefix argument. Setting a
 ~Repository~ makes chee execute in this repository directory. Again,
 this can be unset using a prefix argument.
+
+** Edit tags and comments
+
+Tags and comments to photos are stored in a [[https://www.gnu.org/software/recutils/][rec]] database
+file. Associating tags and/or a comment to a file looks like this:
+
+#+BEGIN_EXAMPLE
+Checksum: 7f20b28aec24844e0fee3d2bd474b96819e453e678e96423b93932c5e5428aa3
+Comment: Some comment to this file
+Tag: bike
+Tag: mountain
+#+END_EXAMPLE
+
+There may be multiple =Tag= entries but at most one =Comment=. The
+=Checksum= entry refers to the file.
+
+The [[https://www.gnu.org/software/recutils/][GNU recutils]] also provide an Emacs mode for editing these
+files. Chee adds functions to ~rec-mode~ for displaying the image to
+the current record. You can setup default key bindings via
+
+#+begin_src emacs-lisp :exports code
+(chee-minor-rec-setup)
+#+end_src
+
+When navigating the file hit =v= to display the image of the current
+record. Hit =V= to enable “follow mode” that displays the image while
+navigating through the file.
