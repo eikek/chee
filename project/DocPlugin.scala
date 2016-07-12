@@ -199,7 +199,8 @@ object DocPlugin extends AutoPlugin {
 
   def allCommandList(javaBin: String, cp: Classpath, opts: Seq[String]): List[List[String]] = {
     val out = runChee(javaBin, cp, opts, Seq.empty, error = true)
-    for (line <- out.split("\n").toList if line contains ("-"))
+    val isCommand: String => Boolean = l => (l contains " - ") || (l endsWith " -")
+    for (line <- out.split("\n").dropWhile(_.trim.nonEmpty).toList if isCommand(line))
     yield line.substring(0, line.indexOf('-')).trim.split(" ").toList
   }
 
