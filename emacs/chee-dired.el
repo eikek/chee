@@ -133,7 +133,12 @@ inside `chee-dired' function."
               (widen)
               (goto-char (point-max))
               (let ((pos (point)))
-                (insert (s-trim (shell-command-to-string (concat "ls " ls-switches " " (shell-quote-argument original) "| tail -n -1"))))
+                (insert "  ")
+                (insert (s-trim (shell-command-to-string
+                                 (concat "ls "
+                                         ls-switches
+                                         " "
+                                         (shell-quote-argument original) "| tail -n -1"))))
                 (insert "\n")
                 (dired-insert-set-properties pos (point))))))
         (with-current-buffer (image-dired-create-thumbnail-buffer)
