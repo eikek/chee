@@ -9,23 +9,16 @@ Chee is a command line tool for managing and organizing photos.
 
 Some features are:
 
-- No “application lock-in”; chee uses open formats for storing data so
+- no “application lock-in”; chee uses open formats for storing data so
   that it can be easily accessed using other (free or open-source)
-  tools.
-- search photos using a simple query language by file and image
-  properties (resolution, created-time, etc)
-- manages collections (created from queries and can be used in
-  queries)
-- copy/symlink images using a custom pattern: keep original files
-  where they are and create symlink trees using a custom folder
-  structure
+  tools
+- search photos using a simple query language
+- manage named queries (called collections)
+- copy/symlink images into a custom folder structure
 - create thumbnails or scaled versions (creates new files, original
   files are not touched)
-- encrypt files using a password or a public key. Encryption is done
-  via OpenPGP.
-- tag and comment photos: user metadata (tags and comments) is stored
-  in a [[https://www.gnu.org/software/recutils/][rec]] plain text file. That allow to edit it manually or use the
-  [[https://www.gnu.org/software/recutils/][rec utilities]] to access the data.
+- encrypt files using OpenPGP
+- tag and comment photos
 - create static html photo gallery
 
 It is a simple program: the metadata of image (and other) files are
@@ -33,10 +26,12 @@ put in a database which can then be queried more conveniently. But
 this already allows some useful features.
 
 It is written in Scala and runs on the JVM so it is quite platform
-neutral. Chee allows to query and print information from the database
-in very flexible ways. Still, in case you need raw data access, simply
-look at the [[http://sqlite.org][sqlite]] database with other tools (such as sqlite command
-line tool or [[http://sqliteman.com][sqliteman]]).
+neutral. Chee uses two databases: sqlite for file metadata and a [[https://www.gnu.org/software/recutils/][rec]]
+file for user metadata (tags and comments). It allows to query and
+print information from the database in very flexible ways. Still, in
+case you need raw data access, use sqlite cli tool or [[http://sqliteman.com][sqliteman]] to
+look at the [[http://sqlite.org][sqlite]] database and [[https://www.gnu.org/software/recutils/][rec utilities]] or any text editor to
+access user metadata.
 
 * Installing
 
