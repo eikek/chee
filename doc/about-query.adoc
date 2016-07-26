@@ -311,7 +311,7 @@ There is a special syntax for date ranges. First of all, the standard
 range syntax works:
 
 ----------------------------------------------------------------------
-date:2015-10-10--2015-10-20
+date/2015-10-10--2015-10-20
 ----------------------------------------------------------------------
 
 This would create two date values, as described above in
@@ -326,13 +326,13 @@ current date. But if used in a range (the upper bound date), it will
 use the lower bound date a the reference value. For instance:
 
 ----------------------------------------------------------------------
-date:2015-10--+7d
+date/2015-10--+7d
 ----------------------------------------------------------------------
 
 would expand to the following:
 
 ----------------------------------------------------------------------
-date:2015-10-01--2015-10-08
+date/2015-10-01--2015-10-08
 ----------------------------------------------------------------------
 
 
