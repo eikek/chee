@@ -38,7 +38,7 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   val syncLocation: Setup => Setup = withSetup { setup =>
     add.run(setup, "-r", setup.files.pathAsString)
     val (out, Nil) = findLisp(setup)
-    out.size should be (8)
+    out.size should be (TestInfo.images.size * 2)
   }
 
   val duplicateImagesDir = addImages andThen copyImagesToDir andThen syncLocation
@@ -85,11 +85,12 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   }
 
   it should "render tags and comments" in bothChee(addImages) { setup =>
-    metaAttach.run(setup, "--skip", "1", "--first", "1", "--tags", "d90a7879", "--comment", "323e-4c15-a1bd-9357121ca8b8")
+    // tif files cannot be processed atm
+    metaAttach.run(setup, "--skip", "1", "--first", "1", "--tags", "d90a7879", "--comment", "323e-4c15-a1bd-9357121ca8b8", "!ext:tif")
     val (out, Nil) = findLisp(setup, "tag:d90a7879")
     out should have size (1)
     val outfile = setup.dirs.userDir.get / "gallery"
-    gallery.run(setup, "--out", outfile.pathAsString)
+    gallery.run(setup, "--out", outfile.pathAsString, "!ext:tif")
     val html = outfile / "index.html"
     html.exists should be (true)
     val content = html.contentAsString

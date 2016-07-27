@@ -26,9 +26,8 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
 
     val (after, Nil) = findLisp(setup)
     val (afterLoc, Nil) = linfo.run(setup)
-
     before.size - 2 should be (after.size)
-    beforeLoc.map(_.replace(": 4", ": 2")) should be (afterLoc)
+    beforeLoc.map(_.replace(s": ${TestInfo.images.size}", s": ${TestInfo.images.size -2}")) should be (afterLoc)
   }
 
   it should "remove directories recursively" in bothChee(addImages) { setup =>
@@ -47,7 +46,7 @@ class RemoveTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     val (afterLoc, Nil) = linfo.run(setup)
 
     before.size - 2 should be (after.size)
-    beforeLoc.map(_.replace(": 4", ": 2")) should be (afterLoc)
+    beforeLoc.map(_.replace(s": ${TestInfo.images.size}", s": ${TestInfo.images.size -2}")) should be (afterLoc)
   }
 
   it should "remove a location root" in bothChee(addImages) { setup =>

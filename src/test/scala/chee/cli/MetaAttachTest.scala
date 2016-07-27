@@ -82,9 +82,10 @@ class MetaAttachTest extends FlatSpec with Matchers with CommandSetup with FindH
     val (out, Nil) = metaFind.run(setup, "-p", "lisp", "checksum?")
     out.size should be (xout.size)
 
+    // drops all entries but the first 2
     val (_, Nil) = attach.run(setup, "--drop-all", "--skip", "2")
     val (out2, Nil) = metaFind.run(setup, "-p", "lisp", "checksum?")
-    out2.size should be (out.size - 2)
+    out2.size should be (2)
   }
 
   it should "refuse if drop and change tags/comments" in bothChee() { setup =>

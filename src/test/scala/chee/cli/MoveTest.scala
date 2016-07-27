@@ -146,7 +146,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     val (_, Nil) = move.run(setup, (files :+ subdir.pathAsString): _*)
 
     val (beforeOut, Nil) = findLisp(setup)
-    beforeOut should have size (4)
+    beforeOut should have size (TestInfo.images.size)
     val (beforeLoc, Nil) = linfo.run(setup)
 
     // rename
@@ -156,7 +156,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     out should have size (2)
 
     val (afterOut, Nil) = findLisp(setup)
-    afterOut should have size (4)
+    afterOut should have size (TestInfo.images.size)
 
     beforeOut.map(s => s
       .replace(
@@ -219,12 +219,9 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
 
     // location list should not change, but its counts
     beforeLoc.map(s => s
-      .replace(
-        "/files: 4",
-        "/files: 8")
-      .replace(
-        "/morefiles: 4",
-        "/morefiles: 0")).filterNot(_ endsWith "0") should be (afterLoc)
+      .replace(s"/files: ${TestInfo.images.size}", s"/files: ${TestInfo.images.size * 2}")
+      .replace(s"/morefiles: ${TestInfo.images.size}", "/morefiles: 0"))
+      .filterNot(_ endsWith ": 0") should be (afterLoc)
   }
 
   it should "move a directory back to a location root" in bothChee(addImages) { setup =>
@@ -256,7 +253,7 @@ class MoveTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     setup.files.exists should be (true)
     images.exists should be (false)
     val (out, Nil) = findLisp(setup, "path:*images*")
-    out should have size (4)
+    out should have size (TestInfo.images.size)
   }
 
   it should "refuse to move non-indexed files" in bothChee() { setup =>

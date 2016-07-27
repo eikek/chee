@@ -79,6 +79,17 @@ trait FileLoan {
     copyFile(img)(code)
   }
 
+  def randomImageAccept(p: File => Boolean)(code: File => Any): Unit = {
+    def loop(n: Int = 0): File =
+      if (n > 300) sys.error("limit exceeded. cannot find file accepting predicate")
+      else {
+        val img = TestInfo.images.randomGet
+        if (p(img)) img
+        else loop(n + 1)
+      }
+    copyFile(loop())(code)
+  }
+
   def encryptFile(in: File, pass: Array[Char], target: Option[File] = None)(code: File => Any): Unit = {
     val out = target match {
       case Some(Directory(dir)) => dir / (in.mapFileName(_ + "." + CheeCrypt.passwordEncryptExtension)).name
