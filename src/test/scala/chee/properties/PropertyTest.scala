@@ -67,6 +67,7 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
 
   it should "work for existing file" in {
     for (file <- TestInfo.images if file.extension != Some(".png")) {
+      info("testing file "+ file)
       val props = new ImageExtract().extract(file)
       for (id <- (Ident.imageProperties.toSet - Ident.iso - Ident.width - Ident.height)) {
         props.get(id) should not be (None)
@@ -80,6 +81,7 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
     for (img <- TestInfo.images if img.extension != Some(".png")) {
       newDirectory { dir =>
         val f = img.copyTo(dir / img.stripExtension.name)
+        info("testing file "+ img +" --> " + f.name)
         deleteFile(f) {
           val props = new ImageExtract().extract(f)
           for (id <- (Ident.imageProperties.toSet - Ident.iso - Ident.width - Ident.height)) {
@@ -118,7 +120,8 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   it should "work for image files" in {
-    for (file <- TestInfo.images) {
+    for (file <- TestInfo.images if file.extension != Some(".tif")) {
+      info("testing file "+ file)
       val props = new WidthHeightExtract().extract(file)
       for (id <- List(Ident.width, Ident.height)) {
         props.get(id) should not be (None)
@@ -127,12 +130,11 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
   }
 
   "width, height and iso" should "be numeric values" in {
-    for (img <- TestInfo.images) {
+    for (img <- TestInfo.images if img.extension != Some(".tif")) {
       val props = new WidthHeightExtract().extract(img)
       props.get(Ident.height).get should fullyMatch regex ("[0-9]+".r)
       props.get(Ident.width).get should fullyMatch regex ("[0-9]+".r)
-    }
-    for (img <- TestInfo.images) {
+
       val m = LazyMap.fromFile(img)
       MapGet.valueForce(Ident.height).result(m) should fullyMatch regex ("[0-9]+".r)
       MapGet.valueForce(Ident.width).result(m) should fullyMatch regex ("[0-9]+".r)

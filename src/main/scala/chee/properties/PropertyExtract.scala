@@ -69,8 +69,7 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
     0x010f -> mapping(Ident.make),
     0x0110 -> mapping(Ident.model),
     0x9003 -> mapping(Ident.created),
-    0x8827 -> mapping(Ident.iso),
-    0x0101 -> mapping(Ident.height)
+    0x8827 -> mapping(Ident.iso)
   )
 
   def mapIdents(f: Ident => Ident) = new ImageExtract(mapping andThen f)
@@ -121,7 +120,7 @@ final class WidthHeightExtract(mapping: Ident => Ident = identity) extends Extra
           (mapping(Ident.width) -> img.width.toString),
           (mapping(Ident.height) -> img.height.toString))
       case Failure(ex) =>
-        logger.warn(s"Cannot load image: ${file.path}", ex)
+        logger.debug(s"Cannot load image: ${file.path}", ex)
         PropertyMap.empty
     }
   }
