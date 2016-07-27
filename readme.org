@@ -33,6 +33,8 @@ case you need raw data access, use sqlite cli tool or [[http://sqliteman.com][sq
 look at the [[http://sqlite.org][sqlite]] database and [[https://www.gnu.org/software/recutils/][rec utilities]] or any text editor to
 access user metadata.
 
+For a quick introduction, see this [[https://eknet.org/main/introducing_chee__a_photo_managing_tool.html][this post]].
+
 * Installing
 
 ** Building
