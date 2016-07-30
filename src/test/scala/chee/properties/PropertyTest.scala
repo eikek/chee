@@ -28,7 +28,7 @@ class PropertyTest extends FlatSpec with Matchers with chee.FileLoan {
     map.get(Ident.filename) should be (Some(TestInfo.images.head.name))
     map.get(Ident.extension) should be (TestInfo.images.head.getExtension)
     map.get(Ident.path) should be (Some(TestInfo.images.head.path.toString))
-    map.get(Ident.mimetype) should (be (Some("image/jpg")) or be (Some("image/png")) or be (Some("image/jpeg")))
+    map.get(Ident.mimetype) should (be (Some("image/jpg")) or be (Some("image/png")) or be (Some("image/jpeg")) or be (Some("image/tiff")))
   }
 
   it should "apply mapIdents" in {
