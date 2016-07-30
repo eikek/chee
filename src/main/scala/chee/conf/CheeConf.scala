@@ -11,7 +11,7 @@ object CheeConf {
     System.getProperty("chee.debugConfig", "false") equalsIgnoreCase "true"
   }
 
-  val defaultConfig = loadDefault()
+  lazy val defaultConfig = loadDefault()
 
   def loadDefault(): Config = load(Directories.makeDefault)
 
