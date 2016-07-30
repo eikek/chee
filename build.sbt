@@ -28,7 +28,11 @@ lazy val dependencies = Seq(
   "ch.qos.logback"              % "logback-classic"          % "1.1.7",
   "org.xerial"                  % "sqlite-jdbc"              % "3.8.11.2",
   "com.typesafe"                % "config"                   % "1.3.0",
-  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.54"
+  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.54",
+  "eu.medsea.mimeutil"          % "mime-util"                % "2.1.3" excludeAll(
+    ExclusionRule("log4j", "log4j"),
+    ExclusionRule("org.slf4j", "slf4j-log4j12")
+  )
 )
 
 lazy val writeTestInfo = Def.task {

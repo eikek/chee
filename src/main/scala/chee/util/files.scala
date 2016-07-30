@@ -1,14 +1,27 @@
 package chee.util
 
+import eu.medsea.mimeutil.MimeUtil2
+import eu.medsea.mimeutil.detector.{ExtensionMimeDetector, MagicMimeMimeDetector}
 import java.io.{InputStream, OutputStream}
-import java.net.URL
+import java.net.{URL, URLConnection}
 import java.nio.file.{Files, Paths}
+import javax.activation.{MimeType, MimetypesFileTypeMap}
 import java.util.zip.{ZipOutputStream, ZipEntry}
 import better.files._
 import better.files.File.LinkOptions
 import scala.io.Codec
+import scala.util.Try
 
 object files {
+
+  private[this] val mimeTypesMap = new MimetypesFileTypeMap()
+  private[this] val mimeUtil = {
+    val u = new MimeUtil2
+    u.registerMimeDetector(classOf[ExtensionMimeDetector].getName)
+    u.registerMimeDetector(classOf[MagicMimeMimeDetector].getName)
+    u
+  }
+
   object Directory {
     def unapply(f: File): Option[File] =
       if (f.isDirectory(LinkOptions.follow)) Some(f) else None
@@ -68,7 +81,6 @@ object files {
       unique getOrElse sys.error("Cannot create unique zip entry. Rename limit exceeded.")
     }
   }
-
 
   implicit class FileExt(f: File) {
     private val NonExistingRegex = """(.*?-)([0-9]+)""".r
@@ -194,6 +206,34 @@ object files {
       }
       asNonExistent(f)
     }
+
+    def mimeType: Option[MimeType] = {
+      def mime(os: Option[String]): MimeType =
+        os.map(new MimeType(_).normalize).getOrElse(unknownMimeType)
+
+      lazy val first = mime(f.contentType)
+      lazy val second = mime(Option(URLConnection.guessContentTypeFromName(f.name)))
+      lazy val third = mime(Option(mimeTypesMap.getContentType(f.toJava)))
+
+      lazy val ct = first.orElse(second).orElse(third).orElse {
+        val m = mimeUtil.getMimeTypes(f.toJava)
+        mime {
+          if (m.size > 0) Some(m.iterator.next.toString)
+          else None
+        }
+      }
+      Try(ct).toOption
+    }
+  }
+
+  private val unknownMimeType = new MimeType("application", "octet-stream")
+
+  implicit class MimeTypeOps(mt: MimeType) {
+    def isUnknown: Boolean = normalize.getBaseType == unknownMimeType.getBaseType
+    def orElse(other: MimeType): MimeType = if (isUnknown) other else mt
+    def normalize: MimeType =
+      if (!mt.getBaseType.contains("unknown")) mt
+      else unknownMimeType
   }
 
   implicit class UrlOpts(url: URL) {

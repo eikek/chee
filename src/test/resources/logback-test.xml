@@ -3,7 +3,7 @@
     <name>loglevel</name>
   </define>
 
-  <logger name="chee" level="warn" />
+  <logger name="chee" level="error" />
 
   <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>

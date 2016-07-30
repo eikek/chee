@@ -1,7 +1,10 @@
 package chee.util
 
+import javax.activation.MimeType
+import better.files.File
 import org.scalatest._
 import chee.FileLoan
+import chee.TestInfo
 import files._
 
 class FilesTest extends FlatSpec with Matchers with FileLoan {
@@ -36,5 +39,21 @@ class FilesTest extends FlatSpec with Matchers with FileLoan {
     val f2 = f.sibling(f.name + ".txt")
     val f3 = f2.mapBaseName(_ + "-bla")
     f3.name should be (f.name + "-bla.txt")
+  }
+
+  "mimeType" should "find mimetype of files without extension" in withNewFile { f =>
+    val image = TestInfo.images.find(_.name == "test1.jpg").get
+    image.copyTo(f)
+    f.mimeType.map(_.toString) should be (Some("image/jpeg"))
+  }
+
+  it should "consult extension first" in {
+    val f = File("test.jpg")
+    f.mimeType.map(_.toString) should be (Some("image/jpeg"))
+  }
+
+  it should "normalize unknown things to application/octet-stream" in {
+    val m1 = new MimeType("video", "x-unknown")
+    m1.normalize.toString should be ("application/octet-stream")
   }
 }

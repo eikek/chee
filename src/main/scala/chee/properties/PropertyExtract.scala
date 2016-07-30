@@ -1,11 +1,12 @@
 package chee.properties
 
-import scala.util.{Try, Success, Failure}
-import better.files._
-import chee.metadata.{ MetadataExtract, MetadataFile }
 import java.time.Duration
+import better.files._
 import com.typesafe.scalalogging.LazyLogging
+import scala.util.{Try, Success, Failure}
 import chee.Timing
+import chee.util.files._
+import chee.metadata.{ MetadataExtract, MetadataFile }
 import MapGet._
 
 trait Extraction {
@@ -25,7 +26,6 @@ object Extraction {
   def all(mf: MetadataFile) = List(
     new BasicExtract(),
     new ImageExtract(),
-    new WidthHeightExtract(),
     new ChecksumExtract(),
     new MetadataExtract(mf))
 }
@@ -53,16 +53,14 @@ final class BasicExtract(mapping: Ident => Ident = identity) extends Extraction 
   }
 
   def mimeType(f: File): Option[Property] =
-    f.contentType.orElse {
-      Option(java.net.URLConnection.guessContentTypeFromName(f.name))
-    } filter(_.nonEmpty) map (Property(mapping(Ident.mimetype), _))
+    f.mimeType.map(mt => Property(mapping(Ident.mimetype), mt.getBaseType))
 }
 
 final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
   import com.drew.imaging.ImageMetadataReader
-  import com.sksamuel.scrimage.ImageMetadata
+  import com.sksamuel.scrimage.{Image, ImageMetadata}
 
-  val idents = (Ident.imageProperties.toSet - Ident.width - Ident.height).map(mapping)
+  val idents = (Ident.imageProperties.toSet).map(mapping)
 
   val exifTags = Map(
     0x0112 -> mapping(Ident.orientation),
@@ -74,7 +72,34 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
 
   def mapIdents(f: Ident => Ident) = new ImageExtract(mapping andThen f)
 
+  def isImage(f: File): MapGet[Boolean] = value(mapping(Ident.mimetype)).map {
+    case Some(mt) if mt startsWith "image/" => true
+    case None => f.mimeType.exists(_.getPrimaryType == "image")
+    case _ => false
+  }
+
   def extractM(f: File): MapGet[PropertyMap] = Extraction.assertExists(f) {
+    isImage(f).map {
+      case true => extractMetadata(f) ++ getWidthAndHeight(f)
+      case false => PropertyMap.empty
+    }
+  }
+
+  def getWidthAndHeight(file: File): PropertyMap = {
+    Try(Image.fromPath(file.path)) match {
+      case Success(img) =>
+        PropertyMap(
+          (mapping(Ident.width) -> img.width.toString),
+          (mapping(Ident.height) -> img.height.toString))
+      case Failure(ex) =>
+        val msg = s"Cannot load image: ${file.path}"
+        if (logger.underlying.isTraceEnabled) logger.warn(msg, ex)
+        else logger.warn(s"$msg: ${ex.getMessage}")
+        PropertyMap.empty
+    }
+  }
+
+  def extractMetadata(f: File): PropertyMap = {
     def logTime(m: Try[PropertyMap], d: Duration): Unit = m match {
       case Success(_) =>
         logger.trace(s"Extracted image properties from ${f.path} in ${Timing.format(d)}")
@@ -88,8 +113,7 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
         .map(ImageMetadata.fromMetadata)
         .map(fromMetadata)
     }
-
-    unit(props.toOption.getOrElse(PropertyMap.empty))
+    props.toOption.getOrElse(PropertyMap.empty)
   }
 
   def fromMetadata(meta: ImageMetadata): PropertyMap = {
@@ -104,24 +128,6 @@ final class ImageExtract(mapping: Ident => Ident = identity) extends Extraction 
       } else {
         pm + (ident -> tag.rawValue.trim)
       }
-    }
-  }
-}
-
-final class WidthHeightExtract(mapping: Ident => Ident = identity) extends Extraction with LazyLogging {
-  import com.sksamuel.scrimage.Image
-
-  val idents = Set(Ident.width, Ident.height).map(mapping)
-  def mapIdents(f: Ident => Ident) = new WidthHeightExtract(f)
-  def extractM(file: File): MapGet[PropertyMap] = MapGet.unit {
-    Try(Image.fromPath(file.path)) match {
-      case Success(img) =>
-        PropertyMap(
-          (mapping(Ident.width) -> img.width.toString),
-          (mapping(Ident.height) -> img.height.toString))
-      case Failure(ex) =>
-        logger.debug(s"Cannot load image: ${file.path}", ex)
-        PropertyMap.empty
     }
   }
 }
