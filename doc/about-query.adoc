@@ -323,7 +323,7 @@ compared numerically and local dates are considered in the default
 Then, you can specify the second date by calculating from the first
 date. Normally, a term like `+7d` would subtract 7 days from the
 current date. But if used in a range (the upper bound date), it will
-use the lower bound date a the reference value. For instance:
+use the lower bound date as the reference value. For instance:
 
 ----------------------------------------------------------------------
 date/2015-10--+7d
