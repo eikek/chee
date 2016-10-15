@@ -59,19 +59,20 @@ chee version
 You can build chee with the [[http://nixos.org/nix][nix package manager]].
 
 #+begin_src shell :exports both
-nix-build https://github.com/eikek/chee/archive/release/0.2.0.tar.gz
+nix-build https://github.com/eikek/chee/archive/master.tar.gz
 #+end_src
 
 or install it with
 
 #+begin_src shell :exports code
-nix-env -if https://github.com/eikek/chee/archive/release/0.2.0.tar.gz
+nix-env -if https://github.com/eikek/chee/archive/master.tar.gz
 #+end_src
 
 ** Download
 
 Prebuild zip files are usually available for download here:
 
+- [[https://eknet.org/main/projects/chee/chee-0.3.0-SNAPSHOT.zip][chee 0.3.0-SNAPSHOT]]
 - [[https://eknet.org/main/projects/chee/chee-0.2.0.zip][chee 0.2.0]]
 - [[https://eknet.org/main/projects/chee/chee-0.1.1.zip][chee 0.1.1]]
 
@@ -99,14 +100,15 @@ chee help manual
 
 opens a browser showing the complete manual.
 
-Click [[https://eknet.org/main/projects/chee/manual-0.2.0.html][here]] to read the manual now.
+Click [[https://eknet.org/main/projects/chee/manual-0.3.0.html][here]] to read the manual now.
 
 * License
 
 Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]].
 
 * Changes
-** 0.2.0 (development)
+** 0.3.0 (development)
+** 0.2.0
 
 - Encrypt and decrypt files using OpenPGP.
 - New ~clean~ command to cleanup temporary data.
