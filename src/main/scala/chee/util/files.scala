@@ -211,11 +211,10 @@ object files {
       def mime(os: Option[String]): MimeType =
         os.map(new MimeType(_).normalize).getOrElse(unknownMimeType)
 
-      lazy val first = mime(f.contentType)
+      lazy val first = mime(Option(mimeTypesMap.getContentType(f.toJava)))
       lazy val second = mime(Option(URLConnection.guessContentTypeFromName(f.name)))
-      lazy val third = mime(Option(mimeTypesMap.getContentType(f.toJava)))
 
-      lazy val ct = first.orElse(second).orElse(third).orElse {
+      lazy val ct = first.orElse(second).orElse {
         val m = mimeUtil.getMimeTypes(f.toJava)
         mime {
           if (m.size > 0) Some(m.iterator.next.toString)
