@@ -29,7 +29,7 @@ class LocalDateTimeParserTest extends FlatSpec with Matchers {
       dp.fullDateTime.parse(date) match {
         case Success(LocalDateTime(2016, 10, 15, 12, 12, 15), _) =>
         case Success(date, _) => sys.error(s"unexpected result: $date")
-        case f: Failure => sys.error(f.msg)
+        case f: Failure[_, _] => sys.error(f.msg)
       }
     }
   }

@@ -9,26 +9,26 @@ lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "2.2.6"    % "test",
-  "org.scalacheck"             %% "scalacheck"               % "1.13.1"   % "test",
-  "com.lihaoyi"                %% "fastparse"                % "0.3.7",
+  "org.scalatest"              %% "scalatest"                % "3.0.0"    % "test",
+  "org.scalacheck"             %% "scalacheck"               % "1.13.2"   % "test",
+  "com.lihaoyi"                %% "fastparse"                % "0.4.1",
   "com.github.pathikrit"       %% "better-files"             % "2.16.0" excludeAll(
     scalaLib
   ),
-  "com.typesafe.scala-logging" %% "scala-logging"            % "3.4.0" excludeAll(
+  "com.typesafe.scala-logging" %% "scala-logging"            % "3.5.0" excludeAll(
     ExclusionRule("org.scala-lang", "scala-reflect"),
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
   "com.github.scopt"           %% "scopt"                    % "3.5.0",
-  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.6" excludeAll(
+  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.7" excludeAll(
     scalaLib,
     slf4jApi // use the one provided by logback
    ),
   "ch.qos.logback"              % "logback-classic"          % "1.1.7",
-  "org.xerial"                  % "sqlite-jdbc"              % "3.8.11.2",
-  "com.typesafe"                % "config"                   % "1.3.0",
-  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.54",
+  "org.xerial"                  % "sqlite-jdbc"              % "3.14.2.1",
+  "com.typesafe"                % "config"                   % "1.3.1",
+  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.55",
   "eu.medsea.mimeutil"          % "mime-util"                % "2.1.3" excludeAll(
     ExclusionRule("log4j", "log4j"),
     ExclusionRule("org.slf4j", "slf4j-log4j12")
@@ -73,12 +73,11 @@ lazy val testSettings = Defaults.itSettings ++ Seq(
   sourceGenerators in Test += writeTestInfo.taskValue
 )
 
-lazy val bootstrapVersion = "3.3.6"
-lazy val galleryVersion = "2.21.2"
-lazy val bootstrapGalleryVersion = "3.4.2"
-lazy val jqueryVersion = "2.2.4"
+lazy val bootstrapVersion = "3.3.7"
+lazy val galleryVersion = "2.21.3"
+lazy val jqueryVersion = "3.1.1"
 lazy val fontAwesomeVersion = "4.6.3"
-lazy val markedVersion = "0.3.5"
+lazy val markedVersion = "0.3.6"
 
 lazy val themes = List("cerulean", "cosmo", "cyborg", "darkly", "flatly", "journal", "lumen",
   "paper", "readable", "sandstone", "simplex", "slate", "spacelab", "superhero", "united", "yeti")
@@ -89,13 +88,12 @@ lazy val buildSettings = Seq(
     // js
     Lib.js(jqueryVersion, "http://code.jquery.com/jquery-<version>.min.js"),
     Lib.js(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/js/jquery.blueimp-gallery.min.js"),
-    Lib.js(bootstrapGalleryVersion, "https://github.com/blueimp/Bootstrap-Image-Gallery/raw/v<version>/js/bootstrap-image-gallery.min.js"),
+    Lib.js(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/js/blueimp-gallery.min.js"),
     Lib.js(markedVersion, "https://github.com/chjj/marked/raw/v<version>/marked.min.js"),
     //css
     Lib.css(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/css/font-awesome.min.css"),
     Lib.css(bootstrapVersion, "http://netdna.bootstrapcdn.com/bootstrap/<version>/css/bootstrap.min.css").in("bootstrap"),
     Lib.css(galleryVersion, "https://github.com/blueimp/Gallery/raw/v<version>/css/blueimp-gallery.min.css"),
-    Lib.css(bootstrapGalleryVersion, "https://github.com/blueimp/Bootstrap-Image-Gallery/raw/v<version>/css/bootstrap-image-gallery.min.css"),
     // fonts
     Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/FontAwesome.otf"),
     Lib.font(fontAwesomeVersion, "https://maxcdn.bootstrapcdn.com/font-awesome/<version>/fonts/fontawesome-webfont.eot"),
