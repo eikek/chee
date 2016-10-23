@@ -1,7 +1,6 @@
 package chee
 
 import java.time.Duration
-import java.time.Instant
 
 object Timing {
 

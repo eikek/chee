@@ -126,3 +126,16 @@ lazy val chee = (project in file("."))
   .settings(commonSettings: _*)
   .settings(testSettings: _*)
   .settings(buildSettings: _*)
+
+scalacOptions ++= Seq(
+  "-encoding", "UTF-8",
+  "-Xfatal-warnings", // fail when there are warnings
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Xlint",
+  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-unused-import"
+)

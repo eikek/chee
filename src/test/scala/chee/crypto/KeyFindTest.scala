@@ -1,7 +1,6 @@
 package chee.crypto
 
 import chee.TestInfo
-import org.bouncycastle.openpgp.PGPDataValidationException
 import org.scalatest._
 
 class KeyFindTest extends FlatSpec with Matchers with chee.FileLoan {

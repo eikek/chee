@@ -1,6 +1,6 @@
 package chee.properties
 
-import org.scalacheck.{Properties, Gen, Arbitrary}
+import org.scalacheck.{Properties, Gen}
 import org.scalacheck.Prop.{forAll, BooleanOperators}
 import Generators._
 import scala.language.implicitConversions

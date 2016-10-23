@@ -1,11 +1,8 @@
 package chee.cli
 
 import better.files._
-import chee.conf._
-import chee.properties._
-import chee.query.{ Index, _ }
 import chee.util.files._
-import com.typesafe.config.Config
+import chee.query.Index
 
 object Location {
   /** Test whether `f` is inside a location given by `locations`.

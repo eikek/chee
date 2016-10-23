@@ -3,7 +3,7 @@ package chee.crypto
 import java.security.SecureRandom
 
 import better.files._
-import org.bouncycastle.openpgp.{PGPUtil, PGPSecretKey, PGPPublicKey, PGPPrivateKey, PGPPBEEncryptedData, PGPLiteralData, PGPEncryptedDataList, PGPEncryptedDataGenerator, PGPEncryptedData, PGPCompressedData, PGPPublicKeyEncryptedData}
+import org.bouncycastle.openpgp.{PGPUtil, PGPSecretKey, PGPPublicKey, PGPPBEEncryptedData, PGPPublicKeyEncryptedData, PGPLiteralData, PGPEncryptedDataList, PGPEncryptedDataGenerator, PGPCompressedData}
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory
 import org.bouncycastle.openpgp.operator.jcajce.{JcePublicKeyKeyEncryptionMethodGenerator, JcePublicKeyDataDecryptorFactoryBuilder, JcePGPDataEncryptorBuilder, JcePBEKeyEncryptionMethodGenerator, JcePBEDataDecryptorFactoryBuilder, JcaPGPDigestCalculatorProviderBuilder}
 import org.bouncycastle.util.io.Streams

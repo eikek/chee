@@ -96,7 +96,7 @@ object Condition {
       r5: Render[Junc],
       r6: Render[In]): Render[Condition] =
       chee.util.Render {
-        case c@TrueCondition => r0.render(c)
+        case c: TrueCondition.type => r0.render(c)
         case c: Exists => r1.render(c)
         case c: Prop => r2.render(c)
         case c: IdentProp => r3.render(c)

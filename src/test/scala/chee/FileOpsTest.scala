@@ -1,12 +1,11 @@
 package chee
 
 import better.files.File
-import java.util.UUID
 import org.scalatest._
-import chee.crypto.{Algorithm, CheeCrypt}
+import chee.crypto.CheeCrypt
 import chee.metadata.MetadataFile
 import chee.properties._
-import chee.query.{Index, SqliteBackend}
+import chee.query.Index
 import chee.util.files._
 import FileOps.{CryptSettings, Result}
 

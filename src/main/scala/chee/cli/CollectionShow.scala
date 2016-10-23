@@ -2,7 +2,6 @@ package chee.cli
 
 import com.typesafe.config.Config
 import chee.conf._
-import chee.Collection
 import chee.properties.Patterns._
 import CollectionShow.Opts
 

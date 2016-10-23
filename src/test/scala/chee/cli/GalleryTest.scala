@@ -2,7 +2,7 @@ package chee.cli
 
 import better.files._
 import chee.it.CommandSetup.Setup
-import chee.{TestInfo, UserError}
+import chee.TestInfo
 import chee.it._
 import chee.util.files._
 import com.typesafe.scalalogging.LazyLogging
@@ -49,18 +49,18 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
 
     val dir = cwd / "gallery"
     gallery.run(setup, "--out", dir.pathAsString, "--link-original")
-    (dir / "thumbnails").list should have size (thumbSize)
-    (dir / "originals").list should have size (originalSize)
-    (dir / "images").list should have size (imageSize)
+    (dir / "thumbnails").list should have size (thumbSize.toLong)
+    (dir / "originals").list should have size (originalSize.toLong)
+    (dir / "images").list should have size (imageSize.toLong)
     (dir / "index.html").exists should be (true)
 
     val zip = cwd / "gallery.zip"
     gallery.run(setup, "--out", zip.pathAsString, "--link-original")
     zip.exists should be (true)
     val entries = zipEntries(zip)
-    entries.filter(_ startsWith "thumbnails") should have size (thumbSize)
-    entries.filter(_ startsWith "originals") should have size (originalSize)
-    entries.filter(_ startsWith "images") should have size (imageSize)
+    entries.filter(_ startsWith "thumbnails") should have size (thumbSize.toLong)
+    entries.filter(_ startsWith "originals") should have size (originalSize.toLong)
+    entries.filter(_ startsWith "images") should have size (imageSize.toLong)
     entries.filter(_ == "index.html") should have size (1)
   }
 

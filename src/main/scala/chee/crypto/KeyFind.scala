@@ -7,7 +7,7 @@ import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder
 import org.bouncycastle.openpgp.{ PGPPrivateKey, PGPPublicKey, PGPPublicKeyRing, PGPSecretKey, PGPSecretKeyRing, PGPSecretKeyRingCollection }
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
 import org.bouncycastle.openpgp.{ PGPPublicKeyRingCollection, PGPUtil }
-import scala.util.{ Success, Try }
+import scala.util.Try
 
 object KeyFind {
   import scala.collection.JavaConverters._

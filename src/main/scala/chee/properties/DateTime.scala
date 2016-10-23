@@ -53,11 +53,11 @@ case class LocalDateTime(
     case n if n < 0 => this - t.abs
     case _ => t match {
       case Years(n) => copy(year = year + n)
-      case Months(n) => fromJava(asJava.plusMonths(n))
-      case Days(n) => fromJava(asJava.plusDays(n))
-      case Hours(n) => fromJava(asJava.plusHours(n))
-      case Minutes(n) => fromJava(asJava.plusMinutes(n))
-      case Seconds(n) => fromJava(asJava.plusSeconds(n))
+      case Months(n) => fromJava(asJava.plusMonths(n.toLong))
+      case Days(n) => fromJava(asJava.plusDays(n.toLong))
+      case Hours(n) => fromJava(asJava.plusHours(n.toLong))
+      case Minutes(n) => fromJava(asJava.plusMinutes(n.toLong))
+      case Seconds(n) => fromJava(asJava.plusSeconds(n.toLong))
     }
   }
 
@@ -66,11 +66,11 @@ case class LocalDateTime(
     case n if n < 0 => this + t.abs
     case _ => t match {
       case Years(n) => copy(year = year - n)
-      case Months(n) => fromJava(asJava.minusMonths(n))
-      case Days(n) => fromJava(asJava.minusDays(n))
-      case Hours(n) => fromJava(asJava.minusHours(n))
-      case Minutes(n) => fromJava(asJava.minusMinutes(n))
-      case Seconds(n) => fromJava(asJava.minusSeconds(n))
+      case Months(n) => fromJava(asJava.minusMonths(n.toLong))
+      case Days(n) => fromJava(asJava.minusDays(n.toLong))
+      case Hours(n) => fromJava(asJava.minusHours(n.toLong))
+      case Minutes(n) => fromJava(asJava.minusMinutes(n.toLong))
+      case Seconds(n) => fromJava(asJava.minusSeconds(n.toLong))
     }
   }
 

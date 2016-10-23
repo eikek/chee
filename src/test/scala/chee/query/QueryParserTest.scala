@@ -10,7 +10,6 @@ import chee.properties.Generators._
 import ConditionFormat._
 import Condition.Render._
 import chee.util.Render.Ops
-import scala.util.Try
 
 class QueryParserTest extends FlatSpec with Matchers {
 

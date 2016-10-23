@@ -105,7 +105,7 @@ object Predicates extends LazyLogging {
       r5: Pred[Junc],
       r6: Pred[In]): Pred[Condition] =
       Pred {
-        case c@TrueCondition => r0.pred(c)
+        case c: TrueCondition.type => r0.pred(c)
         case c: Exists => r1.pred(c)
         case c: Prop => r2.pred(c)
         case c: IdentProp => r3.pred(c)

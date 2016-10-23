@@ -75,7 +75,7 @@ object state {
     def or(ps: Seq[Predicate]): Predicate =
       ps.toStream.foldRight(unit(false))(combineOr)
 
-    private def boolCombine[S](stop: Boolean, f: (Boolean, Boolean) => Boolean)
+    private def boolCombine[T](stop: Boolean, f: (Boolean, Boolean) => Boolean)
       (p1: Predicate, p2: Predicate): Predicate = State { s =>
       val (next1, b1) = p1.run(s)
       if (b1 == stop) (next1, b1)

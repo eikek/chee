@@ -19,9 +19,9 @@ class SetupTest extends FlatSpec with Matchers with CommandSetup with FindHelper
     val (stdout, Nil) = linfo.run(setup)
     stdout(0) should startWith (setup.files.pathAsString)
 
-    setup.files.list.toList should have size (TestInfo.images.size)
+    setup.files.list.toList should have size (TestInfo.images.size.toLong)
     val (out, Nil) = findLisp(setup)
-    out should have size (TestInfo.images.size)
+    out should have size (TestInfo.images.size.toLong)
   }
 
   "repoRoot" should "add repo.root property" in repoChee() { setup =>

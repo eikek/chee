@@ -76,7 +76,7 @@ object Patterns {
 
   def existsIdent(id: Ident, searchIdent: Boolean = true): PatternPred = {
     if (searchIdent) findIdent(id).rflatMap(Predicates.exists).map(_.left.flatMap(_ => Right(false)))
-    else Predicates.exists(id).map(Right(_)).map(_.left.flatMap(_ => Right(false)))
+    else Predicates.exists(id).map(Right(_))
   }
 
   def quote(quoteChar: Character, p: Pattern): Pattern = p.rmap { str =>

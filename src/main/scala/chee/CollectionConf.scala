@@ -1,6 +1,6 @@
 package chee
 
-import scala.util.{Try, Success, Failure}
+import scala.util.Try
 import com.typesafe.scalalogging.LazyLogging
 
 final class CollectionConf(config: => ConfigFile) extends LazyLogging {

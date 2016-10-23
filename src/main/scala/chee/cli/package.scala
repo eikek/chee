@@ -4,10 +4,7 @@ import better.files._
 import chee.crypto.CryptMethod
 import chee.FileOps.Result
 
-package object cli {
-
-  def userError(s: String) = chee.UserError(s)
-
+package cli {
   case class ResultCount private (counter: Map[Result, Int]) {
     def inc(r: Result): ResultCount = {
       ResultCount(counter + (r -> (get(r) + 1)))
@@ -18,6 +15,11 @@ package object cli {
   object ResultCount {
     val empty = ResultCount(Map.empty withDefaultValue 0)
   }
+}
+
+package object cli {
+
+  def userError(s: String) = chee.UserError(s)
 
   def promptPassphrase(prompt: String = "Passphrase: "): Array[Char] = {
     def equals(a1: Array[Char], a2: Array[Char]): Boolean =

@@ -10,7 +10,6 @@ import MapGet._
 import chee.query.Index
 import chee.query.Index.UpdateParam
 import com.typesafe.scalalogging.LazyLogging
-import java.nio.file.Files
 import scala.util.{ Failure, Success, Try }
 
 /** Functions to work with files and index. */

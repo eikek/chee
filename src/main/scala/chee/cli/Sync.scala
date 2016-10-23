@@ -4,10 +4,6 @@ import better.files.File
 import Sync._
 import CryptOptions.{Opts => CryptOpts}
 import chee.CheeApi._
-import chee.FileOps.Result
-import chee.Timing
-import chee.properties._
-import chee.query.Progress
 import com.typesafe.config.Config
 
 class Sync extends ScoptCommand with LockSupport with ProgressDef {

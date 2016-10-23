@@ -1,6 +1,6 @@
 package chee.properties
 
-import org.scalacheck.{Properties, Gen, Arbitrary}
+import org.scalacheck.Properties
 import org.scalacheck.Prop.forAll
 import Generators._
 

@@ -25,7 +25,7 @@ object MegaPixelConverter extends Converter[Int] {
   def parse(str: String) =
     megaPixel.parse(str).right.map(_.toInt)
 
-  override def render(p: Int) = megaPixel.render(p)
+  override def render(p: Int) = megaPixel.render(p.toLong)
 }
 
 object FileSizeConverter extends Converter[Long] {

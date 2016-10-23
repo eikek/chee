@@ -61,7 +61,7 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     files.tail.foreach(_.delete())
     val (_, Nil) = sync.run(setup, file.pathAsString)
     val (out, Nil) = findLisp(setup)
-    out should have size (files.size)
+    out should have size (files.size.toLong)
   }
 
   it should "update changed encrypted files" in bothChee() { setup => //broken

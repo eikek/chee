@@ -4,7 +4,6 @@ import chee.crypto.CheeCrypt
 import chee.util.Render
 import chee.properties._
 import Condition.Render._
-import Patterns._
 
 object SqlFormat {
 

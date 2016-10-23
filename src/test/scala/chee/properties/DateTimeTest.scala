@@ -1,6 +1,5 @@
 package chee.properties
 
-import scala.util._
 import org.scalatest._
 
 class DateTimeTest extends FlatSpec with Matchers {
