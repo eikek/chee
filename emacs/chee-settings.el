@@ -25,6 +25,15 @@
 (require 'dired)
 (require 'image-dired)
 
+(defun chee-find-repodir (dir)
+  "Search DIR upwards until a '.chee' directory is found. Return
+the resulting directory (i.e. that has '.chee' as its direct
+child)."
+  (f-traverse-upwards
+   (lambda (p)
+     (f-exists? (f-join p ".chee")))
+   (expand-file-name dir)))
+
 (defgroup chee nil
   "Interface to the chee program."
   :group 'external)
@@ -100,11 +109,11 @@ this."
   :set (lambda (optname newval)
          (if (string-match "\\([0-9]+\\)x\\([0-9]+\\)" newval)
              (progn
-               (setq chee-thumb-size newval)
-               (setq image-dired-thumb-width
-                     (string-to-number (match-string 1 newval)))
-               (setq image-dired-thumb-height
-                     (string-to-number (match-string 2 newval))))
+               (setq-default chee-thumb-size newval)
+               (setq-default image-dired-thumb-width
+                             (string-to-number (match-string 1 newval)))
+               (setq-default image-dired-thumb-height
+                             (string-to-number (match-string 2 newval))))
            (error "Wrong value for `chee-thumb-size': %s" newval)))
   :group 'chee)
 
@@ -132,6 +141,20 @@ The default is the first option."
   "The number of images to display at once in a buffer. More
   results can be viewed by navigating to the next page."
   :type 'integer
+  :group 'chee)
+
+(defcustom chee-default-repository-dir nil
+  "A directory to use as chee repository. If this is set it
+  becomes the default when searching (instead of searching
+  globally). The directory must contain a '.chee' directory which
+  is checked via `chee-find-repodir'."
+  :type 'directory
+  :set (lambda (optname newval)
+         (if newval
+             (if-let (dir (chee-find-repodir newval))
+                 (setq-default chee-default-repository-dir newval)
+               (error "Directory doesn't contain a '.chee' dir."))
+           (setq-default chee-default-repository-dir nil)))
   :group 'chee)
 
 (provide 'chee-settings)

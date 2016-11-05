@@ -90,7 +90,7 @@
   (interactive)
   (chee--query-set-arg
    (lambda (el i)
-     (let ((dir (chee--query-find-repodir
+     (let ((dir (chee-find-repodir
                  (expand-file-name
                   (helm-read-file-name "Repository: "
                                        :initial-input (or el default-directory)

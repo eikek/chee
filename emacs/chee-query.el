@@ -92,7 +92,7 @@ completion. CANDIDATES is a list of possible candidates."
   (setq font-lock-defaults '((chee-query-font-lock-keywords)))
   (setq-local comment-start "# ")
   (setq-local comment-end "")
-  (chee-query-set-args "" t nil nil 1 nil "default" nil)
+  (chee-query-set-args "" t nil nil 1 nil "default" chee-default-repository-dir)
   (goto-char (point-max)))
 
 (defun chee-query-get-buffer (&optional buffer-or-name)
@@ -194,17 +194,11 @@ concurrent dir recursive first)."
       (apply 'chee-query-set-args
              (apply 'chee-map-index args f ns)))))
 
-(defun chee--query-find-repodir (dir)
-  (f-traverse-upwards
-   (lambda (p)
-     (f-exists? (f-join p ".chee")))
-   (expand-file-name dir)))
-
 (defun chee-query-set-repodir ()
   (interactive)
   (chee--query-set-arg
    (lambda (el i)
-     (let ((dir (chee--query-find-repodir
+     (let ((dir (chee-find-repodir
                  (expand-file-name
                   (read-directory-name "Repository: " nil nil t (or el default-directory))))))
        (unless dir
