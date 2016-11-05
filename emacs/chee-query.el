@@ -36,7 +36,7 @@
     "extension" "length" "lastmodified" "added"
     "mimetype" "created" "make" "model" "width"
     "height" "orientation" "iso" "date" "id"
-    "pixel" "collection" "encrypted")
+    "pixel" "collection" "encrypted" "tag" "comment")
   "Property identifiers used for syntax highlighting and
   completion.")
 
