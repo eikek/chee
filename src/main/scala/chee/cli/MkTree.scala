@@ -107,7 +107,7 @@ class MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
   def symlink(relative: Boolean)(source: File, target: File): Unit = {
     import java.nio.file.Files
 
-    if (target.exists) {
+    if (target.exists(File.LinkOptions.noFollow)) {
       target.delete()
     }
     if (!relative) target.linkTo(source, true)

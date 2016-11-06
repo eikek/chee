@@ -52,7 +52,7 @@ class MkTreeTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     }
   }
 
-  ignore should "fix dangling links" in bothChee(addImages) { setup =>
+  it should "fix dangling links" in bothChee(addImages) { setup =>
     val img = setup.files / TestInfo.images.randomGet.name
     val target = setup.files / "new_folder"
     target.createDirectories()
@@ -67,9 +67,10 @@ class MkTreeTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
       err2 should be ('empty)
       checkDefaultPattern(dir, _.isSymbolicLink should be (true))
       val count = dir.listRecursively.foldLeft(0) {(c, f) =>
+        f should exist
         if (!f.isDirectory) c+1 else c
       }
-      count should be (setup.files.size)
+      count should be (TestInfo.images.size)
     }
   }
 
