@@ -30,7 +30,7 @@ object Main extends LazyLogging {
     View,
     new Move,
     new Remove,
-    MkTree,
+    new MkTree,
     Thumb,
     Scale,
     new ConfigCmd,

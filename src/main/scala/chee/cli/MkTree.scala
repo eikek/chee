@@ -10,7 +10,7 @@ import chee.properties.Patterns._
 import chee.query._
 import com.typesafe.config.Config
 
-object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
+class MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
   case class Opts(
     lsOpts: LsOpts = LsOpts(),
