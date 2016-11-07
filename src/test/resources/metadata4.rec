@@ -1,0 +1,7 @@
+%rec: cities
+
+Name: one
+
+%rec: population
+
+Number: 1000

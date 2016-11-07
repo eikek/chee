@@ -1,5 +1,7 @@
 package chee.properties
 
+import chee.metadata.idents
+
 object FormatPatterns {
   import Patterns._
 
@@ -69,9 +71,16 @@ object FormatPatterns {
 
   val paths = seq(lookup(Ident.path), newline)
 
+  val onelineTags = seq(
+    readable(idents.tag),
+    raw(": "),
+    readable(idents.count),
+    newline)
+
   val formats = Map(
     "oneline" -> oneline,
     "oneline-no-location" -> onelineNoLocation,
+    "oneline-tags" -> onelineTags,
     "detail" -> fullDetail,
     "detail-no-virtual" -> detailNoVirtual,
     "lisp" -> lisp,

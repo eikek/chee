@@ -116,3 +116,25 @@ object MapParser {
       case id => id -> fs.map(_.value).mkString("\n")
     }
 }
+
+final class TagParser extends RecParser(Descriptor.Empty, TagParser.tagFunction) {
+
+  lazy val tags: P[TagCloud] = allRecords.map(_.foldLeft(TagCloud.empty)(_ ++ _))
+
+  def parse(str: String) = tags.parseAll(str)
+  def parseFile(f: File) = parse(f.contentAsString)
+}
+
+object TagParser {
+
+  val tagFunction: Entry => Option[TagCloud] = {
+    case Record(els, _, _) =>
+      Some(els.foldLeft(TagCloud.empty)({
+        case (cloud, Field(name, value, _)) if name equalsIgnoreCase "Tag" =>
+          cloud + (Tag.validated(value) -> 1)
+        case (cloud, _) => cloud
+      }))
+    case _ =>
+      None
+  }
+}

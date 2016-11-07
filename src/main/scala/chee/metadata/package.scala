@@ -19,9 +19,38 @@ package metadata {
     }
   }
 
+  case class TagCloud(data: Map[Tag, Int]) {
+    lazy val tags = data.keySet.toList.sortBy(_.name)
+    def count(t: Tag): Int = data.get(t) getOrElse 0
+    private val update: (Map[Tag, Int], (Tag, Int)) => Map[Tag, Int] = {
+      case (m, (t, n)) => m.updated(t, m.get(t).getOrElse(0) + n)
+    }
+    def +(t: (Tag, Int)): TagCloud =
+      TagCloud(update(data, t))
+
+    def -(t: (Tag, Int)): TagCloud = {
+      val n = count(t._1) - t._2
+      if (n <= 0) TagCloud(data - t._1)
+      else TagCloud(data.updated(t._1, n))
+    }
+    def ++(other: TagCloud): TagCloud = {
+      TagCloud(other.data.foldLeft(data)(update))
+    }
+    def toMaps: List[LazyMap] =
+      tags.map(t => LazyMap(
+        idents.tag -> t.name,
+        idents.count -> count(t).toString
+      ))
+    def isEmpty = data.isEmpty
+  }
+  object TagCloud {
+    val empty = TagCloud(Map.empty)
+  }
+
   object idents {
     val tag: Ident = 'tag
     val comment: Ident = 'comment
+    val count: Ident = 'count
 
     val all = List(tag, comment)
   }

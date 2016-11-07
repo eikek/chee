@@ -100,3 +100,18 @@ tag:                 |car|bike|
 The query syntax is not different, but only applicable to the three
 mentioned properties. The default output prints a list of _rec_
 records.
+
+
+==== tags
+
+Prints all tags in use.
+
+.Usage
+----------------------------------------------------------------------
+<usage_meta_tags>
+----------------------------------------------------------------------
+
+Prints a “tag cloud“, all tags that are in use together with its count.
+
+A pattern can be used to format the output. The only properties are
+`tag` and `count`.

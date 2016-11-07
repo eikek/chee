@@ -37,6 +37,9 @@ trait MetadataFile {
 
   /** Delete all records matching the checksum of the given data. */
   def delete(data: Traversable[LazyMap]): MetadataFile
+
+  /** Get all used tag names */
+  def listTags: TagCloud
 }
 
 object MetadataFile {
@@ -44,6 +47,7 @@ object MetadataFile {
     def find(c: Condition): Traversable[LazyMap] = Seq.empty
     def write(data: Traversable[LazyMap]): MetadataFile = this
     def delete(data: Traversable[LazyMap]): MetadataFile = this
+    def listTags: TagCloud = TagCloud.empty
   }
 
   def apply(f: File): MetadataFile = new Impl(f)
@@ -78,6 +82,7 @@ object MetadataFile {
   private class Impl(f: File) extends MetadataFile with LazyLogging {
     val parser = new MapParser()
     val dbParser = new DatabaseParser()
+    val tagParser = new TagParser
     // read the file once, subsequent finds can reuse the result
     lazy val results = parse(parser.parseFile).getOrElse(Seq.empty)
 
@@ -125,6 +130,11 @@ object MetadataFile {
       val newDb = db.filterId(not(ids))
       newDb.render ==>>: f
       new Impl(f)
+    }
+
+    lazy val listTags: TagCloud = {
+      logger.trace("List tag names of metadata file")
+      parse(tagParser.parseFile) getOrElse TagCloud.empty
     }
   }
 }
