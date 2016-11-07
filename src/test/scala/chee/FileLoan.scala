@@ -6,7 +6,7 @@ import chee.crypto._
 import chee.query.{Index, SqliteBackend}
 import chee.util.files._
 import org.scalacheck.Gen
-import org.scalatest.FlatSpec
+import org.scalatest._
 
 trait FileLoan {
   self: FlatSpec =>

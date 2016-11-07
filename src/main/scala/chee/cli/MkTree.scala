@@ -10,7 +10,7 @@ import chee.properties.Patterns._
 import chee.query._
 import com.typesafe.config.Config
 
-object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
+class MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
 
   case class Opts(
     lsOpts: LsOpts = LsOpts(),
@@ -107,7 +107,7 @@ object MkTree extends ScoptCommand with AbstractLs with TransparentDecrypt {
   def symlink(relative: Boolean)(source: File, target: File): Unit = {
     import java.nio.file.Files
 
-    if (target.exists) {
+    if (target.exists(File.LinkOptions.noFollow)) {
       target.delete()
     }
     if (!relative) target.linkTo(source, true)
