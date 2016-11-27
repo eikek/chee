@@ -2,7 +2,18 @@ lazy val commonSettings = Seq(
   name := "chee",
   homepage := Some(url("https://github.com/eikek/chee")),
   scalaVersion := "2.11.8",
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
+  scalacOptions ++= Seq(
+    "-encoding", "UTF-8",
+    "-Xfatal-warnings", // fail when there are warnings
+    "-deprecation",
+    "-feature",
+    "-unchecked",
+    "-Xlint",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import"
+  )
 )
 
 lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
@@ -20,12 +31,12 @@ lazy val dependencies = Seq(
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
+  "ch.qos.logback"              % "logback-classic"          % "1.1.7",
   "com.github.scopt"           %% "scopt"                    % "3.5.0",
   "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.7" excludeAll(
     scalaLib,
     slf4jApi // use the one provided by logback
    ),
-  "ch.qos.logback"              % "logback-classic"          % "1.1.7",
   "org.xerial"                  % "sqlite-jdbc"              % "3.14.2.1",
   "com.typesafe"                % "config"                   % "1.3.1",
   "org.bouncycastle"            % "bcpg-jdk15on"             % "1.55",
@@ -126,16 +137,3 @@ lazy val chee = (project in file("."))
   .settings(commonSettings: _*)
   .settings(testSettings: _*)
   .settings(buildSettings: _*)
-
-scalacOptions ++= Seq(
-  "-encoding", "UTF-8",
-  "-Xfatal-warnings", // fail when there are warnings
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-Xlint",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import"
-)
