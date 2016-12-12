@@ -25,7 +25,7 @@ object Main extends LazyLogging {
     new Import,
     new Version,
     new Find,
-    HubCommand("meta", List(new MetaFind, new MetaAttach)),
+    HubCommand("meta", List(new MetaFind, new MetaAttach, new MetaTags)),
     HubCommand("collection", List(new CollectionEdit, new CollectionShow, new CollectionRemove)),
     View,
     new Move,

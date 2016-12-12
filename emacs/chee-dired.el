@@ -27,6 +27,7 @@
 (require 'dash)
 (require 'chee-settings)
 (require 'chee-proc)
+(require 'chee-utils)
 
 (defvar chee-dired-buffer-name "*chee-dired*")
 
@@ -255,13 +256,22 @@ specifiers with `image-dired-display-properties-format':
 (defun chee-dired-add-tags (tags)
   "Add new TAGS to the marked files. TAGS is a comma-separated
 list of tag names."
-  (interactive "MAdd tags: ")
+  (interactive (list (completing-read "Tag: " (chee-utils-all-tags))))
   (chee-dired--meta-attach "--add-tags" tags))
+
+(defun chee-dired-tags-of-marked-files ()
+  "Find the currently marked files with chee and extract all tags."
+  (let* ((files (dired-map-over-marks (dired-get-filename) nil))
+         (query (concat "path~\"" (mapconcat 'identity files ";") "\"")))
+    (delete-dups
+     (-mapcat (lambda (pl)
+                (chee-utils--split-tags (plist-get pl :tag)))
+              (chee-proc-sync-sexp (list "find" "-p" "lisp" query))))))
 
 (defun chee-dired-remove-tags (tags)
   "Remove TAGS from existing tag list of marked files. TAGS is a
 comma-separated list of tag names."
-  (interactive "MRemove tags: ")
+  (interactive (list (completing-read "Remove Tag: " (chee-dired-tags-of-marked-files))))
   (chee-dired--meta-attach "--remove-tags" tags))
 
 (defun chee-dired-set-tags (tags)

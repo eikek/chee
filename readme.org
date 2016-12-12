@@ -108,6 +108,9 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
 
 * Changes
 ** 0.3.0 (development)
+
+- add command ~meta tags~ to list all tags in use
+
 ** 0.2.0
 
 - Encrypt and decrypt files using OpenPGP.

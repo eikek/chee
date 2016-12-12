@@ -39,6 +39,16 @@
        item))
    list))
 
+(defun chee-utils-all-tags ()
+  "Get all tags as list for completion"
+  (-map (lambda (pl) (plist-get pl :tag))
+        (chee-proc-sync-sexp '("meta" "tags" "-p" "lisp"))))
+
+(defun chee-utils--split-tags (tagstr)
+  "Split TAGSTR (e.g. |x|y|z|) into a list of tags, e.g. `(x y
+  z)'."
+  (if tagstr
+      (s-split "|" tagstr t)))
 
 (provide 'chee-utils)
 ;;; chee-utils.el ends here

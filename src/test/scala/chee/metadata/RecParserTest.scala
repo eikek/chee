@@ -15,6 +15,7 @@ class RecParserTest extends FlatSpec with Matchers {
 
   val dp = new DatabaseParser()
   val mp = new MapParser()
+  val tp = new TagParser
 
   def checkMetadataFile(db: Database): Unit = {
     val Some(r1) = db.records.find(_.get("Checksum").exists(_.value == "f3f"))
@@ -175,6 +176,30 @@ class RecParserTest extends FlatSpec with Matchers {
     str should include ("quam, a auctor enim")
     str should include ("eget, sodales eget")
     str should include ("sem. Aenean est diam")
+  }
+
+  "tagParser" should "find all tag names" in {
+    val tags = TagCloud(Map(
+      Tag("summer") -> 1,
+      Tag("holidays") -> 1,
+      Tag("spring") -> 1,
+      Tag("car") -> 1,
+      Tag("swimming") -> 1))
+    val tags456 = TagCloud(Map(
+      Tag("summer") -> 456,
+      Tag("holidays") -> 456,
+      Tag("spring") -> 456,
+      Tag("car") -> 456,
+      Tag("swimming") -> 456))
+
+    val Right(tags1) = tp.parse(metadataFile(1))
+    tags1 should be (tags)
+    val Right(tags2) = tp.parse(metadataFile(2))
+    tags2 should be (tags)
+    val Right(tags3) = tp.parse(metadataFile(3))
+    tags3 should be (tags456)
+    val Right(tags4) = tp.parse(metadataFile(4))
+    tags4 should be ('empty)
   }
 }
 
