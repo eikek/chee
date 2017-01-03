@@ -1,5 +1,5 @@
 Chee- Photo Organizer (<version>)
-======================================
+=============================
 Eike Kettner
 v<version> (build <commit> at <buildtime>)
 :toc: true
