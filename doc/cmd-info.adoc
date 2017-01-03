@@ -3,7 +3,7 @@
 Lists all registered locations and the number of files it contains.
 
 ----------------------------------------------------------------------
-$ chee location info
+$ chee info
 /mnt/nas/fotos/one: 587
 /mnt/nas/fotos/two: 1254
 ----------------------------------------------------------------------
