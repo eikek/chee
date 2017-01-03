@@ -1,5 +1,9 @@
 #!<shebang>
 
-<if(cdtohere)>cd $(dirname $(readlink -e $0))<endif>
-
+<if(jarfile)>
+libdir=$(dirname $(readlink -e $0))
+<javabin> -jar <options> $CHEE_OPTS "$libdir/<jarfile>" "$@"
+<endif>
+<if(classpath)>
 <javabin> -cp <classpath> <options> $CHEE_OPTS chee.cli.Main "$@"
+<endif>

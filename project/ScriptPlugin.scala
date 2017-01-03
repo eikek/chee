@@ -30,14 +30,14 @@ object ScriptPlugin extends AutoPlugin {
     `gen-zip` in Compile := genZipImpl.value
   )
 
-  def makeScript(sourceDir: File, classpath: String, shebang: String, java: String, javaOpts: String, cdtohere: Boolean = false): String = {
+  def makeScript(sourceDir: File, classpath: Option[String], jarfile: Option[String], shebang: String, java: String, javaOpts: String): String = {
     val template = Template(sourceDir / "shell" / "chee")
     template.render(Map(
-      "cdtohere" -> cdtohere,
       "shebang" -> shebang,
       "options" -> javaOpts,
       "javabin" -> java,
-      "classpath" -> classpath
+      "classpath" -> classpath.orNull,
+      "jarfile" -> jarfile.orNull
     ))
   }
 
@@ -55,7 +55,8 @@ object ScriptPlugin extends AutoPlugin {
     val out = target.value / "bin" / "chee"
     val body = makeScript(
       sourceDirectory.value,
-      Attributed.data((fullClasspath in Runtime).value).mkString(java.io.File.pathSeparator),
+      Some(Attributed.data((fullClasspath in Runtime).value).mkString(java.io.File.pathSeparator)),
+      None,
       (shebang in script).value,
       (javaBin in script).value,
       (javaOptions in script).value.mkString(" "))
@@ -77,11 +78,11 @@ object ScriptPlugin extends AutoPlugin {
     }
     val body = makeScript(
       sourceDirectory.value,
-      libs.mkString(java.io.File.pathSeparator),
+      None,
+      Some(("lib" + java.io.File.separator + (packageBin in Compile).value.getName)),
       (shebang in script).value,
       (javaBin in script).value,
-      (javaOptions in script).value.mkString(" "),
-      true)
+      (javaOptions in script).value.mkString(" "))
 
     IO.write(zipDir / "chee", body)
     setExecutable(zipDir / "chee")

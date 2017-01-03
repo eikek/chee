@@ -110,6 +110,7 @@ Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]
 ** 0.3.0 (development)
 
 - add command ~meta tags~ to list all tags in use
+- fixes bug (#4) in `chee` shell script for repository mode
 
 ** 0.2.0
 
