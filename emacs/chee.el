@@ -2,7 +2,7 @@
 
 ;; Copyright © 2016- Eike Kettner
 
-;; Version: 0.2.0
+;; Version: 0.2.1-SNAPSHOT
 ;; URL: https://github.com/eikek/chee/tree/master/emacs
 ;; Package-Requires: ((dash "2.12.1") (s "1.10.0") (f "0.18.2"))
 
