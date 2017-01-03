@@ -106,7 +106,11 @@ Click [[https://eknet.org/main/projects/chee/manual-0.2.0.html][here]] to read t
 Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]].
 
 * Changes
-** 0.2.0 (development)
+** 0.2.1
+
+- fixes bug (#4) in `chee` shell script for repository mode
+
+** 0.2.0
 
 - Encrypt and decrypt files using OpenPGP.
 - New ~clean~ command to cleanup temporary data.
