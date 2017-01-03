@@ -124,7 +124,13 @@ lazy val buildSettings = Seq(
   resourceGenerators in Compile += (listDocResources in CheeDoc).taskValue,
   resourceGenerators in Compile += (fetchResources in Compile).taskValue,
   sourceGenerators in Compile += (genDocInfo in CheeDoc).taskValue,
-  sourceGenerators in Compile += (resourceInfo in Compile).taskValue.map(f => Seq(f))
+  sourceGenerators in Compile += (resourceInfo in Compile).taskValue.map(f => Seq(f)),
+  packageOptions in (Compile, packageBin) += Package.ManifestAttributes(
+    "Class-Path" -> Attributed.data((fullClasspath in Runtime).value).
+      withFilter(_.isFile).
+      map(_.getName).
+      mkString(" ")
+  )
 )
 
 addCommandAlias("run-all-tests", ";genDocResources;test;itTest:test")
