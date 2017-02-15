@@ -20,10 +20,10 @@ lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "3.0.0"    % "test",
-  "org.scalacheck"             %% "scalacheck"               % "1.13.2"   % "test",
-  "com.lihaoyi"                %% "fastparse"                % "0.4.1",
-  "com.github.pathikrit"       %% "better-files"             % "2.16.0" excludeAll(
+  "org.scalatest"              %% "scalatest"                % "3.0.1"    % "test",
+  "org.scalacheck"             %% "scalacheck"               % "1.13.4"   % "test",
+  "com.lihaoyi"                %% "fastparse"                % "0.4.2",
+  "com.github.pathikrit"       %% "better-files"             % "2.17.1" excludeAll(
     scalaLib
   ),
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.5.0" excludeAll(
@@ -31,15 +31,15 @@ lazy val dependencies = Seq(
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
-  "ch.qos.logback"              % "logback-classic"          % "1.1.7",
+  "ch.qos.logback"              % "logback-classic"          % "1.2.1",
   "com.github.scopt"           %% "scopt"                    % "3.5.0",
-  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.7" excludeAll(
+  "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.8" excludeAll(
     scalaLib,
     slf4jApi // use the one provided by logback
    ),
-  "org.xerial"                  % "sqlite-jdbc"              % "3.14.2.1",
+  "org.xerial"                  % "sqlite-jdbc"              % "3.16.1",
   "com.typesafe"                % "config"                   % "1.3.1",
-  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.55",
+  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.56",
   "eu.medsea.mimeutil"          % "mime-util"                % "2.1.3" excludeAll(
     ExclusionRule("log4j", "log4j"),
     ExclusionRule("org.slf4j", "slf4j-log4j12")
