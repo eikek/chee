@@ -44,7 +44,8 @@ class PatternParserTest extends FlatSpec with Matchers {
     (Ident.iso -> "200") +
     (Ident.width -> "1000") +
     (Ident.height -> "400") +
-    (Ident.length -> "21")
+    (Ident.length -> "21") +
+    (Ident("origin-length") -> "21")
 
     def parse(s: String) = parseVal(lookupValue, s).result(map)
 
@@ -52,6 +53,7 @@ class PatternParserTest extends FlatSpec with Matchers {
     parse("~#height~f%05d") should be ("00400")
     parse("~#width~f%05d") should be ("01000")
     parse("~#length~f%05d") should be ("00021")
+    parse("~#origin-length") should be ("21")
     parse("~#created~fyyyy") should be ("2015")
     parse("~#added~fyyyy") should be (now.format("yyyy"))
     parse("~#lastmodified~fyyyy") should be (now.format("yyyy"))
