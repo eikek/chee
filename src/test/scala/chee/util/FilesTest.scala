@@ -20,10 +20,17 @@ class FilesTest extends FlatSpec with Matchers with FileLoan {
     f3.name should be (f.name + "-1.txt")
   }
 
-  it should "count up if number exists" in withExistingFile { f =>
+  it should "count up if number exists" in newDirectory { dir =>
+    val f = (dir/"myfile").createIfNotExists()
     val f2 = f.makeNonExisting().get.createIfNotExists()
     val f3 = f2.makeNonExisting().get
     f3.name should be (f.name + "-2")
+  }
+
+  it should "append new number if current number is too long" in newDirectory { dir =>
+    val f = (dir/"file-214748364799").createIfNotExists()
+    val f2 = f.makeNonExisting().get
+    f2.name should be (f.name+"-1")
   }
 
   it should "stop for too many tries" in withExistingFile { f =>
