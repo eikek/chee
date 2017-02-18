@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   name := "chee",
   homepage := Some(url("https://github.com/eikek/chee")),
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.1",
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
     "-Xfatal-warnings", // fail when there are warnings

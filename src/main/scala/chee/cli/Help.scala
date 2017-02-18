@@ -65,6 +65,9 @@ class Help extends ScoptCommand {
       outln(s"Opening page $name ...")
       val cand = if (prefix == "cmd") commands else topics
       CheeDoc.openPage(cfg)(prefixFind(prefix+"-"+name, cand)).get
+
+    case opts =>
+      chee.UserError(s"Unknown help options: $opts")
   }
 }
 
