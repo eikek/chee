@@ -83,7 +83,7 @@ object files {
   }
 
   implicit class FileExt(f: File) {
-    private val NonExistingRegex = """(.*?-)([0-9]+)""".r
+    private val NonExistingRegex = """(.*?-)([0-9]{1,9})""".r
 
     /**
       * Split the name of the file in basename and extension.
