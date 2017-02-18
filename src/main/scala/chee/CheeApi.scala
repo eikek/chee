@@ -190,7 +190,9 @@ private class CheeApiImpl(cfg: Config) extends CheeApi with LazyLogging {
     }
 
   def updateLocation(paths: Seq[File]): Try[Int] = {
-    val data = paths.map(p => LazyMap(Ident.location -> p.pathAsString))
+    val data = paths.
+      map(f => if (!f.isDirectory) f.parent else f).
+      map(p => LazyMap(Ident.location -> p.pathAsString))
     val param = Index.UpdateParam(
       columns = MapGet.unit(Seq(Ident.location)),
       where = MapGet.valueForce(Ident.location).map(p => Prop(Comp.Like, Ident.location -> s"${p}*")))

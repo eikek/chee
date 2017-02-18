@@ -72,12 +72,33 @@ class AddTest extends FlatSpec with Matchers with CommandSetup with FindHelper w
   it should "add symlinked directories" in bothChee() { setup =>
     val repo = (setup.files/"repo").createDirectories()
     TestInfo.images(0).copyTo(repo/TestInfo.images(0).name)
+    TestInfo.images(1).copyTo(repo/TestInfo.images(1).name)
     val link = setup.files/"link-to-files"
     link.symbolicLinkTo(repo)
 
     val (out, Nil) = addCmd.run(setup, "-r", link.pathAsString)
     out(0) should include ("link-to-files")
-    out.size should be (2)
-    findLisp(setup)._1.size should be (1)
+    out.size should be (3)
+    findLisp(setup)._1.size should be (2)
+
+    val (out1, Nil) = find.run(setup, "-a", "-p", "~#location~%")
+    out1(0) should endWith ("link-to-files")
+    out1.toSet should have size (1)
+  }
+
+  it should "add subdirectories behind a symlink" in bothChee() { setup =>
+    val repo = (setup.files/"repo").createDirectories()
+    (repo/"dir1").createDirectories()
+    TestInfo.images(0).copyTo(repo/TestInfo.images(0).name)
+    TestInfo.images(1).copyTo(repo/"dir1"/TestInfo.images(1).name)
+    val link = setup.files/"link-to-files"
+    link.symbolicLinkTo(repo)
+
+    val (out, Nil) = addCmd.run(setup, "-r", (link/TestInfo.images(0).name).pathAsString, (link/"dir1").pathAsString)
+    out.size should be (3)
+
+    val (out1, Nil) = find.run(setup, "-a", "-p", "~#location~%")
+    out1(0) should endWith ("link-to-files")
+    out1.toSet should have size (1)
   }
 }
