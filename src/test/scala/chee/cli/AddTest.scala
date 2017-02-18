@@ -68,4 +68,16 @@ class AddTest extends FlatSpec with Matchers with CommandSetup with FindHelper w
     out2.mkString("\n") should include ("Skipped")
     list should be (findLisp(setup)._1)
   }
+
+  it should "add symlinked directories" in bothChee() { setup =>
+    val repo = (setup.files/"repo").createDirectories()
+    TestInfo.images(0).copyTo(repo/TestInfo.images(0).name)
+    val link = setup.files/"link-to-files"
+    link.symbolicLinkTo(repo)
+
+    val (out, Nil) = addCmd.run(setup, "-r", link.pathAsString)
+    out(0) should include ("link-to-files")
+    out.size should be (2)
+    findLisp(setup)._1.size should be (1)
+  }
 }
