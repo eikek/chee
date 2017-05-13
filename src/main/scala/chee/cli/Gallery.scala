@@ -16,7 +16,8 @@ import chee.properties.{FormatPatterns, Ident, LazyMap, MapGet, Property, Virtua
 import chee.properties.MapGet._
 import chee.resources.ResourceInfo
 import chee.util.files._
-import chee.util.mustache._
+import yamusca.imports._
+import yamusca.context.{MapValue, Find => ContextFind}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -54,9 +55,9 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
     } textW("Provide links to the original picture. This requires to include all original files into the gallery folder.")
 
     opt[File]("template") valueName("<file>") action { (f, c) =>
-      Template.parse(f.contentAsString) match {
+      mustache.parse(f.contentAsString) match {
         case Right(t) => c.copy(template = Some(t))
-        case Left(msg) => userError(msg)
+        case Left(msg) => userError(msg.toString)
       }
     } textW("A custom mustache template for creating the gallery page.")
 
@@ -152,13 +153,13 @@ class Gallery extends ScoptCommand with AbstractLs with TransparentDecrypt {
       outln("Create thumbnails and scale images…")
       val files = findFiles(cfg, opts, out.left.toOption, entries)
       val context = assets :: Context(
-        "files" -> ListValue(files.map(makeContext.result)),
+        "files" -> Value.fromSeq(files.map(makeContext.result)),
         "title" -> Value.of(opts.title),
         "link-original" -> Value.of(opts.linkOriginal),
         "projectInfo" -> Value.map(
-          "version" -> CheeDocInfo.version,
-          "name" -> CheeDocInfo.projectName,
-          "homepage" -> CheeDocInfo.homepage
+          "version" -> Value.of(CheeDocInfo.version),
+          "name" -> Value.of(CheeDocInfo.projectName),
+          "homepage" -> Value.of(CheeDocInfo.homepage)
         )
       )
 
@@ -220,7 +221,7 @@ object Gallery {
             (root relativize target).toString
           })
       }
-      kind.name -> ListValue(files.map(SimpleValue.apply))
+      kind.name -> Value.fromSeq(files.map(Value.of))
     }
     Context(files.get _)
   }
@@ -229,16 +230,16 @@ object Gallery {
     val dir = opts.out.filter(_.getExtension != Some("zip")) getOrElse (cfg.getFile("chee.tmpdir") / "gallery")
     dir.createDirectories()
     val template = opts.template.getOrElse {
-      Template.parse(ResourceInfo.galleryTemplate.contentAsString) match {
+      mustache.parse(ResourceInfo.galleryTemplate.contentAsString) match {
         case Right(t) => t
-        case Left(m) => sys.error(m)
+        case Left(m) => sys.error(m.toString)
       }
     }
     val target = dir / "index.html"
     if (target.exists) {
       target.delete()
     }
-    template.renderTo(context, s => target append s)
+    yamusca.expand.renderTo(template)(context, s => target append s)
     target
   }
 
@@ -304,18 +305,18 @@ object Gallery {
     def find(key: String): (Context, Option[Value]) = {
       key match {
         case "_format" =>
-          def format(pattern: String): ContextGet[String] =
+          def format(pattern: String): ContextFind[String] =
             FormatPatterns.parse(pattern) match {
               case Right(p) =>
                 val (next, v) = p.run(lm)
-                ContextGet.setHead(LazyMapContext(next)).map(_ =>
+                setHead(LazyMapContext(next)).map(_ =>
                   v.fold({ msg =>
                     logger.warn(s"Error evaluating pattern '$pattern': $msg")
                     ""
                   }, identity))
               case Left(msg) =>
                 logger.warn(s"Invalid format pattern '$pattern': $msg")
-                ContextGet.unit("")
+                ContextFind.unit("")
             }
 
           (this, Some(Value.lambda(s => format(s.inner.foldLeft("")(_ + _.asString)))))
@@ -323,9 +324,20 @@ object Gallery {
           if (!Ident.validate(key)) (this, None)
           else {
             val (next, v) = lm(key)
-            (new LazyMapContext(next), v.map(_.value))
+            (new LazyMapContext(next), v.map(_.value).map(Value.of))
           }
       }
+    }
+  }
+
+  def setHead(c: Context): ContextFind[Unit] =
+    ContextFind.modify { ctx => c :: ctx.tail }
+
+  implicit final class ElementAsString(val el: yamusca.data.Element) extends AnyVal {
+    def asString = el match {
+      case v: Literal => v.asString
+      case v: Variable => v.asString
+      case v: Section => v.asString
     }
   }
 }
