@@ -9,6 +9,7 @@ import Gallery._
 import LsOptions.{Opts => LsOpts}
 import ProcessingOptions.{Opts => ProcOpts}
 import better.files.File
+import better.files.Dsl._
 import chee.{Size, OS}
 import chee.conf._
 import chee.doc.CheeDocInfo

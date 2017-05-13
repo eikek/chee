@@ -5,11 +5,11 @@ import eu.medsea.mimeutil.detector.{ExtensionMimeDetector, MagicMimeMimeDetector
 import java.io.{InputStream, OutputStream}
 import java.net.{URL, URLConnection}
 import java.nio.file.{Files, Paths}
+import java.nio.charset.Charset
 import javax.activation.{MimeType, MimetypesFileTypeMap}
 import java.util.zip.{ZipOutputStream, ZipEntry}
 import better.files._
 import better.files.File.LinkOptions
-import scala.io.Codec
 import scala.util.Try
 
 object files {
@@ -182,12 +182,14 @@ object files {
     /** Writes text by first writing it to a temporary file and then
       * moving it to current file */
     def writeMove(text: String, parent: Option[File] = None)
-      (implicit openOptions: File.OpenOptions = File.OpenOptions.default, codec: Codec) = {
+      (implicit openOptions: File.OpenOptions = File.OpenOptions.default, codec: Charset) = {
       val temp = File.newTemporaryFile("chee", "tmp", parent)
-      temp < text
+      temp.write(text)
+//      temp < text
       temp.moveTo(f, overwrite = true)
     }
-    def ==>>:(text: String) = writeMove(text)
+
+    def ==>>:(text: String) = writeMove(text)(File.OpenOptions.default, File.defaultCharset)
 
     /** Append a number to the file until it does not exist. */
     def makeNonExisting(max: Int = 900, exists: File => Boolean = _.exists): Option[File] = {

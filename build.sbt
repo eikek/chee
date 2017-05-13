@@ -5,7 +5,7 @@ lazy val dependencies = Seq(
   "org.scalatest"              %% "scalatest"                % "3.0.3"    % "test",
   "org.scalacheck"             %% "scalacheck"               % "1.13.5"   % "test",
   "com.lihaoyi"                %% "fastparse"                % "0.4.2",
-  "com.github.pathikrit"       %% "better-files"             % "2.17.1" excludeAll(
+  "com.github.pathikrit"       %% "better-files"             % "3.0.0" excludeAll(
     scalaLib
   ),
   "com.typesafe.scala-logging" %% "scala-logging"            % "3.5.0" excludeAll(

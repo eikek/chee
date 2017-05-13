@@ -2,6 +2,7 @@ package chee.cli
 
 import com.typesafe.config.Config
 import better.files._
+import better.files.Dsl._
 import chee.OS
 import chee.conf._
 import chee.Collection

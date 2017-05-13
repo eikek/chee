@@ -46,7 +46,7 @@ class FileProcessorTest extends FlatSpec with Matchers with chee.FileLoan {
     Algorithm.all.foreach { case (name, algo) =>
       info(s"Algorithm: $name")
       withNewFile { f =>
-        f `<<` "hello world"
+        f write "hello world"
         val checksum = ChecksumExtract.checksum(f)
         withNewFile { out =>
           FileProcessor.encryptSymmetric(f, out, password, algo)
@@ -74,7 +74,7 @@ class FileProcessorTest extends FlatSpec with Matchers with chee.FileLoan {
 
   it should "decrypt to same checksum" in {
     withNewFile { f =>
-      f `<<` "hello world"
+      f write "hello world"
       val checksum = ChecksumExtract.checksum(f)
       withNewFile { out =>
         FileProcessor.encryptPubkey(f, KeyFind.findPublicKey(pubkeysPlain, "test@chee"), out)

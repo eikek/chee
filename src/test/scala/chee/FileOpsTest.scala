@@ -1,6 +1,7 @@
 package chee
 
 import better.files.File
+import better.files.Dsl._
 import org.scalatest._
 import chee.crypto.CheeCrypt
 import chee.metadata.MetadataFile

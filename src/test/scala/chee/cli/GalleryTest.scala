@@ -79,7 +79,7 @@ class GalleryTest extends FlatSpec with Matchers with CommandSetup with FindHelp
   it should "render format patterns" in bothChee(addImages) { setup =>
     val cwd = setup.dirs.userDir.get
     val template = cwd / "template.mustache"
-    template `<<` "{{#files}}{{#_format}}~:length{{/_format}} {{/files}}"
+    template.write("{{#files}}{{#_format}}~:length{{/_format}} {{/files}}")
     gallery.run(setup, "--template", template.pathAsString, "--out", (cwd / "gallery").pathAsString)
     (cwd / "gallery" / "index.html").contentAsString.trim should be ("6.6kb 47.6kb 19.4kb 303.8kb")
   }
