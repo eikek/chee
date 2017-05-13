@@ -44,7 +44,6 @@ trait AbstractLs {
     getQueryCondition(cfg, opts) match {
       case Right(cond) =>
         val stream = directoryFind(cond, cfg, opts) getOrElse indexFind(cond, cfg, opts)
-        val x: Int => Stream[LazyMap] = stream.drop _
         sliced(opts.first, opts.skip)(stream).toStream
       case Left(msg) =>
         userError(msg)

@@ -1,27 +1,9 @@
-lazy val commonSettings = Seq(
-  name := "chee",
-  homepage := Some(url("https://github.com/eikek/chee")),
-  scalaVersion := "2.12.2",
-  scalacOptions ++= Seq(
-    "-encoding", "UTF-8",
-    "-Xfatal-warnings", // fail when there are warnings
-    "-deprecation",
-    "-feature",
-    "-unchecked",
-    "-Xlint",
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ywarn-unused-import"
-  )
-)
-
 lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "3.0.1"    % "test",
-  "org.scalacheck"             %% "scalacheck"               % "1.13.4"   % "test",
+  "org.scalatest"              %% "scalatest"                % "3.0.3"    % "test",
+  "org.scalacheck"             %% "scalacheck"               % "1.13.5"   % "test",
   "com.lihaoyi"                %% "fastparse"                % "0.4.2",
   "com.github.pathikrit"       %% "better-files"             % "2.17.1" excludeAll(
     scalaLib
@@ -31,7 +13,7 @@ lazy val dependencies = Seq(
     scalaLib,
     slf4jApi // use the one provided by logback
   ),
-  "ch.qos.logback"              % "logback-classic"          % "1.2.1",
+  "ch.qos.logback"              % "logback-classic"          % "1.2.3",
   "com.github.scopt"           %% "scopt"                    % "3.5.0",
   "com.sksamuel.scrimage"      %% "scrimage-core"            % "2.1.8" excludeAll(
     scalaLib,
@@ -82,7 +64,9 @@ lazy val testSettings = Defaults.itSettings ++ Seq(
   ),
   testOptions in Test := Seq(Tests.Filter(unitFilter)),
   testOptions in ItTest := Seq(Tests.Filter(itFilter)),
-  sourceGenerators in Test += writeTestInfo.taskValue
+  sourceGenerators in Test += writeTestInfo.taskValue,
+  scalacOptions in Test := (scalacOptions in (Compile, console)).value,
+  scalacOptions in ItTest := (scalacOptions in (Compile, console)).value
 )
 
 lazy val bootstrapVersion = "3.3.7"
@@ -138,9 +122,26 @@ addCommandAlias("run-all-tests", ";genDocResources;test;itTest:test")
 addCommandAlias("make-chee", ";genDocResources;gen-chee")
 addCommandAlias("make-zip", ";run-all-tests;gen-zip;gen-chee")
 
-lazy val chee = (project in file("."))
-  .configs(ItTest, CheeDoc, script)
-  .settings(inConfig(ItTest)(Defaults.testTasks): _*)
-  .settings(commonSettings: _*)
-  .settings(testSettings: _*)
-  .settings(buildSettings: _*)
+lazy val chee = (project in file(".")).
+  configs(ItTest, CheeDoc, script).
+  settings(inConfig(ItTest)(Defaults.testTasks): _*).
+  settings(
+    name := "chee",
+    homepage := Some(url("https://github.com/eikek/chee")),
+    scalaVersion := "2.12.2",
+    scalacOptions ++= Seq(
+      "-encoding", "UTF-8",
+      "-Xfatal-warnings", // fail when there are warnings
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Xlint",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused-import"
+    ),
+    scalacOptions in (Compile, console) ~= (_.filterNot(Set("-Xfatal-warnings", "-Ywarn-unused-import").contains))
+  ).
+  settings(testSettings: _*).
+  settings(buildSettings: _*)
