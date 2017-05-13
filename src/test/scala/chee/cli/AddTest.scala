@@ -40,7 +40,7 @@ class AddTest extends FlatSpec with Matchers with CommandSetup with FindHelper w
     encryptFile(file, "test".toCharArray) { enc =>
       file.delete()
       withNewFile { passfile =>
-        passfile `<<` "test"
+        passfile.write("test")
         val (_, Nil) = addCmd.run(setup, "-d", "--method", "password", "--passphrase", passfile.pathAsString, target.pathAsString)
         val (out, Nil) = findLisp(setup)
         out should have size (1)

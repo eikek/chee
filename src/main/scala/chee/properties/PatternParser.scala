@@ -89,7 +89,6 @@ final class PatternParser(idents: Traversable[Ident]) {
   def loopDirective: Parser[Ident => Pattern] =
     P("~@" ~ ("!".!.?) ~ ("*".!.?) ~ "~{" ~ loopBody ~ "~}").map {
       case (excl, all, body) =>
-        val idents = if (all.isDefined) Ident.defaults else (Ident.defaults diff VirtualProperty.idents.all)
         _ => loop(body._1, body._2, MapGet.idents(all.isDefined), excl.isEmpty)
     }
 

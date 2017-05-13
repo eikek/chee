@@ -19,7 +19,7 @@ class CryptTest extends FlatSpec with Matchers with CommandSetup with FindHelper
 
   def withPassFile(code: File => Any) =
     withNewFile { f =>
-      f `<<` String.valueOf(pass)
+      f.write(String.valueOf(pass))
       code(f)
     }
 

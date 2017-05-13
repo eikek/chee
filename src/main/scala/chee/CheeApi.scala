@@ -171,7 +171,7 @@ private class CheeApiImpl(cfg: Config) extends CheeApi with LazyLogging {
     }
 
     val targetLoc = locationFor(t)
-    val n = index.move(source.path, t.path, Some(targetLoc.path)).get
+    index.move(source.path, t.path, Some(targetLoc.path)).get
     if (!indexOnly) {
       source.moveTo(t)
     }

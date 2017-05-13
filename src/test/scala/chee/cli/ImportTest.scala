@@ -63,7 +63,7 @@ class ImportTest extends FlatSpec with Matchers with CommandSetup with FindHelpe
     val target = (setup.files / "repo").createDirectories()
     val source = (setup.files / "src").createDirectories()
     withNewFile { passfile =>
-      passfile `<<` String.valueOf(pass)
+      passfile.write(String.valueOf(pass))
       val testImage = TestInfo.images.filter(_.extension != Some(".tif")).head
       encryptFile(testImage, pass, Some(source)) { enc =>
         val (_, Nil) = imp.run(setup, "-r", "-d", "--method", "password", "--passphrase", passfile.pathAsString, source.pathAsString, target.pathAsString)

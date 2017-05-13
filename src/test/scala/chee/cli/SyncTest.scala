@@ -78,7 +78,7 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
       source.delete()
       encryptFile(TestInfo.images(1), "test".toCharArray, Some(source)) { enc =>
         withNewFile { passfile =>
-          passfile `<<` "test"
+          passfile.write("test")
           val (_, Nil) = sync.run(setup, "-d", "--method", "password", "--passphrase", passfile.pathAsString, target.pathAsString)
 
           val (after, Nil) = findLisp(setup)
@@ -106,7 +106,7 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
       encryptFile(source, "test".toCharArray) { enc =>
         source.delete()
         withNewFile { passfile =>
-          passfile `<<` "test"
+          passfile.write("test")
           val (_, Nil) = sync.run(setup, "-d", "--method", "password", "--passphrase", passfile.pathAsString, target.pathAsString)
           val (after, Nil) = findLisp(setup)
           after should have size (1)
@@ -123,7 +123,7 @@ class SyncTest extends FlatSpec with Matchers with CommandSetup with FindHelper 
     val target = (setup.files / "repo").createDirectories()
     combine(withNewFile, encryptFile(TestInfo.images(2), "test".toCharArray, Some(target))) { (passfile, enc) =>
       // add encrypted file
-      passfile `<<` "test"
+      passfile.write("test")
       addCmd.run(setup, "-d", "--method", "password", "--passphrase", passfile.pathAsString, target.pathAsString)
       val (before, Nil) = find.run(setup, "-p", "~#checksum ~#encrypted~%")
       before should have size (1)
