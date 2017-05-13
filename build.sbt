@@ -1,7 +1,7 @@
 lazy val commonSettings = Seq(
   name := "chee",
   homepage := Some(url("https://github.com/eikek/chee")),
-  scalaVersion := "2.12.1",
+  scalaVersion := "2.12.2",
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
     "-Xfatal-warnings", // fail when there are warnings
@@ -43,7 +43,8 @@ lazy val dependencies = Seq(
   "eu.medsea.mimeutil"          % "mime-util"                % "2.1.3" excludeAll(
     ExclusionRule("log4j", "log4j"),
     ExclusionRule("org.slf4j", "slf4j-log4j12")
-  )
+  ),
+  "com.github.eikek"           %% "yamusca"                  % "0.1.0"
 )
 
 lazy val writeTestInfo = Def.task {
