@@ -59,22 +59,23 @@ chee version
 You can build chee with the [[http://nixos.org/nix][nix package manager]].
 
 #+begin_src shell :exports both
-nix-build https://github.com/eikek/chee/archive/master.tar.gz
+nix-build https://github.com/eikek/chee/archive/release/0.3.0.tar.gz
 #+end_src
 
 or install it with
 
 #+begin_src shell :exports code
-nix-env -if https://github.com/eikek/chee/archive/master.tar.gz
+nix-env -if https://github.com/eikek/chee/archive/release/0.3.0.tar.gz
 #+end_src
 
 ** Download
 
-Prebuild zip files are usually available for download here:
+Prebuild zip files are usually available for download at the
+[[https://github.com/eikek/chee/releases][release page]].
+
+Snapshots can be downloaded here:
 
 - [[https://eknet.org/main/projects/chee/chee-0.3.0-SNAPSHOT.zip][chee 0.3.0-SNAPSHOT]]
-- [[https://eknet.org/main/projects/chee/chee-0.2.0.zip][chee 0.2.0]]
-- [[https://eknet.org/main/projects/chee/chee-0.1.1.zip][chee 0.1.1]]
 
 Download and unzip the file. Then add the resulting directory to your
 ~$PATH~. You need Java 8 for running it. Test it via
@@ -107,10 +108,12 @@ Click [[https://eknet.org/main/projects/chee/manual-0.3.0.html][here]] to read t
 Chee is distributed under the [[http://www.gnu.org/licenses/gpl-3.0.html][GPLv3]].
 
 * Changes
-** 0.3.0 (development)
+** 0.3.0
 
 - add command ~meta tags~ to list all tags in use
 - fixes bug (#4) in `chee` shell script for repository mode
+- fixes bug #7 and #8
+- add more tests and updated dependencies
 
 ** 0.2.0
 

@@ -2,8 +2,8 @@
 
 ;; Copyright © 2016- Eike Kettner
 
-;; Version: 0.3.0-SNAPSHOT
-;; URL: https://github.com/eikek/chee/tree/master/emacs
+;; Version: 0.3.0
+;; URL: https://github.com/eikek/chee/tree/release/0.3.0/emacs
 ;; Package-Requires: ((dash "2.12.1") (s "1.10.0") (f "0.18.2"))
 
 ;; This file is not part of GNU Emacs.
