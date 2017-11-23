@@ -5,7 +5,8 @@
     <title>{{title}}{{^title}}Chee Gallery{{/title}}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {{#css}}<link rel="stylesheet" href="{{.}}"/>
+    {{#css}}
+    <link rel="stylesheet" href="{{.}}"/>
     {{/css}}
     <style type="text/css">
      .blueimp-gallery > .indicator > li {
@@ -128,16 +129,21 @@
         <div class="col-md-12">
             <h1>{{title}}{{^title}}Gallery <i class="fa fa-smile-o"></i>{{/title}}</h1>
             <br>
-            {{#files}}
+
+{{#files}}
+
                 <a href="{{scaled-image}}" class="thumb-link" title="{{filename}} ({{model}}), {{created}}, {{#_format}}~:length{{/_format}}" data-comment="{{comment}}" data-tag="{{tag}}" {{#link-original}}data-download="{{path}}"{{/link-original}} data-gallery>
                     <img src="{{thumbnail}}" alt="{{filename}} ({{model}}), {{created}}">
                 </a>
-            {{/files}}
+
+{{/files}}
+<!--       -->
         </div>
       </div>
     </div>
 
-    {{#js}}<script src="{{.}}"></script>
+    {{#js}}
+    <script src="{{.}}"></script>
     {{/js}}
     <script>
      $('#blueimp-gallery').on('slide', function(event, index, slide) {

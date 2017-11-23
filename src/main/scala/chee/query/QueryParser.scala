@@ -33,7 +33,7 @@ class QueryParser(comparators: Set[Comp]) {
     quote.toString ~ simpleEnum(Seq(quote)) ~ quote.toString
   )
 
-  lazy val in: P[In] = P(ident ~ WS.rep ~ "~" ~ WS.rep ~/ (quotedEnum(''') | quotedEnum('"') | simpleEnum(")\"' \t"))).map {
+  lazy val in: P[In] = P(ident ~ WS.rep ~ "~" ~ WS.rep ~/ (quotedEnum('\'') | quotedEnum('"') | simpleEnum(")\"' \t"))).map {
     case (id, values) => In(id, values)
   }
 
@@ -59,8 +59,8 @@ class QueryParser(comparators: Set[Comp]) {
 object QueryParser {
   import fastparse.all._
 
-  lazy val quotedValue: P[String] = P(quotedString('"') | quotedString('''))
-  lazy val simpleValue: P[String] = P(CharNotIn(Seq(')', '"', ''', ' ', '\t')).rep.!)
+  lazy val quotedValue: P[String] = P(quotedString('"') | quotedString('\''))
+  lazy val simpleValue: P[String] = P(CharNotIn(Seq(')', '"', '\'', ' ', '\t')).rep.!)
 
   private lazy val defaultParser = new QueryParser(Comp.all)
 

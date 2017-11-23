@@ -80,7 +80,7 @@ object OS {
       import chee.util.parsing._
 
       val simpleWord: P[String] = CharNotIn("' \t").rep(1).!
-      val word: P[String] = quotedString(''')
+      val word: P[String] = quotedString('\'')
       val token: P[Seq[String]] = P(WS.rep ~ (word | simpleWord) ~ WS.rep).rep
 
       def apply(s: String): Either[String, Seq[String]] =

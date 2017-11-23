@@ -13,7 +13,7 @@ object SqlBackend {
   val idents = Ident.defaults diff VirtualProperty.idents.all
 
   private def valuePattern(id: Ident) = {
-    def ofId(id: Ident) = cond(existsIdent(id), quote(''', lookup(id)), raw("null"))
+    def ofId(id: Ident) = cond(existsIdent(id), quote('\'', lookup(id)), raw("null"))
     if (id == Ident.path) cond(existsIdent(Index.realPathIdent), ofId(Index.realPathIdent), ofId(id))
     else ofId(id)
   }

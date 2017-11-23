@@ -2,9 +2,9 @@ lazy val scalaLib = ExclusionRule("org.scala-lang", "scala-library")
 lazy val slf4jApi = ExclusionRule("org.slf4j", "slf4j-api")
 
 lazy val dependencies = Seq(
-  "org.scalatest"              %% "scalatest"                % "3.0.3"    % "test",
+  "org.scalatest"              %% "scalatest"                % "3.0.4"    % "test",
   "org.scalacheck"             %% "scalacheck"               % "1.13.5"   % "test",
-  "com.lihaoyi"                %% "fastparse"                % "0.4.2",
+  "com.lihaoyi"                %% "fastparse"                % "1.0.0",
   "com.github.pathikrit"       %% "better-files"             % "3.0.0" excludeAll(
     scalaLib
   ),
@@ -19,14 +19,14 @@ lazy val dependencies = Seq(
     scalaLib,
     slf4jApi // use the one provided by logback
    ),
-  "org.xerial"                  % "sqlite-jdbc"              % "3.16.1",
-  "com.typesafe"                % "config"                   % "1.3.1",
-  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.56",
+  "org.xerial"                  % "sqlite-jdbc"              % "3.21.0",
+  "com.typesafe"                % "config"                   % "1.3.2",
+  "org.bouncycastle"            % "bcpg-jdk15on"             % "1.58",
   "eu.medsea.mimeutil"          % "mime-util"                % "2.1.3" excludeAll(
     ExclusionRule("log4j", "log4j"),
     ExclusionRule("org.slf4j", "slf4j-log4j12")
   ),
-  "com.github.eikek"           %% "yamusca"                  % "0.1.0"
+  "com.github.eikek"           %% "yamusca-core"             % "0.4.0"
 )
 
 lazy val writeTestInfo = Def.task {
@@ -128,7 +128,7 @@ lazy val chee = (project in file(".")).
   settings(
     name := "chee",
     homepage := Some(url("https://github.com/eikek/chee")),
-    scalaVersion := "2.12.2",
+    scalaVersion := "2.12.4",
     scalacOptions ++= Seq(
       "-encoding", "UTF-8",
       "-Xfatal-warnings", // fail when there are warnings

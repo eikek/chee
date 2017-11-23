@@ -16,7 +16,7 @@ class FormatPatternTest extends FlatSpec with Matchers {
 
   it should "escape quote chars" in {
     quote('"', raw("\"hello\", they said")).right.result(emptyMap) should be ("\"\\\"hello\\\", they said\"")
-    quote(''', raw("'hello', they said")).right.result(emptyMap) should be ("'\\'hello\\', they said'")
+    quote('\'', raw("'hello', they said")).right.result(emptyMap) should be ("'\\'hello\\', they said'")
   }
 
   "fixedwidth" should "pad with space" in {

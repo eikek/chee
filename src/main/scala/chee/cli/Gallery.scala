@@ -18,7 +18,8 @@ import chee.properties.MapGet._
 import chee.resources.ResourceInfo
 import chee.util.files._
 import yamusca.imports._
-import yamusca.context.{MapValue, Find => ContextFind}
+import yamusca.syntax._
+import yamusca.context.{Find => ContextFind}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -224,7 +225,7 @@ object Gallery {
       }
       kind.name -> Value.fromSeq(files.map(Value.of))
     }
-    Context(files.get _)
+    Context.from(files.get _)
   }
 
   def generateHtml(cfg: Config, opts: Opts, context: Context): File = {
@@ -300,7 +301,7 @@ object Gallery {
   }
 
   def makeContext: MapGet[Value] =
-    get.map { m => MapValue(new LazyMapContext(m), false) }
+    get.map { m => Value.fromContext(new LazyMapContext(m), false) }
 
   case class LazyMapContext(lm: LazyMap) extends Context with LazyLogging {
     def find(key: String): (Context, Option[Value]) = {
@@ -333,12 +334,4 @@ object Gallery {
 
   def setHead(c: Context): ContextFind[Unit] =
     ContextFind.modify { ctx => c :: ctx.tail }
-
-  implicit final class ElementAsString(val el: yamusca.data.Element) extends AnyVal {
-    def asString = el match {
-      case v: Literal => v.asString
-      case v: Variable => v.asString
-      case v: Section => v.asString
-    }
-  }
 }
